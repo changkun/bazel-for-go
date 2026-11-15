@@ -2,8 +2,9 @@
 
 A short book for staff and principal engineers deciding whether a Go codebase should be
 built with Bazel or with the go command. It explains how each system is designed, why the two
-designs differ, where each one stops scaling, and what changes when you switch. The examples run, and every number comes
-from a measurement in `examples/bench/results/`.
+designs differ, where each one stops scaling, and what changes when you switch. The examples
+run; the few numbers in the text come from the measurements in Appendix A. `PLAN.md` holds the
+chapter-by-chapter plan.
 
 Versions used: Go 1.27, Bazel 9.3, rules_go 0.65, Gazelle 0.54, measured on macOS/arm64.
 
@@ -38,37 +39,32 @@ Versions used: Go 1.27, Bazel 9.3, rules_go 0.65, Gazelle 0.54, measured on macO
   Bazel replaces and which half it keeps; the SDK, the standard library, the builder,
   archives versus export data, configurations, nogo and Gazelle
 - [8. The designs side by side](book/08-side-by-side.md): each decision from Chapter 1 as
-  the two systems make it, why each made it that way, and what each choice costs as a
-  repository grows
+  the two systems make it, why each made it that way, what each choice costs as a repository
+  grows, and where each system stops scaling
 
-**Part IV. Evidence**
+**Part IV. Operating at scale**
 
-- [9. Measurements](book/09-measurements.md): the predictions of Chapter 8 tested on a
-  synthetic repository across a size ladder: cold, no-op, incremental, test, code generation
-  and shared-cache builds
-
-**Part V. Operating**
-
-- [10. Optimizing a Bazel Go build](book/10-optimizing.md): cache hit rate, action keys, Build
-  without the Bytes, analysis cost, memory, test selection and profiling, and placing each
-  workload on the machine type that suits it
-- [11. Deciding](book/11-deciding.md): the limits of each system, a decision table and a
+- [9. Optimizing a Bazel Go build](book/09-optimizing.md): cache hit rate, action keys, Build
+  without the Bytes, analysis cost and server memory, test selection, and placing each
+  workload class on the machine type that suits it
+- [10. Deciding](book/10-deciding.md): where each system stops scaling, a decision table and a
   migration path
 
 **Appendix**
 
-- [A. Reproducing the measurements](book/a-reproducing.md)
+- [A. Measurements](book/a-measurements.md): the synthetic repository, the harness, the full
+  results and how to reproduce them
 
 ## Layout
 
 - `book/`: the chapters.
 - `examples/minimal/`: the repository built in Chapter 2.
 - `examples/bench/`: the synthetic-repository generator, the benchmark harness and the raw
-  results that Chapters 5 and 9 report.
+  results that Appendix A reports.
 
 ## Running the examples
 
-Bazelisk reads `.bazelversion` and downloads the pinned Bazel. See Appendix A for the
+Bazelisk reads `.bazelversion` and downloads the pinned Bazel. Appendix A describes the
 benchmark harness.
 
 ```bash
