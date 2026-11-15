@@ -1,0 +1,12 @@
+# A single-language (English) book theme, derived from the customized
+# hugo-book theme of "Go: Under the Hood"
+# (https://github.com/golang-design/under-the-hood, website/themes/book),
+# itself based on https://github.com/alex-shpak/hugo-book.
+name = "Book"
+license = "MIT"
+description = "A plain, single-language book theme: sidebar file tree, light/dark, mermaid, KaTeX, search."
+min_version = "0.146"
+
+[author]
+  name = "Changkun Ou"
+  homepage = "https://changkun.de/"

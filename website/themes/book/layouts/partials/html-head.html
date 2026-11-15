@@ -1,0 +1,51 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Apply dark mode before first paint to avoid a flash of the light theme.
+     Theme is a 3-state preference stored in localStorage("theme") as
+     "light" | "dark" | "auto"; "auto" (the default when unset) follows the
+     OS prefers-color-scheme. This runs synchronously in <head> so <html>
+     already carries `.dark` on the very first paint when dark is in effect. -->
+<script>
+(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='auto'){t='auto';}var d=t==='dark'||(t==='auto'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}}catch(e){}})();
+</script>
+<!-- Base background painted from the same synchronous decision, so the very
+     first frame (before book.scss loads) is already dark and there is no
+     white flash on navigation. -->
+<style>html,html body{background:#fff;color:#1f1f1f}html.dark,html.dark body{background:#181818;color:#e3e3e3}</style>
+{{- partial "social-meta.html" . -}}
+
+{{- /* The home page's title is the book's full title (README heading); other
+       pages read "<page> | <site>". */}}
+<title>{{ if .IsHome }}{{ partial "title" . }}{{ else }}{{ partial "title" . }} | {{ .Site.Title }}{{ end }}</title>
+<link rel="icon" href="{{ "favicon.png" | relURL }}" type="image/x-icon">
+
+<!-- No web fonts or icon fonts: the stylesheet uses system font stacks and the
+     icons are inline SVG. -->
+
+<!-- Theme stylesheet -->
+{{- $styles := resources.Get "book.scss" | resources.ExecuteAsTemplate "book.scss" . | css.Sass | resources.Minify | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $styles.RelPermalink }}" integrity="{{ $styles.Data.Integrity }}">
+
+<!-- KaTeX math is rendered at build time (see layouts/_default/_markup/
+     render-passthrough.html). Only the stylesheet is needed client-side. -->
+<link rel="stylesheet" href="{{ "katex/katex.min.css" | relURL }}?v={{ partialCached "static-version" "katex/katex.min.css" "katex/katex.min.css" }}">
+
+{{ if default true .Site.Params.BookSearch }}
+{{- .Scratch.Set "bookSearchConfig" (i18n "bookSearchConfig") -}} <!-- Remove after https://github.com/gohugoio/hugo/issues/6331 -->
+{{- $searchJSFile := printf "%s.search.js" .Language.Lang -}}
+{{- $searchJS := resources.Get "search.js" | resources.ExecuteAsTemplate $searchJSFile . | resources.Minify | resources.Fingerprint }}
+<script defer src="{{ $searchJS.RelPermalink }}" integrity="{{ $searchJS.Data.Integrity }}"></script>
+{{ end }}
+
+<!-- Sidebar and "on this page" toggles, scroll-spy. -->
+<script defer src="{{ "reading.js" | relURL }}?v={{ partialCached "static-version" "reading.js" "reading.js" }}"></script>
+
+<!-- RSS -->
+{{ with .OutputFormats.Get "rss" -}}
+  {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
+{{ end -}}
+
+{{ "<!--" | safeHTML }}
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+{{ "-->" | safeHTML }}

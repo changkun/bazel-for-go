@@ -1,0 +1,14 @@
+{{- /*
+  Render ```mermaid fenced code blocks as diagrams.
+  Using a fenced code block (not a shortcode) keeps the source readable on
+  GitHub, which renders ```mermaid natively. This hook makes the Hugo site
+  render the same source. mermaid.min.js is loaded once per page.
+*/ -}}
+{{ if not (.Page.Scratch.Get "mermaid") }}
+<script src="{{ "mermaid.min.js" | relURL }}?v={{ partialCached "static-version" "mermaid.min.js" "mermaid.min.js" }}"></script>
+<script src="{{ "mermaid-init.js" | relURL }}?v={{ partialCached "static-version" "mermaid-init.js" "mermaid-init.js" }}"></script>
+{{ .Page.Scratch.Set "mermaid" true }}
+{{ end }}
+<pre class="mermaid">
+{{- .Inner -}}
+</pre>

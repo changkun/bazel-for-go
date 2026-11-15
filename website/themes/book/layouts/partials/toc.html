@@ -1,0 +1,7 @@
+{{ $tocLevels := default (default 6 .Site.Params.BookToC) .Params.BookToC }}
+{{ if and $tocLevels (strings.TrimSpace (plainify .Page.TableOfContents)) }}
+  <aside class="book-toc levels-{{$tocLevels}}">
+    <div class="reading-toc-head">{{ i18n "TocHead" }}</div>
+    {{ .Page.TableOfContents }}
+  </aside>
+{{ end }}

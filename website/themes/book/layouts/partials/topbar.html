@@ -1,0 +1,47 @@
+{{/*
+  Top bar: sidebar toggle, book title, breadcrumb, theme switch (driven by
+  dark.js through #theme-switch / .theme-option / setTheme), and the
+  "on this page" toggle (reading.js).
+*/}}
+<header class="reading-topbar">
+  <button type="button" class="reading-iconbtn" id="fold-sidebar" title="{{ i18n "CollapseSidebar" }}" aria-label="{{ i18n "CollapseSidebar" }}">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
+  <a class="reading-wordmark" href="{{ .Site.Home.RelPermalink }}">
+    <span class="wm-title wm-long">{{ .Site.Title }}</span>
+    <span class="wm-title wm-short">{{ .Site.Params.shortTitle | default .Site.Title }}</span>
+  </a>
+
+  {{ if not .IsHome }}
+  <nav class="reading-crumb" aria-label="breadcrumb">
+    {{ range $a := .Ancestors.Reverse }}
+      {{ if not $a.IsHome }}
+        <a href="{{ $a.RelPermalink }}">{{ $a.LinkTitle }}</a>
+        <span class="crumb-sep">/</span>
+      {{ end }}
+    {{ end }}
+    <span class="crumb-current">{{ .LinkTitle }}</span>
+  </nav>
+  {{ end }}
+
+  <div class="reading-spacer"></div>
+
+  <div id="theme-switch" class="theme-switch" role="radiogroup" aria-label="{{ i18n "Theme" | default "Theme" }}">
+    <button type="button" class="theme-option" data-theme="light" role="radio" aria-checked="false" aria-label="{{ i18n "ThemeLight" | default "Light" }}" title="{{ i18n "ThemeLight" | default "Light" }}" onclick="setTheme('light')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <button type="button" class="theme-option" data-theme="auto" role="radio" aria-checked="false" aria-label="{{ i18n "ThemeAuto" | default "Auto" }}" title="{{ i18n "ThemeAuto" | default "Auto" }}" onclick="setTheme('auto')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg>
+    </button>
+    <button type="button" class="theme-option" data-theme="dark" role="radio" aria-checked="false" aria-label="{{ i18n "ThemeDark" | default "Dark" }}" title="{{ i18n "ThemeDark" | default "Dark" }}" onclick="setTheme('dark')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
+    </button>
+  </div>
+
+  {{ if strings.TrimSpace (plainify .TableOfContents) }}
+  <button type="button" class="reading-iconbtn" id="fold-toc" title="{{ i18n "TocHead" }}" aria-label="{{ i18n "TocHead" }}">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+  </button>
+  {{ end }}
+</header>

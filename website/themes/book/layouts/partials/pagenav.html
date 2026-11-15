@@ -1,0 +1,11 @@
+{{- /* Previous / next links. make.go writes the targets into front matter
+       as content paths (prev/next, e.g. "/part1/_index.md"), resolved here so
+       the links follow whatever baseURL the site is built with. */ -}}
+{{- $prev := "" -}}{{- with .Params.prev }}{{ $prev = site.GetPage . }}{{ end -}}
+{{- $next := "" -}}{{- with .Params.next }}{{ $next = site.GetPage . }}{{ end -}}
+{{- if or $prev $next -}}
+<nav class="reading-pagenav">
+  {{- with $prev }}<a class="pagenav-prev" href="{{ .RelPermalink }}" rel="prev"><span class="pagenav-label">← {{ i18n "PrevSection" }}</span><span class="pagenav-title">{{ .LinkTitle }}</span></a>{{ end -}}
+  {{- with $next }}<a class="pagenav-next" href="{{ .RelPermalink }}" rel="next"><span class="pagenav-label">{{ i18n "NextSection" }} →</span><span class="pagenav-title">{{ .LinkTitle }}</span></a>{{ end -}}
+</nav>
+{{- end -}}

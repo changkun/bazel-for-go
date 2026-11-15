@@ -1,0 +1,33 @@
+- id: Search
+  translation: Search
+
+# Header theme switcher (light / auto / dark segmented control).
+- id: Theme
+  translation: Theme
+
+- id: ThemeLight
+  translation: Light
+
+- id: ThemeAuto
+  translation: Auto
+
+- id: ThemeDark
+  translation: Dark
+
+# Reading chrome (top bar, table of contents, page navigation, menu).
+# The book title shown in the top bar and menu is the site title (config.toml).
+- id: PrevSection
+  translation: Previous
+- id: NextSection
+  translation: Next
+- id: TocHead
+  translation: On this page
+- id: CollapseSidebar
+  translation: Collapse sidebar
+- id: SearchPlaceholder
+  translation: Search the book…
+- id: AuthorHome
+  translation: Author
+
+- id: bookSearchConfig
+  translation: '{ cache: true }'

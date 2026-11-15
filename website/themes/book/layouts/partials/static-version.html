@@ -1,0 +1,7 @@
+{{- /*
+  Short content hash of a file under themes/book/static, for cache busting:
+  callers append it as ?v=<hash>, so a browser fetches the file again exactly
+  when its bytes change. Call through partialCached with the path as the key,
+  so each file is hashed once per build.
+*/ -}}
+{{- return substr (md5 (readFile (printf "themes/book/static/%s" .))) 0 10 -}}

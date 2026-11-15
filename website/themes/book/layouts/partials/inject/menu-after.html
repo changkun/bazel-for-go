@@ -1,0 +1,6 @@
+{{- /* Always rendered: _reading.scss styles `nav > ul:last-of-type > li` as
+       this small print, so without it the rule would hit the book tree. */}}
+<hr>
+<ul>
+    <li>{{ .Site.Params.menuFooter | default .Site.Params.copyright | default .Site.Title | markdownify }}</li>
+</ul>

@@ -6,3 +6,9 @@ bazel-*
 /examples/bench/work/
 /examples/bench/out/
 .DS_Store
+# Website build output; content/ is generated from README.md and book/ by
+# website/make.go.
+/website/content/
+/website/public/
+/website/resources/
+/website/.hugo_build.lock

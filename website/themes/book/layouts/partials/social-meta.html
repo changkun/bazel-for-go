@@ -1,0 +1,56 @@
+{{- /*
+  Share/SEO metadata for link unfurls (Slack, X, LinkedIn, ...). Every URL is
+  absolute via the baseURL.
+
+  Per-page overrides (front matter):
+    description: "..."      -> og/twitter description
+    image: "path-or-url"    -> share image for this page
+
+  A share image is emitted only when a page sets `image` or the site sets
+  params.shareImage (a file under static/ or an absolute URL); without one the
+  card is a plain "summary".
+*/ -}}
+{{- $title := partial "title" . -}}
+{{- $desc := "" -}}
+{{- with .Description -}}
+  {{- $desc = . -}}
+{{- else -}}
+  {{- if and .IsPage .Summary -}}
+    {{- $desc = .Summary | plainify | htmlUnescape | chomp -}}
+  {{- else -}}
+    {{- $desc = .Site.Params.description -}}
+  {{- end -}}
+{{- end -}}
+{{- $desc = ($desc | plainify | chomp) -}}
+{{- if gt (len $desc) 200 -}}{{- $desc = printf "%.200s…" $desc -}}{{- end -}}
+
+{{- $img := .Site.Params.shareImage | default "" -}}
+{{- with .Params.image -}}{{- $img = . -}}{{- end -}}
+{{- $imgURL := $img -}}
+{{- if and $img (not (or (hasPrefix $img "http://") (hasPrefix $img "https://"))) -}}
+  {{- $imgURL = $img | absURL -}}
+{{- end -}}
+
+<meta name="description" content="{{ $desc }}">
+<link rel="canonical" href="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ .Site.Title }}">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:locale" content="en_US">
+{{- with $imgURL }}
+<meta property="og:image" content="{{ . }}">
+<meta property="og:image:alt" content="{{ $title }} · {{ $.Site.Title }}">
+{{- end }}
+
+<meta name="twitter:card" content="{{ if $imgURL }}summary_large_image{{ else }}summary{{ end }}">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $desc }}">
+{{- with $imgURL }}
+<meta name="twitter:image" content="{{ . }}">
+{{- end }}
+{{- with .Site.Params.twitter }}
+<meta name="twitter:site" content="{{ . }}">
+<meta name="twitter:creator" content="{{ . }}">
+{{- end }}

@@ -1,0 +1,77 @@
+.img-center {
+    display: block;
+    margin: 1.0rem auto;
+    margin-bottom: 30px;
+    height: auto;
+    text-align: center;
+}
+.img-center img {
+    padding: 5px;
+}
+.img-center strong {
+    display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   Collapsible sidebar menu (interactive expand / collapse via a checkbox hack)
+   --------------------------------------------------------------------------- */
+.book-menu {
+    /* The tree can be taller than the viewport: scroll the nav on its own
+       (its height is set below the top bar in _reading.scss). */
+    nav {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    input.toggle { display: none; }
+
+    label.book-toggle-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+
+        a, span { flex: 1 1 auto; }
+    }
+    label.book-toggle-label::after {
+        content: "\25B8"; /* small right triangle */
+        flex: 0 0 auto;
+        margin-left: 0.5rem;
+        font-size: 0.75em;
+        opacity: 0.55;
+        transition: transform 0.15s ease;
+    }
+    input.toggle:checked + label.book-toggle-label::after {
+        transform: rotate(90deg);
+    }
+
+    /* a section's child list is the sibling that follows its toggle checkbox */
+    input.toggle ~ ul { display: none; }
+    input.toggle:checked ~ ul { display: block; }
+}
+
+/* ---------------------------------------------------------------------------
+   Dark mode
+   Toggled by adding `.dark` to <html> (see static/dark.js). Colours are
+   custom properties that swap under html.dark in _reading.scss, so only the
+   base theme's leftovers that do not read the tokens are handled here.
+   --------------------------------------------------------------------------- */
+html.dark {
+    /* The .bib bibliography tables hard-code white even rows. */
+    .bib tr:nth-child(even) { background-color: transparent !important; }
+
+    .book-search-spinner { border-top-color: var(--fg-muted); }
+
+    /* Thin, subtle scrollbars (see _main.scss for light). */
+    .book-menu nav,
+    .markdown pre,
+    .markdown .highlight,
+    .markdown .chroma,
+    .markdown table {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+    }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.30); }
+}

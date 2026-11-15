@@ -1,0 +1,10 @@
+<ul>
+    <li><a href="{{ .Site.Home.RelPermalink }}">{{ .Site.Title }}</a></li>
+    {{- with .Site.Params.authorURL }}
+    <li><a href="{{ . }}">{{ i18n "AuthorHome" }}</a></li>
+    {{- end }}
+    {{- with .Site.Params.repo }}
+    <li><a href="{{ . }}">GitHub</a></li>
+    {{- end }}
+</ul>
+<hr>

@@ -1,0 +1,696 @@
+// ===========================================================================
+// Site design layer (carried over unchanged from "Go: Under the Hood").
+//
+// Deliberately plain: a white page, system fonts, one link colour (the
+// #007d9c blue go.dev uses for links), and no decorative chrome. Imported last
+// (see book.scss) so it overrides the base theme's hard-coded greys.
+//
+// The custom-property NAMES below are an interface: mermaid-init.js reads
+// --bg, --surface, --fg, --fg-muted, --border-strong, --accent and
+// --font-sans at runtime to paint diagrams. Change the values freely; do not
+// rename them.
+// ===========================================================================
+
+:root {
+  --bg: #ffffff;
+  --surface: #f6f6f6;
+  --fg: #1f1f1f;
+  --fg-muted: #555555;
+  --fg-faint: #707070;
+  --border: #e3e3e3;
+  --border-strong: #c9c9c9;
+
+  --accent: #007d9c;
+  --accent-soft: rgba(0, 125, 156, 0.1);
+  --shadow-panel: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --warn: #b35900;
+
+  --code-bg: #f6f6f6;
+  --code-inline-bg: rgba(0, 0, 0, 0.055);
+  --kw: #cf222e;   // keywords
+  --typ: #953800;  // types
+  --com: #6e7781;  // comments
+  --str: #0a3069;  // strings
+  --fn: #8250df;   // function names
+  --num: #0550ae;  // numbers
+  --op: #1f1f1f;   // operators
+
+  // System fonts only: nothing is downloaded, which also keeps the site fast
+  // where Google Fonts is unreachable.
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --reading-measure: 50rem;
+}
+
+html.dark {
+  --bg: #181818;
+  --surface: #222222;
+  --fg: #e3e3e3;
+  --fg-muted: #ababab;
+  --fg-faint: #8c8c8c;
+  --border: #303030;
+  --border-strong: #474747;
+
+  --accent: #4fb8d6;
+  --accent-soft: rgba(79, 184, 214, 0.15);
+  --shadow-panel: 0 2px 12px rgba(0, 0, 0, 0.5);
+  --warn: #e3a35a;
+
+  --code-bg: #222222;
+  --code-inline-bg: rgba(255, 255, 255, 0.08);
+  --kw: #ff7b72;
+  --typ: #ffa657;
+  --com: #8b949e;
+  --str: #a5d6ff;
+  --fn: #d2a8ff;
+  --num: #79c0ff;
+  --op: #e3e3e3;
+}
+
+// --- Base ---------------------------------------------------------------
+html {
+  background: var(--bg);
+  letter-spacing: normal; // the base theme tracks all text by 0.33px
+}
+
+body,
+html.dark body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+a,
+a:visited { color: var(--accent); }
+
+// --- Top bar ------------------------------------------------------------
+$topbar-h: 50px;
+
+body { padding-top: $topbar-h; }
+
+.reading-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: $topbar-h;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.reading-wordmark {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-decoration: none;
+  white-space: nowrap;
+
+  .wm-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--fg);
+  }
+  .wm-short { display: none; }
+}
+
+.reading-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: 6px;
+  font-size: 13px;
+  color: var(--fg-faint);
+  white-space: nowrap;
+  overflow: hidden;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    &:hover { color: var(--fg); }
+  }
+  .crumb-current {
+    color: var(--fg-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.reading-spacer { flex: 1 1 auto; }
+
+.reading-iconbtn,
+.reading-topbar .theme-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+
+  &:hover { background: var(--surface); color: var(--fg); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  svg { display: block; }
+}
+#fold-toc.is-active { color: var(--fg); background: var(--surface); }
+
+.reading-topbar .theme-switch {
+  display: inline-flex;
+  gap: 2px;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+
+  .theme-option + .theme-option { border-left: 0; }
+  .theme-option.active { color: var(--fg); background: var(--surface); }
+}
+
+// --- Left sidebar -------------------------------------------------------
+.book-menu nav {
+  top: $topbar-h;
+  height: calc(100vh - #{$topbar-h});
+  max-height: calc(100vh - #{$topbar-h});
+}
+
+.book-menu {
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  font-size: 14px;
+
+  nav { padding: 18px 14px 40px; }
+
+  ul { margin: 0; padding: 0; }
+  ul ul { padding-left: 0; }
+  li { margin: 0; }
+
+  a {
+    display: block;
+    padding: 3px 8px;
+    color: var(--fg);
+    line-height: 1.5;
+    text-decoration: none;
+
+    &:hover { opacity: 1; color: var(--accent); }
+  }
+  a.active,
+  a.active:hover {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  hr {
+    height: 1px;
+    margin: 12px 0;
+    border: 0;
+    background: var(--border);
+  }
+
+  // Links to the home page, author and repository above the tree.
+  nav > ul:first-of-type > li > a {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--fg-muted);
+  }
+
+  // Part
+  nav > ul > li > label { margin-top: 10px; }
+  nav > ul > li > label > a,
+  .book-section-flat > label > a,
+  .book-section-flat > a {
+    font-weight: 600;
+  }
+
+  // Chapter: a collapsible section (label > a) or, as in this book, a
+  // plain page directly under its part. The second selector also undoes
+  // _main.scss's bold `nav>ul>li>ul>li>a`.
+  nav > ul > li > ul > li > label > a,
+  nav > ul > li > ul > li > a {
+    font-weight: 400;
+    padding-left: 18px;
+  }
+  nav > ul > li > ul > li > a.active { font-weight: 600; }
+
+  // Section
+  nav > ul > li > ul > li > ul > li > a {
+    font-size: 13px;
+    color: var(--fg-muted);
+    padding-left: 30px;
+  }
+  nav > ul > li > ul > li > ul > li > a.active { color: var(--accent); }
+
+  .book-toggle-label::after { color: var(--fg-faint); opacity: 1; }
+
+  // Copyright line injected after the tree.
+  nav > ul:last-of-type > li {
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--fg-faint);
+  }
+
+  .book-search { margin: 0 0 12px; }
+  .book-search-field { position: relative; }
+  .book-search input {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 14px;
+
+    &::placeholder { color: var(--fg-faint); }
+    &:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  }
+  #book-search-results {
+    margin: 8px 0 0;
+    a { padding: 4px 8px; }
+    small { color: var(--fg-faint); }
+  }
+}
+
+// Desktop: the sidebar can be folded away.
+html[data-sidebar="closed"] .book-menu { display: none; }
+
+// Small screens: the sidebar slides in over the page.
+@media screen and (max-width: $sm-breakpoint) {
+  .book-menu {
+    position: fixed;
+    top: $topbar-h;
+    left: 0;
+    bottom: 0;
+    z-index: 45;
+    width: $menu-width;
+    max-width: 86vw;
+    margin-left: 0;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+
+    nav {
+      position: static;
+      width: 100%;
+      height: auto;
+      max-height: none;
+    }
+  }
+  html[data-sidebar="open"] .book-menu {
+    transform: translateX(0);
+    box-shadow: var(--shadow-panel);
+  }
+}
+
+// --- "On this page" panel (opened from the top bar) --------------------
+.book-toc { display: none; }
+html[data-toc="open"] .book-toc { display: block; }
+
+.book-toc {
+  position: fixed;
+  top: $topbar-h + 10px;
+  right: 14px;
+  width: 260px;
+  max-height: calc(100vh - #{$topbar-h + 30px});
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-panel);
+  z-index: 30;
+  font-size: 13px;
+
+  // The base theme pins this nav with position:fixed; keep it in flow.
+  nav {
+    position: static;
+    width: auto;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .reading-toc-head {
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 8px;
+  }
+
+  ul { margin: 0; padding: 0; list-style: none; }
+  ul ul { padding-left: 12px; }
+  li { margin: 0; }
+
+  a {
+    display: block;
+    padding: 3px 0 3px 10px;
+    border-left: 2px solid transparent;
+    color: var(--fg-muted);
+    line-height: 1.45;
+    text-decoration: none;
+
+    &:hover { opacity: 1; color: var(--fg); }
+    &.toc-active { color: var(--accent); border-left-color: var(--accent); }
+  }
+}
+
+// --- Page ---------------------------------------------------------------
+.book-page {
+  background: var(--bg);
+  min-height: calc(100vh - #{$topbar-h});
+  margin: 0;
+  padding: 0;
+}
+
+// --- Reading column -----------------------------------------------------
+.markdown {
+  max-width: var(--reading-measure);
+  margin: 0 auto;
+  padding: 36px 32px 96px;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--fg);
+
+  &:lang(en) {
+    max-width: 46rem;
+    line-height: 1.65;
+  }
+
+  p { margin: 0 0 1em; }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.35;
+    letter-spacing: 0;
+  }
+  h1 { font-size: 1.9em; line-height: 1.25; margin: 0 0 0.7em; }
+  h2 { font-size: 1.45em; margin: 1.9em 0 0.6em; }
+  h3 { font-size: 1.2em; margin: 1.6em 0 0.5em; }
+  h4 { font-size: 1.05em; margin: 1.4em 0 0.5em; }
+  h2, h3, h4 { scroll-margin-top: $topbar-h + 16px; }
+
+  strong, b { font-weight: 600; }
+
+  a,
+  a:visited { color: var(--accent); }
+  a:hover { text-decoration: underline; }
+
+  img { max-width: 100%; }
+
+  hr {
+    height: 1px;
+    margin: 2em 0;
+    border: 0;
+    background: var(--border);
+  }
+
+  // Inline code
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    background: var(--code-inline-bg);
+    color: inherit;
+    word-break: break-word;
+  }
+
+  // Code blocks
+  pre,
+  .highlight {
+    margin: 1.2em 0;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--code-bg);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    line-height: 1.55;
+    tab-size: 4;
+    overflow-x: auto;
+  }
+  .highlight pre,
+  pre code,
+  .highlight code {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    font-size: inherit;
+    word-break: normal;
+  }
+  // No line-number gutter for book snippets.
+  .highlight .lntable td.lntd:first-child { display: none; }
+  .highlight table.lntable { margin: 0; }
+
+  blockquote {
+    margin: 1.2em 0;
+    padding: 0 0 0 1em;
+    border-left: 3px solid var(--border-strong);
+    border-radius: 0;
+    background: none;
+    color: var(--fg-muted);
+  }
+
+  // GitHub-style alerts (> [!NOTE] ...), see _markup/render-blockquote.html.
+  // Same quiet rule as a blockquote, with an accent rule and a small label.
+  blockquote.alert {
+    color: var(--fg);
+    border-left-color: var(--accent);
+
+    .alert-title {
+      margin-bottom: 0.25em;
+      font-size: 0.88em;
+      font-weight: 600;
+      color: var(--accent);
+    }
+  }
+  blockquote.alert-warning,
+  blockquote.alert-caution {
+    border-left-color: var(--warn);
+    .alert-title { color: var(--warn); }
+  }
+
+  // Epigraphs at part and chapter openings: <div class="quote">.
+  .quote {
+    margin: 1.5em 0 2em;
+    padding: 0 0 0 1em;
+    border-left: 3px solid var(--border-strong);
+    border-radius: 0;
+    background: none;
+    color: var(--fg-muted);
+
+    .quote-mark { display: none; }
+    .quote-right {
+      margin-top: 0.4em;
+      font-size: 0.88em;
+      text-align: right;
+    }
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 1.2em 0;
+    font-size: 0.92em;
+    line-height: 1.55;
+
+    // Nested under tr to outrank _markdown.scss's `table tr th, tr td`.
+    tr th, tr td {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+    }
+    tr th {
+      background: var(--surface);
+      font-weight: 600;
+    }
+    tr:nth-child(2n) { background: transparent; }
+  }
+
+  // SVG figures, inlined by make.go: <figure class="svg-figure"><svg>...
+  // <figcaption>. The SVG draws in currentColor, so it follows the theme;
+  // it fills the column up to its viewBox width (an inline max-width set by
+  // make.go) and keeps its aspect ratio.
+  .svg-figure {
+    margin: 1.6em 0;
+    color: var(--fg);
+    text-align: center;
+    scroll-margin-top: $topbar-h + 16px;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    figcaption {
+      margin-top: 0.6em;
+      font-size: 0.88em;
+      line-height: 1.5;
+      color: var(--fg-muted);
+    }
+  }
+
+  // Footnotes. Chapters cite sources as [^name]; goldmark renders a small
+  // numbered superscript that links to the numbered list it appends at the
+  // end of the page, which is right under the final "## References".
+  sup { line-height: 0; }
+  .footnote-ref {
+    padding: 0 0.1em;
+    font-size: 0.8em;
+    text-decoration: none;
+  }
+  sup[id^="fnref"],
+  .footnotes li { scroll-margin-top: $topbar-h + 16px; }
+  .footnotes {
+    font-size: 0.86em;
+    line-height: 1.55;
+    color: var(--fg-muted);
+
+    ol { margin: 0; padding-left: 1.8em; }
+    li { margin: 0 0 0.45em; }
+    li p { margin: 0; }
+    li:target { color: var(--fg); }
+    // Long permalinks wrap instead of widening the page.
+    a { overflow-wrap: anywhere; word-break: break-word; }
+    .footnote-backref { margin-left: 0.2em; text-decoration: none; }
+  }
+  // Under its "## References" heading the list needs no rule of its own.
+  h2 + .footnotes > hr { display: none; }
+
+  // Previous / next links after the content.
+  .reading-pagenav {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 3em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.5;
+
+    a { text-decoration: none; max-width: 48%; }
+    a:hover .pagenav-title { text-decoration: underline; }
+    .pagenav-next { margin-left: auto; text-align: right; }
+    .pagenav-label {
+      display: block;
+      font-size: 13px;
+      color: var(--fg-faint);
+    }
+  }
+}
+
+// --- Syntax colours -----------------------------------------------------
+.chroma {
+  background: transparent;
+  color: var(--fg);
+
+  .lnt, .ln { color: var(--fg-faint); }
+  .hl { background: var(--accent-soft); display: block; }
+
+  .k, .kc, .kd, .kn, .kp, .kr { color: var(--kw); }
+  .kt, .nb, .bp { color: var(--typ); }
+  .nf { color: var(--fn); }
+  .nx, .nc, .nn { color: inherit; }
+  .s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .si, .sx, .sr, .sa { color: var(--str); }
+  .m, .mb, .mf, .mh, .mi, .mo, .il { color: var(--num); }
+  .c, .ch, .cm, .c1, .cs, .cp, .cpf { color: var(--com); font-style: normal; }
+  .o, .ow, .p { color: var(--op); }
+  .err { color: inherit; }
+}
+
+// --- Mermaid ------------------------------------------------------------
+// Colours come from the tokens via mermaid-init.js.
+.markdown pre.mermaid {
+  display: block;
+  margin: 1.5em auto;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg);
+  text-align: center;
+  overflow-x: auto;
+  font-family: var(--font-sans);
+  font-size: inherit;
+
+  svg {
+    display: inline-block;
+    max-width: 100%;
+    height: auto;
+  }
+  &:not([data-processed]) { color: transparent; }
+}
+
+// --- Footer -------------------------------------------------------------
+#footer {
+  max-width: var(--reading-measure);
+  margin: 0 auto;
+  padding: 20px 32px 48px;
+  border-top: 1px solid var(--border);
+  color: var(--fg-faint);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+
+  p { margin: 0 0 0.5em; }
+  a { color: var(--fg-muted); text-decoration: underline; }
+  .footer-stat { font-variant-numeric: tabular-nums; }
+}
+html:lang(en) #footer { max-width: 46rem; }
+
+// The README cover on the home page: smaller than its inline height="450".
+.reading-home > img[align] {
+  width: 240px;
+  height: auto !important;
+  margin: 6px 0 16px 32px !important;
+}
+
+// --- Narrow screens -----------------------------------------------------
+// A floated image (the home page cover) cannot sit beside text on a narrow
+// screen, so stack it instead.
+@media screen and (max-width: 820px) {
+  .markdown img[align],
+  .markdown img[style*="float"] {
+    float: none !important;
+    display: block;
+    height: auto !important;
+    width: 260px;
+    max-width: 100%;
+    margin: 0 0 24px !important;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .reading-topbar { gap: 6px; padding: 0 8px; }
+  .reading-crumb { display: none; }
+  .reading-wordmark .wm-long { display: none; }
+  .reading-wordmark .wm-short { display: inline; }
+
+  .markdown {
+    padding: 24px 16px 64px;
+    font-size: 16px;
+  }
+  .markdown h1 { font-size: 1.6em; }
+  .markdown h2 { font-size: 1.3em; }
+  .markdown code { overflow-wrap: anywhere; }
+  .markdown .reading-pagenav { flex-direction: column; gap: 12px; }
+  .markdown .reading-pagenav a { max-width: none; }
+
+  #footer { padding-left: 16px; padding-right: 16px; }
+
+  html, body { overflow-x: hidden; max-width: 100%; }
+}
