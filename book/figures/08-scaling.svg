@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 352" role="img" aria-labelledby="f82-title" class="f82">
+  <title id="f82-title">The work of one small edit, split by Chapter 1's cost terms. The go command, on every run: list every directory and check every file, hash every source file, then compile the package and its direct importers and relink its binaries. Bazel with its server running: the graph is kept in memory, it compares every known file's times, then compiles the package and relinks its binaries. Bazel with a new server: it starts the server, loads and analyzes every target, checks every file and looks up every action, then compiles the package and relinks its binaries. Finding the graph and the change grows with the repository; running what missed grows with the edit.</title>
+  <style>
+    .f82 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 13px; fill: currentColor; }
+    .f82 .f82-term { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; font-weight: 600; }
+    .f82 .f82-sm { font-size: 13px; opacity: 0.75; }
+    .f82 .f82-golabel { fill: #007D9C; font-size: 14px; font-weight: 600; }
+    .f82 .f82-bzlabel { fill: #388E3C; font-size: 14px; font-weight: 600; }
+    .f82 .f82-run { fill: #d9822b; fill-opacity: 0.15; stroke: #d9822b; stroke-width: 1.5; }
+    .f82 .f82-hit { fill: #8a8f98; fill-opacity: 0.12; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .f82 .f82-rule { stroke: currentColor; stroke-opacity: .15; stroke-width: 1; }
+    .f82 .f82-brace { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.3; }
+  </style>
+
+  <!-- Column headers: Chapter 1's cost terms -->
+  <text class="f82-term" x="246" y="20" text-anchor="middle">T_graph</text>
+  <text class="f82-sm" x="246" y="38" text-anchor="middle">find the graph</text>
+  <text class="f82-term" x="430" y="20" text-anchor="middle">T_detect</text>
+  <text class="f82-sm" x="430" y="38" text-anchor="middle">find what changed</text>
+  <text class="f82-term" x="614" y="20" text-anchor="middle">T_exec</text>
+  <text class="f82-sm" x="614" y="38" text-anchor="middle">run what missed</text>
+  <line class="f82-rule" x1="16" y1="48" x2="704" y2="48"/>
+
+  <!-- go command, every run -->
+  <text class="f82-golabel" x="20" y="88">go command</text>
+  <text class="f82-sm" x="20" y="106">every run</text>
+  <rect class="f82-run" x="160" y="58" width="172" height="60" rx="8"/>
+  <text x="246" y="83" text-anchor="middle">list every directory,</text>
+  <text x="246" y="101" text-anchor="middle">check every file</text>
+  <rect class="f82-run" x="344" y="58" width="172" height="60" rx="8"/>
+  <text x="430" y="83" text-anchor="middle">hash every</text>
+  <text x="430" y="101" text-anchor="middle">source file</text>
+  <rect class="f82-run" x="528" y="58" width="172" height="60" rx="8"/>
+  <text x="614" y="83" text-anchor="middle">the package, its direct</text>
+  <text x="614" y="101" text-anchor="middle">importers, its binaries</text>
+
+  <!-- Bazel, server running -->
+  <text class="f82-bzlabel" x="20" y="164">Bazel</text>
+  <text class="f82-sm" x="20" y="182">server running</text>
+  <rect class="f82-hit" x="160" y="134" width="172" height="60" rx="8"/>
+  <text x="246" y="168" text-anchor="middle">kept in memory</text>
+  <rect class="f82-run" x="344" y="134" width="172" height="60" rx="8"/>
+  <text x="430" y="159" text-anchor="middle">compare every known</text>
+  <text x="430" y="177" text-anchor="middle">file's times</text>
+  <rect class="f82-run" x="528" y="134" width="172" height="60" rx="8"/>
+  <text x="614" y="159" text-anchor="middle">the package,</text>
+  <text x="614" y="177" text-anchor="middle">its binaries</text>
+
+  <!-- Bazel, new server -->
+  <text class="f82-bzlabel" x="20" y="240">Bazel</text>
+  <text class="f82-sm" x="20" y="258">new server</text>
+  <rect class="f82-run" x="160" y="210" width="172" height="60" rx="8"/>
+  <text x="246" y="235" text-anchor="middle">start the server, load</text>
+  <text x="246" y="253" text-anchor="middle">and analyze every target</text>
+  <rect class="f82-run" x="344" y="210" width="172" height="60" rx="8"/>
+  <text x="430" y="235" text-anchor="middle">check every file,</text>
+  <text x="430" y="253" text-anchor="middle">look up every action</text>
+  <rect class="f82-run" x="528" y="210" width="172" height="60" rx="8"/>
+  <text x="614" y="235" text-anchor="middle">the package,</text>
+  <text x="614" y="253" text-anchor="middle">its binaries</text>
+
+  <!-- What each column grows with -->
+  <path class="f82-brace" d="M160,280 L160,288 L516,288 L516,280"/>
+  <text class="f82-sm" x="338" y="306" text-anchor="middle">grows with the repository</text>
+  <path class="f82-brace" d="M528,280 L528,288 L700,288 L700,280"/>
+  <text class="f82-sm" x="614" y="306" text-anchor="middle">grows with the edit</text>
+
+  <!-- Legend -->
+  <rect class="f82-run" x="160" y="324" width="22" height="16" rx="3"/>
+  <text class="f82-sm" x="190" y="337">runs</text>
+  <rect class="f82-hit" x="260" y="324" width="22" height="16" rx="3"/>
+  <text class="f82-sm" x="290" y="337">skipped: kept from the last command</text>
+</svg>

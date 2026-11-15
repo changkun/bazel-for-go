@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 428" role="img" aria-labelledby="f81-title" class="f81">
+  <title id="f81-title">The six decisions from Chapter 1, answered by the go command and by Bazel with rules_go. Unit: both compile one package per action; Bazel runs each in a sandbox. Graph: derived from imports on every run, against declared in BUILD files and kept by the server. Change: hash every input file on every run, against compare each known file's times, or be notified with --watchfs. Key: each import's whole archive and the directory, against only what the action reads, each import's .x file. Sharing: one machine, or wider with GOCACHEPROG, against one checkout, or a team with a shared cache. Execution: processes on one machine, against local or a pool of remote machines. Filled markers are defaults; hollow markers show what an option adds.</title>
+  <style>
+    .f81 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f81 .f81-head { font-size: 13px; fill-opacity: .65; }
+    .f81 .f81-label { font-size: 15px; font-weight: 600; }
+    .f81 .f81-num { font-size: 13px; font-weight: 600; }
+    .f81 .f81-end { font-size: 13px; fill-opacity: .75; }
+    .f81 .f81-golabel { fill: #007D9C; font-size: 13px; font-weight: 600; }
+    .f81 .f81-bzlabel { fill: #388E3C; font-size: 13px; font-weight: 600; }
+    .f81 .f81-circle { fill: none; stroke: currentColor; stroke-width: 1.3; }
+    .f81 .f81-rule { stroke: currentColor; stroke-opacity: .15; stroke-width: 1; }
+    .f81 .f81-dial { stroke: currentColor; stroke-opacity: .5; stroke-width: 1.3; }
+    .f81 .f81-stop { fill: none; stroke: currentColor; stroke-opacity: .6; stroke-width: 1.3; }
+    .f81 .f81-go { fill: #00ADD8; stroke: #00ADD8; stroke-width: 1.3; stroke-linejoin: round; }
+    .f81 .f81-bz { fill: #43A047; stroke: #43A047; stroke-width: 1.3; stroke-linejoin: round; }
+    .f81 .f81-opt { fill: none; }
+    .f81 .f81-key { fill: currentColor; fill-opacity: .7; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.3; stroke-linejoin: round; }
+    .f81 .f81-keyopt { fill: none; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.3; stroke-linejoin: round; }
+  </style>
+
+  <defs>
+    <!-- A go marker sits above a dial and points down; a Bazel marker sits below and points up. -->
+    <path id="f81-down" d="M-5,-14 L5,-14 L0,-5 z"/>
+    <path id="f81-up" d="M-5,14 L5,14 L0,5 z"/>
+  </defs>
+
+  <!-- Header -->
+  <text class="f81-head" x="24" y="22">decision</text>
+  <use href="#f81-down" class="f81-go" x="162" y="27"/>
+  <text class="f81-golabel" x="174" y="22">go command</text>
+  <use href="#f81-up" class="f81-bz" x="300" y="8"/>
+  <text class="f81-bzlabel" x="312" y="22">Bazel with rules_go</text>
+  <text class="f81-head" x="616" y="22" text-anchor="middle">range of answers</text>
+  <line class="f81-rule" x1="16" y1="34" x2="704" y2="34"/>
+
+  <!-- 1 Unit -->
+  <g transform="translate(0,34)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">1</text>
+    <text class="f81-label" x="56" y="34">Unit</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">one compile per package</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">one compile per package, in a sandbox</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">module</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">file</text>
+    <use href="#f81-down" class="f81-go" x="616" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="616" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- 2 Graph -->
+  <g transform="translate(0,92)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">2</text>
+    <text class="f81-label" x="56" y="34">Graph</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">derived from imports on every run</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">declared in BUILD files, kept by the server</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">derived</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">declared</text>
+    <use href="#f81-down" class="f81-go" x="560" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="672" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- 3 Change -->
+  <g transform="translate(0,150)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">3</text>
+    <text class="f81-label" x="56" y="34">Change</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">hash every input file on every run</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">compare each known file's times</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">rehash all</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">notified</text>
+    <use href="#f81-down" class="f81-go" x="560" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="616" y="22"/>
+    <use href="#f81-up" class="f81-bz f81-opt" x="672" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- 4 Key -->
+  <g transform="translate(0,208)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">4</text>
+    <text class="f81-label" x="56" y="34">Key</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">each import's whole archive; the directory</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">only what it reads: each import's .x</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">whole output</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">part read</text>
+    <use href="#f81-down" class="f81-go" x="560" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="672" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- 5 Sharing -->
+  <g transform="translate(0,266)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">5</text>
+    <text class="f81-label" x="56" y="34">Sharing</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">one machine; wider with GOCACHEPROG</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">one checkout; a team with a shared cache</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">one process</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">a team</text>
+    <use href="#f81-down" class="f81-go" x="605" y="22"/>
+    <use href="#f81-down" class="f81-go f81-opt" x="672" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="588" y="22"/>
+    <use href="#f81-up" class="f81-bz f81-opt" x="672" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- 6 Execution -->
+  <g transform="translate(0,324)">
+    <circle class="f81-circle" cx="36" cy="29" r="11"/><text class="f81-num" x="36" y="33.5" text-anchor="middle">6</text>
+    <text class="f81-label" x="56" y="34">Execution</text>
+    <use href="#f81-down" class="f81-go" x="162" y="29"/>
+    <text x="176" y="24">-p processes on one machine</text>
+    <use href="#f81-up" class="f81-bz" x="162" y="32"/>
+    <text x="176" y="46">local, or a pool of remote machines</text>
+    <line class="f81-dial" x1="560" y1="22" x2="672" y2="22"/><circle class="f81-stop" cx="560" cy="22" r="3.5"/><circle class="f81-stop" cx="672" cy="22" r="3.5"/>
+    <text class="f81-end" x="560" y="51" text-anchor="middle">local</text>
+    <text class="f81-end" x="672" y="51" text-anchor="middle">remote</text>
+    <use href="#f81-down" class="f81-go" x="560" y="22"/>
+    <use href="#f81-up" class="f81-bz" x="560" y="22"/>
+    <use href="#f81-up" class="f81-bz f81-opt" x="672" y="22"/>
+    <line class="f81-rule" x1="16" y1="58" x2="704" y2="58"/>
+  </g>
+
+  <!-- Legend -->
+  <use href="#f81-up" class="f81-key" x="500" y="399"/>
+  <text class="f81-head" x="512" y="413">default</text>
+  <use href="#f81-up" class="f81-keyopt" x="590" y="399"/>
+  <text class="f81-head" x="602" y="413">with an option</text>
+</svg>
