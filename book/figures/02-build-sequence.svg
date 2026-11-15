@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" role="img" aria-labelledby="t2-2">
+  <title id="t2-2">bazel build //cmd/hello: the client hands the command to the server, which loads, analyzes and executes</title>
+  <style>
+    .t { font: 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; }
+    .b { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; }
+    .h { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; opacity: .65; }
+    .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
+    .box { fill: none; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
+    .bz { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
+    .run { fill: #d9822b; fill-opacity: .16; stroke: #d9822b; stroke-width: 1.5; }
+    .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
+    .lane { stroke: currentColor; stroke-opacity: .15; }
+    .s1 { animation: k1 9s infinite; } .s2 { animation: k2 9s infinite; }
+    .s3 { animation: k3 9s infinite; } .s4 { animation: k4 9s infinite; }
+    .s5 { animation: k5 9s infinite; } .s6 { animation: k6 9s infinite; }
+    .s7 { animation: k7 9s infinite; } .s8 { animation: k8 9s infinite; }
+    .s9 { animation: k9 9s infinite; } .s10 { animation: k10 9s infinite; }
+    @keyframes k1 { 0% { opacity: .15 } 4%, 100% { opacity: 1 } }
+    @keyframes k2 { 0%, 10% { opacity: .15 } 14%, 100% { opacity: 1 } }
+    @keyframes k3 { 0%, 20% { opacity: .15 } 24%, 100% { opacity: 1 } }
+    @keyframes k4 { 0%, 30% { opacity: .15 } 34%, 100% { opacity: 1 } }
+    @keyframes k5 { 0%, 38% { opacity: .15 } 42%, 100% { opacity: 1 } }
+    @keyframes k6 { 0%, 46% { opacity: .15 } 50%, 100% { opacity: 1 } }
+    @keyframes k7 { 0%, 54% { opacity: .15 } 58%, 100% { opacity: 1 } }
+    @keyframes k8 { 0%, 60% { opacity: .15 } 64%, 100% { opacity: 1 } }
+    @keyframes k9 { 0%, 66% { opacity: .15 } 70%, 100% { opacity: 1 } }
+    @keyframes k10 { 0%, 76% { opacity: .15 } 80%, 100% { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <defs>
+    <marker id="a22" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Lanes -->
+  <text class="h" x="10" y="61">client</text>
+  <text class="h" x="10" y="144">server</text>
+  <text class="h" x="10" y="228">sandbox</text>
+  <path class="lane" d="M10,96 H710 M10,174 H710"/>
+
+  <!-- Client issues the command -->
+  <g class="s1">
+    <rect class="box" x="110" y="36" width="200" height="40" rx="6"/>
+    <text class="m" x="120" y="61">bazel build //cmd/hello</text>
+  </g>
+
+  <!-- Server phases -->
+  <g class="s2">
+    <path class="edge" d="M200,76 V114" marker-end="url(#a22)"/>
+    <text class="t" x="208" y="100">start or reuse</text>
+    <rect class="bz" x="110" y="116" width="180" height="46" rx="6"/>
+    <text class="b" x="122" y="135">Loading</text>
+    <text class="t" x="122" y="153">read BUILD files</text>
+  </g>
+  <g class="s3">
+    <path class="edge" d="M290,139 H308" marker-end="url(#a22)"/>
+    <rect class="bz" x="310" y="116" width="180" height="46" rx="6"/>
+    <text class="b" x="322" y="135">Analysis</text>
+    <text class="t" x="322" y="153">targets → actions</text>
+  </g>
+  <g class="s4">
+    <path class="edge" d="M490,139 H508" marker-end="url(#a22)"/>
+    <rect class="bz" x="510" y="116" width="200" height="46" rx="6"/>
+    <text class="b" x="522" y="135">Execution</text>
+    <text class="t" x="522" y="153">run actions not cached</text>
+    <path class="edge" d="M610,162 V186 M162,186 H658"/>
+  </g>
+
+  <!-- The five processes that ran in a clean build -->
+  <g class="s5">
+    <path class="edge" d="M162,186 V198" marker-end="url(#a22)"/>
+    <rect class="run" x="110" y="200" width="104" height="46" rx="6"/>
+    <text class="t" x="120" y="219">rules_go</text>
+    <text class="t" x="120" y="237">builder</text>
+  </g>
+  <g class="s6">
+    <path class="edge" d="M286,186 V198" marker-end="url(#a22)"/>
+    <path class="edge" d="M214,223 H232" marker-end="url(#a22)"/>
+    <rect class="run" x="234" y="200" width="104" height="46" rx="6"/>
+    <text class="t" x="244" y="219">standard</text>
+    <text class="t" x="244" y="237">library</text>
+  </g>
+  <g class="s7">
+    <path class="edge" d="M410,186 V198" marker-end="url(#a22)"/>
+    <path class="edge" d="M338,223 H356" marker-end="url(#a22)"/>
+    <rect class="run" x="358" y="200" width="104" height="46" rx="6"/>
+    <text class="t" x="368" y="219">compile</text>
+    <text class="m" x="368" y="237">greet</text>
+  </g>
+  <g class="s8">
+    <path class="edge" d="M534,186 V198" marker-end="url(#a22)"/>
+    <path class="edge" d="M462,223 H480" marker-end="url(#a22)"/>
+    <rect class="run" x="482" y="200" width="104" height="46" rx="6"/>
+    <text class="t" x="492" y="219">compile</text>
+    <text class="m" x="492" y="237">hello</text>
+  </g>
+  <g class="s9">
+    <path class="edge" d="M658,186 V198" marker-end="url(#a22)"/>
+    <path class="edge" d="M586,223 H604" marker-end="url(#a22)"/>
+    <rect class="run" x="606" y="200" width="104" height="46" rx="6"/>
+    <text class="t" x="616" y="219">link</text>
+    <text class="m" x="616" y="237">hello</text>
+  </g>
+
+  <!-- Result back to the client -->
+  <g class="s10">
+    <path class="edge" d="M640,116 V78" marker-end="url(#a22)"/>
+    <rect class="box" x="510" y="36" width="200" height="40" rx="6"/>
+    <text class="t" x="522" y="61">prints bazel-bin path</text>
+  </g>
+</svg>

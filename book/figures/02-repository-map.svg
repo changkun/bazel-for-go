@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 450" role="img" aria-labelledby="t2-1">
+  <title id="t2-1">Files of examples/minimal, the targets they define, and the edges between targets</title>
+  <style>
+    .t { font: 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; }
+    .b { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; }
+    .h { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; opacity: .65; }
+    .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
+    .k { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; opacity: .7; }
+    .go { fill: #0b7fab; }
+    .dir { fill: none; stroke: currentColor; stroke-opacity: .4; }
+    .tgt { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
+    .ext { fill: none; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
+    .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
+    .tc { stroke: currentColor; stroke-opacity: .45; stroke-width: 1.2; fill: none; }
+  </style>
+  <defs>
+    <marker id="a21" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="a21t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor" fill-opacity=".45"/>
+    </marker>
+  </defs>
+
+  <text class="h" x="10" y="20">Files</text>
+  <text class="h" x="230" y="20">Targets</text>
+  <text class="h" x="495" y="20">External repositories</text>
+
+  <!-- Files -->
+  <rect class="dir" x="10" y="32" width="190" height="112" rx="6"/>
+  <text class="m go" x="22" y="56">go.mod  go.sum</text>
+  <text class="m" x="22" y="80">MODULE.bazel</text>
+  <text class="m" x="22" y="104">BUILD.bazel</text>
+  <text class="m" x="22" y="128">.bazelversion .bazelrc</text>
+
+  <rect class="dir" x="10" y="164" width="190" height="118" rx="6"/>
+  <text class="b" x="22" y="186">cmd/hello/</text>
+  <text class="m" x="22" y="212">BUILD.bazel</text>
+  <text class="m" x="22" y="236">main.go</text>
+
+  <rect class="dir" x="10" y="300" width="190" height="136" rx="6"/>
+  <text class="b" x="22" y="322">internal/greet/</text>
+  <text class="m" x="22" y="348">BUILD.bazel</text>
+  <text class="m" x="22" y="372">greet.go</text>
+  <text class="m" x="22" y="396">greet_test.go</text>
+  <text class="m" x="22" y="420">greeting.tmpl</text>
+
+  <!-- Targets -->
+  <rect class="tgt" x="230" y="83" width="230" height="42" rx="6"/>
+  <text class="m" x="242" y="101">//:gazelle</text>
+  <text class="k" x="242" y="118">gazelle</text>
+
+  <rect class="tgt" x="230" y="168" width="230" height="42" rx="6"/>
+  <text class="m" x="242" y="186">//cmd/hello:hello</text>
+  <text class="k" x="242" y="203">go_binary</text>
+
+  <rect class="tgt" x="230" y="236" width="230" height="42" rx="6"/>
+  <text class="m" x="242" y="254">//cmd/hello:hello_lib</text>
+  <text class="k" x="242" y="271">go_library</text>
+
+  <rect class="tgt" x="230" y="304" width="230" height="42" rx="6"/>
+  <text class="m" x="242" y="322">//internal/greet:greet</text>
+  <text class="k" x="242" y="339">go_library + embedsrcs</text>
+
+  <rect class="tgt" x="230" y="380" width="230" height="42" rx="6"/>
+  <text class="m" x="242" y="398">//internal/greet:greet_test</text>
+  <text class="k" x="242" y="415">go_test</text>
+
+  <!-- Edges between targets -->
+  <path class="edge" d="M300,210 V234" marker-end="url(#a21)"/>
+  <text class="t" x="310" y="227">embed</text>
+  <path class="edge" d="M300,278 V302" marker-end="url(#a21)"/>
+  <text class="t" x="310" y="295">deps</text>
+  <path class="edge" d="M300,380 V348" marker-end="url(#a21)"/>
+  <text class="t" x="310" y="368">embed</text>
+  <path class="edge" d="M460,408 H493" marker-end="url(#a21)"/>
+
+  <!-- Toolchain: every Go target compiles with the SDK -->
+  <path class="tc" d="M460,189 H478 M460,257 H478 M460,325 H478 M460,392 H478 M478,392 V64 H493" marker-end="url(#a21t)"/>
+
+  <!-- External repositories -->
+  <rect class="ext" x="495" y="32" width="215" height="76" rx="6"/>
+  <text class="b" x="507" y="54">Go 1.27.3 SDK</text>
+  <text class="t" x="507" y="75">toolchain for Go targets</text>
+  <text class="t go" x="507" y="96">version from go.mod</text>
+
+  <rect class="ext" x="495" y="372" width="215" height="64" rx="6"/>
+  <text class="m" x="505" y="392">@com_github_google_go_cmp</text>
+  <text class="m" x="505" y="409">//cmp</text>
+  <text class="t go" x="505" y="427">v0.7.0 from go.mod</text>
+</svg>
