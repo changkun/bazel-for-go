@@ -94,6 +94,11 @@ func cmdRun(args []string) error {
 	if *out == "" {
 		*out = filepath.Join("results", time.Now().Format("2006-01-02"))
 	}
+	// The go command and Bazel run in the generated repositories, so every path they are
+	// given must be absolute.
+	if *out, err = filepath.Abs(*out); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(*out, 0o755); err != nil {
 		return err
 	}
