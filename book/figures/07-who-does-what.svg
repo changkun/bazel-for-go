@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 384" role="img" aria-labelledby="f71-title" class="f71">
+  <title id="f71-title">The go command and Bazel with rules_go each find the graph, plan the actions and cache the results in their own way, then run the same Go tools.</title>
+  <style>
+    .f71 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f71 .f71-sm { font-size: 13px; opacity: 0.8; }
+    .f71 .f71-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .f71 .f71-row { font-size: 13px; opacity: 0.7; letter-spacing: 0.04em; }
+    .f71 .f71-go { fill: #0b7fab; fill-opacity: 0.12; stroke: #0b7fab; stroke-width: 1.5; }
+    .f71 .f71-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f71 .f71-golabel { fill: #0b7fab; font-weight: 600; }
+    .f71 .f71-bzlabel { fill: #3f9142; font-weight: 600; }
+    .f71 .f71-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f71 .f71-tools { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .f71 .f71-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="f71-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Column headers -->
+  <text x="145" y="30" text-anchor="middle" class="f71-golabel">go command</text>
+  <text x="575" y="30" text-anchor="middle" class="f71-bzlabel">Bazel with rules_go</text>
+
+  <!-- Row 1: the graph -->
+  <text x="360" y="79" text-anchor="middle" class="f71-row">graph</text>
+  <rect class="f71-go" x="30" y="50" width="230" height="48" rx="8"/>
+  <text x="145" y="70" text-anchor="middle">read imports</text>
+  <text x="145" y="88" text-anchor="middle" class="f71-sm">again on every run</text>
+  <rect class="f71-bz" x="460" y="50" width="230" height="48" rx="8"/>
+  <text x="575" y="70" text-anchor="middle">BUILD files</text>
+  <text x="575" y="88" text-anchor="middle" class="f71-sm">written by Gazelle</text>
+
+  <!-- Row 2: the plan -->
+  <text x="360" y="141" text-anchor="middle" class="f71-row">plan</text>
+  <rect class="f71-go" x="30" y="112" width="230" height="48" rx="8"/>
+  <text x="145" y="132" text-anchor="middle">action graph</text>
+  <text x="145" y="150" text-anchor="middle" class="f71-sm">built in memory, then dropped</text>
+  <rect class="f71-bz" x="460" y="112" width="230" height="48" rx="8"/>
+  <text x="575" y="132" text-anchor="middle">analysis</text>
+  <text x="575" y="150" text-anchor="middle" class="f71-sm">rules_go declares the actions</text>
+
+  <!-- Row 3: the cache -->
+  <text x="360" y="203" text-anchor="middle" class="f71-row">cache</text>
+  <rect class="f71-go" x="30" y="174" width="230" height="48" rx="8"/>
+  <text x="145" y="194" text-anchor="middle" class="f71-mono">GOCACHE</text>
+  <text x="145" y="212" text-anchor="middle" class="f71-sm">one user, one machine</text>
+  <rect class="f71-bz" x="460" y="174" width="230" height="48" rx="8"/>
+  <text x="575" y="194" text-anchor="middle">Bazel's caches</text>
+  <text x="575" y="212" text-anchor="middle" class="f71-sm">can be shared by machines</text>
+
+  <!-- Row 4: running a tool -->
+  <text x="360" y="265" text-anchor="middle" class="f71-row">run</text>
+  <rect class="f71-go" x="30" y="236" width="230" height="48" rx="8"/>
+  <text x="145" y="256" text-anchor="middle">go starts the tool</text>
+  <text x="145" y="274" text-anchor="middle" class="f71-sm">a child process</text>
+  <rect class="f71-bz" x="460" y="236" width="230" height="48" rx="8"/>
+  <text x="575" y="256" text-anchor="middle">the builder</text>
+  <text x="575" y="274" text-anchor="middle" class="f71-sm">wraps each tool call</text>
+
+  <!-- Shared tools -->
+  <rect class="f71-tools" x="190" y="306" width="340" height="66" rx="10"/>
+  <text x="360" y="325" text-anchor="middle" class="f71-sm">the Go toolchain, the same in both</text>
+  <rect class="f71-box" x="204" y="334" width="70" height="28" rx="6"/>
+  <text x="239" y="353" text-anchor="middle" class="f71-mono">compile</text>
+  <rect class="f71-box" x="284" y="334" width="70" height="28" rx="6"/>
+  <text x="319" y="353" text-anchor="middle" class="f71-mono">link</text>
+  <rect class="f71-box" x="364" y="334" width="70" height="28" rx="6"/>
+  <text x="399" y="353" text-anchor="middle" class="f71-mono">asm</text>
+  <rect class="f71-box" x="444" y="334" width="70" height="28" rx="6"/>
+  <text x="479" y="353" text-anchor="middle" class="f71-mono">cgo</text>
+
+  <path class="f71-line" d="M145,284 L145,339 L186,339" marker-end="url(#f71-arrow)"/>
+  <path class="f71-line" d="M575,284 L575,339 L534,339" marker-end="url(#f71-arrow)"/>
+</svg>

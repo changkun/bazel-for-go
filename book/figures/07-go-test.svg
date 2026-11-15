@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 250" role="img" aria-labelledby="f74-title" class="f74">
+  <title id="f74-title">go_test compiles three packages: the library with its in-package tests, the external _test package, and a generated main package that imports both. A link turns them into the test binary.</title>
+  <style>
+    .f74 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f74 .f74-sm { font-size: 13px; opacity: 0.8; }
+    .f74 .f74-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .f74 .f74-mn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; fill: #3f9142; }
+    .f74 .f74-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f74 .f74-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="f74-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 1. the library with its in-package tests -->
+  <rect class="f74-bz" x="20" y="20" width="220" height="74" rx="8"/>
+  <text x="36" y="44" class="f74-mono">package greet</text>
+  <text x="36" y="63" class="f74-sm">library + in-package tests</text>
+  <text x="36" y="82" class="f74-mn">GoCompilePkg</text>
+
+  <!-- 2. the external test package -->
+  <rect class="f74-bz" x="20" y="156" width="220" height="74" rx="8"/>
+  <text x="36" y="180" class="f74-mono">package greet_test</text>
+  <text x="36" y="199" class="f74-sm">tests that import greet</text>
+  <text x="36" y="218" class="f74-mn">GoCompilePkgExternal</text>
+
+  <!-- 3. the generated main package -->
+  <rect class="f74-bz" x="300" y="88" width="236" height="74" rx="8"/>
+  <text x="316" y="112" class="f74-mono">package main</text>
+  <text x="316" y="131" class="f74-sm">generated test main</text>
+  <text x="316" y="150" class="f74-mn">GoTestGenTest, GoCompilePkg</text>
+
+  <!-- the link -->
+  <rect class="f74-bz" x="580" y="88" width="120" height="74" rx="8"/>
+  <text x="596" y="112" class="f74-mono">link</text>
+  <text x="596" y="131" class="f74-sm">test binary</text>
+  <text x="596" y="150" class="f74-mn">GoLink</text>
+
+  <!-- imports: arrows point from importer to imported package -->
+  <line class="f74-line" x1="130" y1="156" x2="130" y2="98" marker-end="url(#f74-arrow)"/>
+  <text x="140" y="131" class="f74-sm">imports</text>
+  <path class="f74-line" d="M300,110 L270,110 L270,57 L244,57" marker-end="url(#f74-arrow)"/>
+  <path class="f74-line" d="M300,140 L270,140 L270,193 L244,193" marker-end="url(#f74-arrow)"/>
+  <line class="f74-line" x1="536" y1="125" x2="576" y2="125" marker-end="url(#f74-arrow)"/>
+</svg>

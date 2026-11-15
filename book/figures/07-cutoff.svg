@@ -1,0 +1,266 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 528" role="img" aria-labelledby="f73-title" class="f73">
+  <title id="f73-title">Two edits to core, in the go command and in Bazel. A body edit to a function that is not inlined: the go command recompiles core and its direct importers, Bazel only core; both relink every binary. A comment that shifts the lines of core's types: the go command recompiles two levels of importers, Bazel one.</title>
+  <style>
+    .f73 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f73 .f73-sm { font-size: 13px; opacity: 0.8; }
+    .f73 .f73-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f73 .f73-golabel { fill: #0b7fab; font-weight: 600; }
+    .f73 .f73-bzlabel { fill: #3f9142; font-weight: 600; }
+    .f73 .f73-scen { font-weight: 600; }
+    .f73 .f73-node { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f73 .f73-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
+    .f73 .f73-hit { fill: #8a8f98; fill-opacity: 0.14; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .f73 .f73-edge { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.4; }
+    .f73 .f73-runtext { fill: #d9822b; font-weight: 600; }
+    .f73 .f73-editline { fill: none; stroke: #d9822b; stroke-width: 1.5; }
+    .f73 .f73-rule { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.25; }
+    /* The static state is the end state. Each step fades in once per 10 s loop:
+       the body edit first, then the comment, then a pause. */
+    .f73 .f73-t2 { animation: f73-k2 10s linear infinite; }
+    @keyframes f73-k2 { 0%, 2% { opacity: 0; } 5%, 100% { opacity: 1; } }
+    .f73 .f73-t6 { animation: f73-k6 10s linear infinite; }
+    @keyframes f73-k6 { 0%, 6% { opacity: 0; } 9%, 100% { opacity: 1; } }
+    .f73 .f73-t14 { animation: f73-k14 10s linear infinite; }
+    @keyframes f73-k14 { 0%, 14% { opacity: 0; } 17%, 100% { opacity: 1; } }
+    .f73 .f73-t22 { animation: f73-k22 10s linear infinite; }
+    @keyframes f73-k22 { 0%, 22% { opacity: 0; } 25%, 100% { opacity: 1; } }
+    .f73 .f73-t30 { animation: f73-k30 10s linear infinite; }
+    @keyframes f73-k30 { 0%, 30% { opacity: 0; } 33%, 100% { opacity: 1; } }
+    .f73 .f73-t38 { animation: f73-k38 10s linear infinite; }
+    @keyframes f73-k38 { 0%, 38% { opacity: 0; } 41%, 100% { opacity: 1; } }
+    .f73 .f73-t50 { animation: f73-k50 10s linear infinite; }
+    @keyframes f73-k50 { 0%, 50% { opacity: 0; } 53%, 100% { opacity: 1; } }
+    .f73 .f73-t54 { animation: f73-k54 10s linear infinite; }
+    @keyframes f73-k54 { 0%, 54% { opacity: 0; } 57%, 100% { opacity: 1; } }
+    .f73 .f73-t62 { animation: f73-k62 10s linear infinite; }
+    @keyframes f73-k62 { 0%, 62% { opacity: 0; } 65%, 100% { opacity: 1; } }
+    .f73 .f73-t70 { animation: f73-k70 10s linear infinite; }
+    @keyframes f73-k70 { 0%, 70% { opacity: 0; } 73%, 100% { opacity: 1; } }
+    .f73 .f73-t78 { animation: f73-k78 10s linear infinite; }
+    @keyframes f73-k78 { 0%, 78% { opacity: 0; } 81%, 100% { opacity: 1; } }
+    .f73 .f73-t86 { animation: f73-k86 10s linear infinite; }
+    @keyframes f73-k86 { 0%, 86% { opacity: 0; } 89%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <text x="180" y="24" text-anchor="middle" class="f73-golabel">go command</text>
+  <text x="540" y="24" text-anchor="middle" class="f73-bzlabel">Bazel</text>
+  <line class="f73-rule" x1="360" y1="36" x2="360" y2="484"/>
+  <line class="f73-rule" x1="20" y1="262" x2="700" y2="262"/>
+  <text x="20" y="52" class="f73-scen f73-t2">Edit a function body that is not inlined</text>
+  <!-- scenario A, go -->
+  <g class="f73-edge">
+    <line x1="115" y1="92" x2="115" y2="104"/>
+    <line x1="225" y1="92" x2="225" y2="104"/>
+    <line x1="115" y1="132" x2="60" y2="144"/>
+    <line x1="115" y1="132" x2="170" y2="144"/>
+    <line x1="225" y1="132" x2="170" y2="144"/>
+    <line x1="225" y1="132" x2="280" y2="144"/>
+    <line x1="60" y1="172" x2="60" y2="184"/>
+    <line x1="60" y1="172" x2="170" y2="184"/>
+    <line x1="170" y1="172" x2="170" y2="184"/>
+    <line x1="280" y1="172" x2="280" y2="184"/>
+    <line x1="60" y1="212" x2="170" y2="224"/>
+    <line x1="170" y1="212" x2="170" y2="224"/>
+    <line x1="280" y1="212" x2="170" y2="224"/>
+  </g>
+  <rect class="f73-node" x="77" y="64" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t38" x="77" y="64" width="76" height="28" rx="7"/>
+  <text x="115" y="83" text-anchor="middle" class="f73-mono">app00</text>
+  <rect class="f73-node" x="187" y="64" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t38" x="187" y="64" width="76" height="28" rx="7"/>
+  <text x="225" y="83" text-anchor="middle" class="f73-mono">app01</text>
+  <rect class="f73-node" x="77" y="104" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t30" x="77" y="104" width="76" height="28" rx="7"/>
+  <text x="115" y="123" text-anchor="middle" class="f73-mono">web</text>
+  <rect class="f73-node" x="187" y="104" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t30" x="187" y="104" width="76" height="28" rx="7"/>
+  <text x="225" y="123" text-anchor="middle" class="f73-mono">batch</text>
+  <rect class="f73-node" x="22" y="144" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t22" x="22" y="144" width="76" height="28" rx="7"/>
+  <text x="60" y="163" text-anchor="middle" class="f73-mono">api</text>
+  <rect class="f73-node" x="132" y="144" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t22" x="132" y="144" width="76" height="28" rx="7"/>
+  <text x="170" y="163" text-anchor="middle" class="f73-mono">store</text>
+  <rect class="f73-node" x="242" y="144" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t22" x="242" y="144" width="76" height="28" rx="7"/>
+  <text x="280" y="163" text-anchor="middle" class="f73-mono">jobs</text>
+  <rect class="f73-node" x="22" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t14" x="22" y="184" width="76" height="28" rx="7"/>
+  <text x="60" y="203" text-anchor="middle" class="f73-mono">auth</text>
+  <rect class="f73-node" x="132" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t14" x="132" y="184" width="76" height="28" rx="7"/>
+  <text x="170" y="203" text-anchor="middle" class="f73-mono">billing</text>
+  <rect class="f73-node" x="242" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t14" x="242" y="184" width="76" height="28" rx="7"/>
+  <text x="280" y="203" text-anchor="middle" class="f73-mono">search</text>
+  <rect class="f73-node" x="132" y="224" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t6" x="132" y="224" width="76" height="28" rx="7"/>
+  <text x="170" y="243" text-anchor="middle" class="f73-mono">core</text>
+  <g class="f73-t2">
+    <text x="40" y="243" class="f73-runtext">edit</text>
+    <line class="f73-editline" x1="74" y1="238" x2="124" y2="238"/>
+    <path d="M124,233 L130,238 L124,243 z" fill="#d9822b"/>
+  </g>
+  <!-- scenario A, bz -->
+  <g class="f73-edge">
+    <line x1="475" y1="92" x2="475" y2="104"/>
+    <line x1="585" y1="92" x2="585" y2="104"/>
+    <line x1="475" y1="132" x2="420" y2="144"/>
+    <line x1="475" y1="132" x2="530" y2="144"/>
+    <line x1="585" y1="132" x2="530" y2="144"/>
+    <line x1="585" y1="132" x2="640" y2="144"/>
+    <line x1="420" y1="172" x2="420" y2="184"/>
+    <line x1="420" y1="172" x2="530" y2="184"/>
+    <line x1="530" y1="172" x2="530" y2="184"/>
+    <line x1="640" y1="172" x2="640" y2="184"/>
+    <line x1="420" y1="212" x2="530" y2="224"/>
+    <line x1="530" y1="212" x2="530" y2="224"/>
+    <line x1="640" y1="212" x2="530" y2="224"/>
+  </g>
+  <rect class="f73-node" x="437" y="64" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t38" x="437" y="64" width="76" height="28" rx="7"/>
+  <text x="475" y="83" text-anchor="middle" class="f73-mono">app00</text>
+  <rect class="f73-node" x="547" y="64" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t38" x="547" y="64" width="76" height="28" rx="7"/>
+  <text x="585" y="83" text-anchor="middle" class="f73-mono">app01</text>
+  <rect class="f73-node" x="437" y="104" width="76" height="28" rx="7"/>
+  <text x="475" y="123" text-anchor="middle" class="f73-mono">web</text>
+  <rect class="f73-node" x="547" y="104" width="76" height="28" rx="7"/>
+  <text x="585" y="123" text-anchor="middle" class="f73-mono">batch</text>
+  <rect class="f73-node" x="382" y="144" width="76" height="28" rx="7"/>
+  <text x="420" y="163" text-anchor="middle" class="f73-mono">api</text>
+  <rect class="f73-node" x="492" y="144" width="76" height="28" rx="7"/>
+  <text x="530" y="163" text-anchor="middle" class="f73-mono">store</text>
+  <rect class="f73-node" x="602" y="144" width="76" height="28" rx="7"/>
+  <text x="640" y="163" text-anchor="middle" class="f73-mono">jobs</text>
+  <rect class="f73-node" x="382" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t14" x="382" y="184" width="76" height="28" rx="7"/>
+  <text x="420" y="203" text-anchor="middle" class="f73-mono">auth</text>
+  <rect class="f73-node" x="492" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t14" x="492" y="184" width="76" height="28" rx="7"/>
+  <text x="530" y="203" text-anchor="middle" class="f73-mono">billing</text>
+  <rect class="f73-node" x="602" y="184" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t14" x="602" y="184" width="76" height="28" rx="7"/>
+  <text x="640" y="203" text-anchor="middle" class="f73-mono">search</text>
+  <rect class="f73-node" x="492" y="224" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t6" x="492" y="224" width="76" height="28" rx="7"/>
+  <text x="530" y="243" text-anchor="middle" class="f73-mono">core</text>
+  <g class="f73-t2">
+    <text x="400" y="243" class="f73-runtext">edit</text>
+    <line class="f73-editline" x1="434" y1="238" x2="484" y2="238"/>
+    <path d="M484,233 L490,238 L484,243 z" fill="#d9822b"/>
+  </g>
+  <text x="20" y="288" class="f73-scen f73-t50">Add a comment that shifts core's lines</text>
+  <!-- scenario B, go -->
+  <g class="f73-edge">
+    <line x1="115" y1="328" x2="115" y2="340"/>
+    <line x1="225" y1="328" x2="225" y2="340"/>
+    <line x1="115" y1="368" x2="60" y2="380"/>
+    <line x1="115" y1="368" x2="170" y2="380"/>
+    <line x1="225" y1="368" x2="170" y2="380"/>
+    <line x1="225" y1="368" x2="280" y2="380"/>
+    <line x1="60" y1="408" x2="60" y2="420"/>
+    <line x1="60" y1="408" x2="170" y2="420"/>
+    <line x1="170" y1="408" x2="170" y2="420"/>
+    <line x1="280" y1="408" x2="280" y2="420"/>
+    <line x1="60" y1="448" x2="170" y2="460"/>
+    <line x1="170" y1="448" x2="170" y2="460"/>
+    <line x1="280" y1="448" x2="170" y2="460"/>
+  </g>
+  <rect class="f73-node" x="77" y="300" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t86" x="77" y="300" width="76" height="28" rx="7"/>
+  <text x="115" y="319" text-anchor="middle" class="f73-mono">app00</text>
+  <rect class="f73-node" x="187" y="300" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t86" x="187" y="300" width="76" height="28" rx="7"/>
+  <text x="225" y="319" text-anchor="middle" class="f73-mono">app01</text>
+  <rect class="f73-node" x="77" y="340" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t78" x="77" y="340" width="76" height="28" rx="7"/>
+  <text x="115" y="359" text-anchor="middle" class="f73-mono">web</text>
+  <rect class="f73-node" x="187" y="340" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t78" x="187" y="340" width="76" height="28" rx="7"/>
+  <text x="225" y="359" text-anchor="middle" class="f73-mono">batch</text>
+  <rect class="f73-node" x="22" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t70" x="22" y="380" width="76" height="28" rx="7"/>
+  <text x="60" y="399" text-anchor="middle" class="f73-mono">api</text>
+  <rect class="f73-node" x="132" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t70" x="132" y="380" width="76" height="28" rx="7"/>
+  <text x="170" y="399" text-anchor="middle" class="f73-mono">store</text>
+  <rect class="f73-node" x="242" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t70" x="242" y="380" width="76" height="28" rx="7"/>
+  <text x="280" y="399" text-anchor="middle" class="f73-mono">jobs</text>
+  <rect class="f73-node" x="22" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="22" y="420" width="76" height="28" rx="7"/>
+  <text x="60" y="439" text-anchor="middle" class="f73-mono">auth</text>
+  <rect class="f73-node" x="132" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="132" y="420" width="76" height="28" rx="7"/>
+  <text x="170" y="439" text-anchor="middle" class="f73-mono">billing</text>
+  <rect class="f73-node" x="242" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="242" y="420" width="76" height="28" rx="7"/>
+  <text x="280" y="439" text-anchor="middle" class="f73-mono">search</text>
+  <rect class="f73-node" x="132" y="460" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t54" x="132" y="460" width="76" height="28" rx="7"/>
+  <text x="170" y="479" text-anchor="middle" class="f73-mono">core</text>
+  <g class="f73-t50">
+    <text x="40" y="479" class="f73-runtext">edit</text>
+    <line class="f73-editline" x1="74" y1="474" x2="124" y2="474"/>
+    <path d="M124,469 L130,474 L124,479 z" fill="#d9822b"/>
+  </g>
+  <!-- scenario B, bz -->
+  <g class="f73-edge">
+    <line x1="475" y1="328" x2="475" y2="340"/>
+    <line x1="585" y1="328" x2="585" y2="340"/>
+    <line x1="475" y1="368" x2="420" y2="380"/>
+    <line x1="475" y1="368" x2="530" y2="380"/>
+    <line x1="585" y1="368" x2="530" y2="380"/>
+    <line x1="585" y1="368" x2="640" y2="380"/>
+    <line x1="420" y1="408" x2="420" y2="420"/>
+    <line x1="420" y1="408" x2="530" y2="420"/>
+    <line x1="530" y1="408" x2="530" y2="420"/>
+    <line x1="640" y1="408" x2="640" y2="420"/>
+    <line x1="420" y1="448" x2="530" y2="460"/>
+    <line x1="530" y1="448" x2="530" y2="460"/>
+    <line x1="640" y1="448" x2="530" y2="460"/>
+  </g>
+  <rect class="f73-node" x="437" y="300" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t86" x="437" y="300" width="76" height="28" rx="7"/>
+  <text x="475" y="319" text-anchor="middle" class="f73-mono">app00</text>
+  <rect class="f73-node" x="547" y="300" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t86" x="547" y="300" width="76" height="28" rx="7"/>
+  <text x="585" y="319" text-anchor="middle" class="f73-mono">app01</text>
+  <rect class="f73-node" x="437" y="340" width="76" height="28" rx="7"/>
+  <text x="475" y="359" text-anchor="middle" class="f73-mono">web</text>
+  <rect class="f73-node" x="547" y="340" width="76" height="28" rx="7"/>
+  <text x="585" y="359" text-anchor="middle" class="f73-mono">batch</text>
+  <rect class="f73-node" x="382" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t70" x="382" y="380" width="76" height="28" rx="7"/>
+  <text x="420" y="399" text-anchor="middle" class="f73-mono">api</text>
+  <rect class="f73-node" x="492" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t70" x="492" y="380" width="76" height="28" rx="7"/>
+  <text x="530" y="399" text-anchor="middle" class="f73-mono">store</text>
+  <rect class="f73-node" x="602" y="380" width="76" height="28" rx="7"/>
+  <rect class="f73-hit f73-t70" x="602" y="380" width="76" height="28" rx="7"/>
+  <text x="640" y="399" text-anchor="middle" class="f73-mono">jobs</text>
+  <rect class="f73-node" x="382" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="382" y="420" width="76" height="28" rx="7"/>
+  <text x="420" y="439" text-anchor="middle" class="f73-mono">auth</text>
+  <rect class="f73-node" x="492" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="492" y="420" width="76" height="28" rx="7"/>
+  <text x="530" y="439" text-anchor="middle" class="f73-mono">billing</text>
+  <rect class="f73-node" x="602" y="420" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t62" x="602" y="420" width="76" height="28" rx="7"/>
+  <text x="640" y="439" text-anchor="middle" class="f73-mono">search</text>
+  <rect class="f73-node" x="492" y="460" width="76" height="28" rx="7"/>
+  <rect class="f73-run f73-t54" x="492" y="460" width="76" height="28" rx="7"/>
+  <text x="530" y="479" text-anchor="middle" class="f73-mono">core</text>
+  <g class="f73-t50">
+    <text x="400" y="479" class="f73-runtext">edit</text>
+    <line class="f73-editline" x1="434" y1="474" x2="484" y2="474"/>
+    <path d="M484,469 L490,474 L484,479 z" fill="#d9822b"/>
+  </g>
+  <rect class="f73-run" x="20" y="500" width="22" height="16" rx="3"/>
+  <text x="50" y="513" class="f73-sm">runs: compile or link</text>
+  <rect class="f73-hit" x="250" y="500" width="22" height="16" rx="3"/>
+  <text x="280" y="513" class="f73-sm">checked, cache hit</text>
+  <rect class="f73-node" x="470" y="500" width="22" height="16" rx="3"/>
+  <text x="500" y="513" class="f73-sm">not looked at</text>
+</svg>

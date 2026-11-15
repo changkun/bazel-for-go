@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="f72-title" class="f72">
+  <title id="f72-title">One compile of core writes core.a, the object code that only the linker reads, and core.x, the export data that the compiles of core's importers read. The export data holds the exported types, the bodies of inlinable functions and source positions.</title>
+  <style>
+    .f72 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f72 .f72-sm { font-size: 13px; opacity: 0.8; }
+    .f72 .f72-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .f72 .f72-head { font-weight: 600; }
+    .f72 .f72-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f72 .f72-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f72 .f72-item { fill: currentColor; fill-opacity: 0.06; stroke: currentColor; stroke-width: 1; stroke-opacity: 0.5; }
+    .f72 .f72-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="f72-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Sources and the compile -->
+  <rect class="f72-box" x="20" y="118" width="110" height="56" rx="8"/>
+  <text x="75" y="142" text-anchor="middle" class="f72-mono">core/*.go</text>
+  <text x="75" y="161" text-anchor="middle" class="f72-sm">sources</text>
+
+  <rect class="f72-bz" x="170" y="118" width="130" height="56" rx="8"/>
+  <text x="235" y="142" text-anchor="middle" class="f72-mono">compile</text>
+  <text x="235" y="161" text-anchor="middle" class="f72-sm">one process</text>
+
+  <line class="f72-line" x1="130" y1="146" x2="166" y2="146" marker-end="url(#f72-arrow)"/>
+  <path class="f72-line" d="M300,134 L320,134 L320,60 L346,60" marker-end="url(#f72-arrow)"/>
+  <path class="f72-line" d="M300,158 L320,158 L320,200 L346,200" marker-end="url(#f72-arrow)"/>
+
+  <!-- core.a -->
+  <rect class="f72-box" x="350" y="24" width="190" height="72" rx="8"/>
+  <text x="366" y="50" class="f72-mono f72-head">core.a</text>
+  <text x="366" y="72" class="f72-sm">object code: machine code,</text>
+  <text x="366" y="88" class="f72-sm">data, debug information</text>
+
+  <!-- core.x -->
+  <rect class="f72-box" x="350" y="122" width="190" height="160" rx="8"/>
+  <text x="366" y="148" class="f72-mono f72-head">core.x</text>
+  <text x="366" y="168" class="f72-sm">export data</text>
+  <rect class="f72-item" x="362" y="180" width="166" height="26" rx="5"/>
+  <text x="372" y="198">exported types</text>
+  <rect class="f72-item" x="362" y="212" width="166" height="26" rx="5"/>
+  <text x="372" y="230">inlinable bodies</text>
+  <rect class="f72-item" x="362" y="244" width="166" height="26" rx="5"/>
+  <text x="372" y="262">source positions</text>
+
+  <!-- Readers -->
+  <rect class="f72-bz" x="590" y="36" width="110" height="48" rx="8"/>
+  <text x="645" y="57" text-anchor="middle" class="f72-mono">link</text>
+  <text x="645" y="75" text-anchor="middle" class="f72-sm">each binary</text>
+
+  <rect class="f72-bz" x="590" y="176" width="110" height="48" rx="8"/>
+  <text x="645" y="197" text-anchor="middle" class="f72-mono">compile</text>
+  <text x="645" y="215" text-anchor="middle" class="f72-sm">each importer</text>
+
+  <line class="f72-line" x1="540" y1="60" x2="586" y2="60" marker-end="url(#f72-arrow)"/>
+  <line class="f72-line" x1="540" y1="200" x2="586" y2="200" marker-end="url(#f72-arrow)"/>
+</svg>
