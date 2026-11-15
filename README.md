@@ -59,6 +59,7 @@ Versions used: Go 1.27, Bazel 9.3, rules_go 0.65, Gazelle 0.54, measured on macO
 
 - `book/`: the chapters.
 - `examples/minimal/`: the repository built in Chapter 2.
+- `examples/constraints/`: the demonstrations in Chapter 3.
 - `examples/bench/`: the synthetic-repository generator, the benchmark harness and the raw
   results that Appendix A reports.
 
