@@ -206,7 +206,6 @@ func (r *Repo) write(dir string) (Stats, error) {
 		if err := r.writePkg(p, putGo, put); err != nil {
 			return st, err
 		}
-		targets = append(targets, "//"+p.dir())
 	}
 	for i, imp := range r.bins {
 		var b bytes.Buffer
@@ -232,8 +231,9 @@ func (r *Repo) write(dir string) (Stats, error) {
 		targets = append(targets, "//"+d)
 	}
 	targets = append(targets, "//tools/gentable")
-	// The non-test targets: what `go build ./...` builds. `bazel build //...` would also
-	// build every go_test binary, which `go build` never compiles.
+	// The main packages: Bazel then builds them and everything they import, which is exactly
+	// what `go build -o <dir> ./...` builds. `bazel build //...` would also build libraries no
+	// binary imports, and every go_test binary, which `go build` never compiles.
 	put("build_targets.txt", []byte(strings.Join(targets, "\n")+"\n"))
 
 	for name, b := range files {
