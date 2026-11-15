@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 296" role="img" aria-labelledby="f51-title">
-  <title id="f51-title">One compile process over time. The front end parses, type-checks, inlines and runs escape analysis on one thread. The back end then compiles the package's functions on -c worker goroutines, longest first, and the process ends by writing the archive.</title>
+  <title id="f51-title">One compile process over time. The front end parses the files in parallel, then type-checks, inlines and runs escape analysis serially. The back end then compiles the package's functions on -c worker goroutines, longest first, and the process ends by writing the archive.</title>
   <style>
     .f51 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f51-sm { font-size: 13px; }
@@ -28,7 +28,7 @@
   </defs>
 
   <g class="f51">
-    <text class="f51-head" x="20" y="90">front end: one thread</text>
+    <text class="f51-head" x="20" y="90">front end: serial after parsing</text>
     <text class="f51-head" x="362" y="34">back end: <tspan class="f51-mono">-c</tspan> workers (here 4)</text>
     <text class="f51-head" x="590" y="90">write</text>
 

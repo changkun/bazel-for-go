@@ -93,7 +93,7 @@ def end_to_end(res):
            .unstack("tool"))
     out = out.sort_index(key=lambda k: k.map(order) if k.name == "scenario" else k)
     md(out, "End to end: median seconds and processes run")
-    heap = res[res.unit.notna()].pivot_table(index="config", columns="scenario", values="value")
+    heap = res[res.unit.notna()].pivot_table(index="config", columns="scenario", values="value", aggfunc="first")
     md(heap, "Bazel server: used heap after GC (MB)", ".0f")
 
 
@@ -131,10 +131,6 @@ def workload(w, graphs):
     md(c.nlargest(6, "rss_mb").set_index(["config", "target"])[["wall_ms", "cpu_ms", "rss_mb"]],
        "Largest compiles", ".0f")
 
-    for config, t in w[w.kind == "test (run)"].groupby("config"):
-        print(f"- {config}: wall time of the first test runs, in the order they finished (ms): "
-              f"{', '.join(map(str, t.wall_ms.head(8)))}; median step {t.wall_ms.head(18).diff().median():.0f} ms\n")
-
     # Test binaries, by how many of the repository's packages they link.
     links = []
     for config, actions in graphs.items():
@@ -156,25 +152,35 @@ def workload(w, graphs):
     return w, links
 
 
-def fig_process_cost(d, config):
-    """Figure 5.2: peak memory against wall time, one point per compile or link."""
+def fig_process_cost(d, repo):
+    """Figure 5.2: peak memory against wall time, one point per compile or link process."""
     fig, ax = plt.subplots(figsize=(10, 4.4))
     for kind, label, style in [
-        ("compile", "compile, one per package", dict(marker="o", s=9, color=GO, alpha=.3, linewidths=0)),
+        ("compile", "compile, one per process", dict(marker="o", s=9, color=GO, alpha=.3, linewidths=0)),
         ("link (test)", "link, one per test binary", dict(marker="o", s=20, facecolors="none", edgecolors=INK, linewidths=.7, alpha=.5)),
         ("link", "link, one per go build binary", dict(marker="D", s=36, color=INK, linewidths=0)),
     ]:
         k = d[d.kind == kind]
-        ax.scatter(k.wall_ms / 1000, k.rss_mb, label=f"{label} ({len(k)})", **style)
+        ax.scatter(k.wall_ms / 1000, k.rss_mb, label=f"{label} ({len(k):,})", **style)
     ax.set(xscale="log", yscale="log", xlabel="wall time per process (s)", ylabel="peak memory (MB)")
     plain = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
     for axis in (ax.xaxis, ax.yaxis):
         axis.set_major_formatter(plain)
         axis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-    ax.set_yticks([v for v in [10, 20, 50, 100, 200, 500, 1000, 2000] if d.rss_mb.min() / 1.5 < v < d.rss_mb.max() * 1.5])
-    ax.legend(loc="upper left", handletextpad=.2, borderaxespad=0)
+    shown = d[d.kind.isin(["compile", "link (test)", "link"])]
+    secs = shown.wall_ms / 1000
+    ax.set_xticks([v for v in [.005, .01, .02, .05, .1, .2, .5, 1, 2, 5, 10] if secs.min() / 1.5 < v < secs.max() * 1.5])
+    ax.set_yticks([v for v in [10, 20, 50, 100, 200, 500, 1000, 2000]
+                   if shown.rss_mb.min() / 1.5 < v < shown.rss_mb.max() * 1.5])
+    for rt in d[(d.kind == "compile") & (d.target == "runtime")].itertuples():  # the compile the text names
+        ax.scatter([rt.wall_ms / 1000], [rt.rss_mb], marker="o", s=20, color=GO, linewidths=0)
+        ax.annotate("runtime", (rt.wall_ms / 1000, rt.rss_mb), xytext=(6, -2), textcoords="offset points",
+                    ha="left", va="center", color=INK)
+    leg = ax.legend(loc="upper left", handletextpad=.2, borderaxespad=0, markerscale=1.5)
+    for h in getattr(leg, "legend_handles", None) or leg.legendHandles:
+        h.set_alpha(1)  # the points are faint so that they show density; the key need not be
     fig.tight_layout()
-    save(fig, "05-process-cost.svg", f"Peak memory against wall time for every compile and link process of {config}.")
+    save(fig, "05-process-cost.svg", f"Peak memory against wall time for every compile and link process of {repo}.")
 
 
 # ---- 3. The go build's critical path --------------------------------------------------------
@@ -205,7 +211,9 @@ def critical_paths(graphs):
         out[config] = (a, path)
         cp, cmd = a.loc[path], a[a.Cmd.notna()]
         rows.append({
-            "config": config, "processes": len(cmd), "wall_s": a.done.max(),
+            # span_s: from the first action's start to the last one's end; the command also
+            # loads packages before its first action, so its wall time (results.jsonl) is longer.
+            "config": config, "processes": len(cmd), "span_s": a.done.max(),
             "action_s": a.dur.sum(), "cpu_s": (cmd.CmdUser.sum() + cmd.CmdSys.sum()) / 1e9,
             "critical_s": cp.dur.sum(), "on path": len(cp[cp.Cmd.notna()]),
             "link_s": cp[cp.Mode == "link"].dur.sum(),
@@ -216,20 +224,20 @@ def critical_paths(graphs):
         print(f"- {config} critical path (package, s): " + " → ".join(steps) + "\n")
     t = pd.DataFrame(rows).set_index("config")
     t["action_s / critical_s"] = t.action_s / t.critical_s
-    t["action_s / wall_s"] = t.action_s / t.wall_s
+    t["action_s / span_s"] = t.action_s / t.span_s
     md(t, "go build, cold: total action time and CPU against the critical path (s)")
     return out
 
 
-def fig_build_shape(a, path, ncpu, config):
-    """Figure 5.3: processes running during a cold go build, with the critical path beneath."""
+def fig_build_shape(a, path, ncpu, repo):
+    """Figure 5.3: actions that ran a command during a cold go build, with the critical path beneath."""
     run = a[a.Cmd.notna()]
     ev = pd.concat([pd.Series(1, run.start), pd.Series(-1, run.done)]).groupby(level=0).sum().cumsum()
     fig, ax = plt.subplots(figsize=(10, 4.2))
     ax.fill_between(ev.index, ev.values, step="post", color=GO, alpha=.15, linewidth=0)
     ax.step(ev.index, ev.values, where="post", color=GO, linewidth=1)
     ax.axhline(ncpu, color=INK, linewidth=.8, linestyle=(0, (2, 3)))
-    ax.text(a.done.max(), ncpu + .6, f"{ncpu} cores", ha="right")
+    ax.text(a.done.max(), ncpu + .6, f"-p = {ncpu}", ha="right")  # the harness leaves -p at its default, GOMAXPROCS
     cp = a.loc[path]
     ax.hlines([-2.2] * len(cp), cp.start, cp.done, color=INK, linewidth=6)
     std = cp.Package.str.contains(".", regex=False) == False
@@ -238,12 +246,13 @@ def fig_build_shape(a, path, ncpu, config):
                         ("link", "right", cp.done.max())]:
         ax.text(x, -3.4, part, ha=ha, va="top")
     ax.set_yticks([0, 5, 10, 15, -2.2], ["0", "5", "10", "15", "critical path"])
-    ax.set(xlabel="seconds since the build started", ylabel="processes running", xlim=(0, None), ylim=(-5.5, ncpu + 2.5))
+    ax.set(xlabel="seconds since the first action started", ylabel="actions running", xlim=(0, None),
+           ylim=(-5.5, ncpu + 2.5))
     ax.yaxis.set_label_coords(-.1, .6)
     ax.spines["left"].set_bounds(0, ncpu + 2)
     fig.tight_layout()
     save(fig, "05-build-shape.svg",
-         f"Processes running during a cold go build of {config}, against the critical path beneath it.")
+         f"Actions running during a cold go build of {repo}, against the critical path beneath it.")
 
 
 # ---- 4. Bazel's profiles ---------------------------------------------------------------------
@@ -283,7 +292,7 @@ def chapter_numbers(res, w, links, paths, profiles, ncpu):
         k = dict(list(d.groupby("kind")))
         c = k["compile"]
         lib = c[c.target.str.startswith("example.com/")]  # the repository's packages and their test variants
-        cs = pd.to_numeric(c.c, errors="coerce")
+        cs = pd.to_numeric(lib.c, errors="coerce")
         print(f"- {config} compiles of repository packages ({len(lib)}), median: {lib.wall_ms.median():.0f} ms wall, "
               f"{lib.cpu_ms.median():.0f} ms CPU, {lib.rss_mb.median():.0f} MB; CPU/wall {lib.cpu_ms.sum() / lib.wall_ms.sum():.1f}; "
               f"-c from {cs.min():.0f} to {cs.max():.0f}")
@@ -305,6 +314,12 @@ def chapter_numbers(res, w, links, paths, profiles, ncpu):
         if "test (run)" in k:
             t = k["test (run)"]
             print(f"- {config} test runs, median: {t.cpu_ms.median():.0f} ms CPU, {t.wall_ms.median() / 1000:.1f} s wall")
+            # The probe appends a record when its process exits, so file order is the order the runs
+            # finished. go test runs up to -p (by default ncpu) at once: if the runs wait in one queue,
+            # the first -p to finish take one step longer each, and the rest level off.
+            first, rest = t.wall_ms.head(ncpu) / 1000, t.wall_ms.iloc[ncpu:] / 1000
+            print(f"- {config} test runs, the first {len(first)} to finish: {first.iloc[0]:.2f} s to {first.iloc[-1]:.2f} s, "
+                  f"a median {first.diff().median():.2f} s longer each; the other {len(rest)}: median {rest.median():.1f} s")
     for (config, tool), r in res[res.scenario == "test-first"].groupby(["config", "tool"]):
         r = r.iloc[0]
         cp = r.counts.get("critical_path_ms")
@@ -325,10 +340,17 @@ def chapter_numbers(res, w, links, paths, profiles, ncpu):
         cmd = a[a.Cmd.notna()]
         repo = cp[cp.Package.str.startswith("example.com/") & cp.Mode.eq("build")]
         cpu = (cmd.CmdUser.sum() + cmd.CmdSys.sum()) / 1e9
+        wall = res[(res.config == config) & (res.tool == "go") & (res.scenario == "cold")].seconds.median()
         print(f"- {config} cold go build: actions {a.dur.sum():.0f} s, CPU {cpu:.0f} s ({cpu / ncpu:.1f} s on {ncpu} cores), "
-              f"wall {a.done.max():.1f} s, critical path {cp.dur.sum():.1f} s "
-              f"(runtime {cp[cp.Package == 'runtime'].dur.sum():.2f} s, {len(repo)} repository packages, "
-              f"link {cp[cp.Mode == 'link'].dur.sum():.2f} s); links median {a[a.Mode == 'link'].dur.median():.2f} s")
+              f"actions spanned {a.done.max():.1f} s (the command took {wall:.1f} s), critical path {cp.dur.sum():.1f} s "
+              f"(runtime compile action {cp[cp.Package == 'runtime'].dur.sum():.2f} s, {len(repo)} repository packages, "
+              f"link {cp[cp.Mode == 'link'].dur.sum():.2f} s); link actions median {a[a.Mode == 'link'].dur.median():.2f} s")
+        pkg = a.Package.fillna("")
+        sizes = [(sum(pkg[d].startswith("example.com/") for d in deps), len(deps))
+                 for deps in a[a.Mode == "link"].Deps]
+        big = [s for s in sizes if s[0] > 1]  # leave out tools that link no repository package but their own
+        print(f"- {config} go build links: {len(sizes)}, {len(big)} of them of {min(r for r, _ in big)}–{max(r for r, _ in big)} "
+              f"repository packages ({min(n for _, n in big)}–{max(n for _, n in big)} with the standard library)")
     for name, (cp, act) in profiles.items():
         tools = cp[cp.name.str.contains("GoToolchainBinaryBuild|GoStdlib")].dur.sum() / 1e6
         links = act[act.mnemonic == "GoLink"].dur
@@ -360,9 +382,12 @@ def main():
     w, links = workload(w, graphs)
     config = w.config.value_counts().idxmax()  # the figures show the largest repository measured per process
     print(f"<!-- figures 5.2 and 5.3 show {config} -->\n")
-    fig_process_cost(w[w.config == config], config)
+    configs = load(d / "configs.jsonl", jsonl)
+    pkgs = None if configs is None else configs.set_index("config").stats.get(config, {}).get("Pkgs")
+    repo = f"the {pkgs:,}-package repository" if pkgs else f"the repository {config}"
+    fig_process_cost(w[w.config == config], repo)
     if config in paths:
-        fig_build_shape(*paths[config], int(meta["ncpu"]), config)
+        fig_build_shape(*paths[config], int(meta["ncpu"]), repo)
     chapter_numbers(res, w, links, paths, profiles, int(meta["ncpu"]))
 
 

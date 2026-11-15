@@ -1,5 +1,5 @@
 <svg role="img" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 720 302.4" xmlns="http://www.w3.org/2000/svg" version="1.1">
- <title>Processes running during a cold go build of n1000, against the critical path beneath it.</title>
+ <title>Actions running during a cold go build of the 1,000-package repository, against the critical path beneath it.</title>
  <defs>
  </defs>
  <g id="05-build-shape-figure_1">
@@ -24,7 +24,7 @@ z
    </g>
    <g id="05-build-shape-FillBetweenPolyCollection_1">
     <defs>
-     <path id="05-build-shape-mb4df03902d" d="M 98.819247 -101.243108 
+     <path id="05-build-shape-m2f3bbe2884" d="M 98.819247 -101.243108 
 L 98.819247 -110.370762 
 L 98.833618 -110.370762 
 L 98.833618 -119.498415 
@@ -7828,7 +7828,7 @@ z
 "/>
     </defs>
     <g clip-path="url(#05-build-shape-p78208a3d73)">
-     <use xlink:href="#05-build-shape-mb4df03902d" x="0" y="302.4" style="fill: #00ADD8; fill-opacity: 0.15"/>
+     <use xlink:href="#05-build-shape-m2f3bbe2884" x="0" y="302.4" style="fill: #00add8; fill-opacity: 0.15"/>
     </g>
    </g>
    <g id="05-build-shape-matplotlib.axis_1">
@@ -7918,7 +7918,7 @@ L 0 3.5
      </g>
     </g>
     <g id="05-build-shape-text_9">
-     <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: middle; fill: currentColor" x="402.112031" y="285.236953" transform="rotate(-0 402.112031 285.236953)">seconds since the build started</text>
+     <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: middle; fill: currentColor" x="402.112031" y="285.236953" transform="rotate(-0 402.112031 285.236953)">seconds since the first action started</text>
     </g>
    </g>
    <g id="05-build-shape-matplotlib.axis_2">
@@ -7978,7 +7978,7 @@ L -3.5 0
      </g>
     </g>
     <g id="05-build-shape-text_15">
-     <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: middle; fill: currentColor" x="34.371422" y="108.967594" transform="rotate(-90 34.371422 108.967594)">processes running</text>
+     <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: middle; fill: currentColor" x="34.371422" y="108.967594" transform="rotate(-90 34.371422 108.967594)">actions running</text>
     </g>
    </g>
    <g id="05-build-shape-line2d_14">
@@ -10221,7 +10221,7 @@ L 676.618205 182.901585
 L 677.009938 182.901585 
 L 677.022098 201.156892 
 L 677.022098 201.156892 
-" clip-path="url(#05-build-shape-p78208a3d73)" style="fill: none; stroke: #00ADD8; stroke-linecap: square"/>
+" clip-path="url(#05-build-shape-p78208a3d73)" style="fill: none; stroke: #00add8; stroke-linecap: square"/>
    </g>
    <g id="05-build-shape-line2d_15">
     <path d="M 98.264062 36.859133 
@@ -10409,7 +10409,7 @@ L 705.96 251.358984
 " style="fill: none; stroke: currentColor; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="05-build-shape-text_16">
-    <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: end; fill: currentColor" x="677.074134" y="31.382541" transform="rotate(-0 677.074134 31.382541)">18 cores</text>
+    <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: end; fill: currentColor" x="677.074134" y="31.382541" transform="rotate(-0 677.074134 31.382541)">-p = 18</text>
    </g>
    <g id="05-build-shape-text_17">
     <text style="font-size: 13px; font-family: ui-sans-serif, system-ui, sans-serif; text-anchor: start; fill: currentColor" x="98.264062" y="242.068881" transform="rotate(-0 98.264062 242.068881)">standard library</text>
