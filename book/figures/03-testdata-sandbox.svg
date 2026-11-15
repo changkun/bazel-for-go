@@ -10,7 +10,7 @@
     .hbz { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #388E3C; }
     .dir { fill: none; stroke: currentColor; stroke-opacity: .45; }
     .sbx { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.5; }
-    .rf { fill: #43A047; fill-opacity: .08; stroke: #43A047; stroke-opacity: .8; }
+    .rf { fill: #43A047; fill-opacity: .12; stroke: #43A047; stroke-opacity: .8; }
     .pgo { fill: #00ADD8; fill-opacity: .14; stroke: #00ADD8; stroke-width: 1.5; }
     .pbz { fill: #43A047; fill-opacity: .14; stroke: #43A047; stroke-width: 1.5; }
     .hit { fill: #00ADD8; fill-opacity: .14; }
@@ -45,7 +45,7 @@
   <!-- bazel test -->
   <text class="hbz" x="370" y="22">bazel test //golden:golden_test</text>
   <rect class="sbx" x="370" y="36" width="340" height="232" rx="8"/>
-  <text class="d" x="698" y="56" text-anchor="end">sandbox</text>
+  <text class="d" x="698" y="56" text-anchor="end">sandbox (same failure without it)</text>
 
   <rect class="rf" x="382" y="66" width="316" height="122" rx="6"/>
   <text class="b" x="394" y="88">_main/golden/</text>
