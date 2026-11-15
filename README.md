@@ -72,3 +72,7 @@ cd examples/minimal
 bazel run //cmd/hello
 bazel test //...
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

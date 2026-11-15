@@ -26,8 +26,8 @@ disableKinds = ["taxonomy", "term"]
   repo = "https://github.com/changkun/bazel-for-go"
   authorURL = "https://changkun.de"
   # Footer line and the small print under the sidebar tree (Markdown).
-  copyright = "© 2026 [Changkun Ou](https://changkun.de)"
-  menuFooter = "Bazel for Go: What Scales and What Doesn't © 2026 Changkun Ou"
+  copyright = "© 2026 [Changkun Ou](https://changkun.de) · [MIT License](https://github.com/changkun/bazel-for-go/blob/main/LICENSE)"
+  menuFooter = "Bazel for Go: What Scales and What Doesn't © 2026 Changkun Ou. MIT License."
   # Optional 1200x630 share card under static/ (or an absolute URL). Unset,
   # link unfurls use a plain summary card.
   # shareImage = "og-cover.png"
