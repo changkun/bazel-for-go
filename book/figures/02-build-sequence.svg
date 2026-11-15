@@ -6,7 +6,7 @@
     .h { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; opacity: .65; }
     .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
     .box { fill: none; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
-    .bz { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
+    .bz { fill: #43A047; fill-opacity: .14; stroke: #43A047; stroke-width: 1.5; }
     .run { fill: #d9822b; fill-opacity: .16; stroke: #d9822b; stroke-width: 1.5; }
     .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
     .lane { stroke: currentColor; stroke-opacity: .15; }

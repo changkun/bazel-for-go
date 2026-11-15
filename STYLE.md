@@ -64,8 +64,9 @@ Appendix A: 1,200.
 - **Colour.** No background fill. Text and lines use `currentColor` so the figure follows the
   light or dark theme. Use the accent colours only with these meanings, the same in every
   chapter:
-  - go command: `#0b7fab` (blue)
-  - Bazel: `#3f9142` (green)
+  - go command: `#00ADD8` (Go's Gopher Blue) for shapes; `#007D9C` (go.dev's link blue) for
+    text
+  - Bazel: `#43A047` (Bazel's green) for shapes; `#388E3C` (a deeper shade of it) for text
   - work that runs (rebuild, miss): `#d9822b` (orange)
   - work skipped (cache hit): `#8a8f98` (grey), drawn with a dashed outline
   - remote / shared: `#7e57c2` (purple)

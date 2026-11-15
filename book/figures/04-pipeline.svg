@@ -7,8 +7,8 @@
     .f41 .f41-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f41 .f41-run { fill: #d9822b; fill-opacity: 0.15; stroke: #d9822b; stroke-width: 1.5; }
     .f41 .f41-hit { fill: #8a8f98; fill-opacity: 0.12; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 5 4; }
-    .f41 .f41-go { fill: none; stroke: #0b7fab; stroke-width: 1.5; stroke-dasharray: 6 4; }
-    .f41 .f41-golabel { fill: #0b7fab; font-weight: 600; }
+    .f41 .f41-go { fill: none; stroke: #00ADD8; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .f41 .f41-golabel { fill: #007D9C; font-weight: 600; }
     .f41 .f41-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
   </style>
   <defs>

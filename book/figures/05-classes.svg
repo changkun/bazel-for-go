@@ -6,8 +6,8 @@
     .f54-b { font-weight: 600; }
     .f54-dim { fill-opacity: .7; }
     .f54-card { fill: none; stroke: currentColor; stroke-opacity: .6; stroke-width: 1.3; }
-    .f54-bz { fill: #3f9142; fill-opacity: .12; stroke: #3f9142; stroke-opacity: 1; }
-    .f54-bzt { fill: #3f9142; }
+    .f54-bz { fill: #43A047; fill-opacity: .12; stroke: #43A047; stroke-opacity: 1; }
+    .f54-bzt { fill: #388E3C; }
   </style>
   <g class="f54">
     <rect class="f54-card" x="10" y="10" width="340" height="118" rx="8"/>

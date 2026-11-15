@@ -4,8 +4,8 @@
     .f73 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f73 .f73-sm { font-size: 13px; opacity: 0.8; }
     .f73 .f73-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
-    .f73 .f73-golabel { fill: #0b7fab; font-weight: 600; }
-    .f73 .f73-bzlabel { fill: #3f9142; font-weight: 600; }
+    .f73 .f73-golabel { fill: #007D9C; font-weight: 600; }
+    .f73 .f73-bzlabel { fill: #388E3C; font-weight: 600; }
     .f73 .f73-scen { font-weight: 600; }
     .f73 .f73-node { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f73 .f73-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }

@@ -9,8 +9,8 @@
     .f51-fn { fill: currentColor; fill-opacity: .10; stroke: currentColor; stroke-width: 1; }
     .f51-edge { fill: none; stroke: currentColor; stroke-opacity: .5; stroke-width: 1.2; }
     .f51-axis { fill: none; stroke: currentColor; stroke-width: 1.2; }
-    .f51-go { fill: #0b7fab; }
-    .f51-bz { fill: #3f9142; }
+    .f51-go { fill: #007D9C; }
+    .f51-bz { fill: #388E3C; }
     /* One 8 s loop: a cursor sweeps left to right and reveals the work done so far; hold at the end. */
     .f51-curtain { animation: f51-sweep 8s linear infinite; }
     .f51-now { opacity: 0; animation: f51-move 8s linear infinite; }

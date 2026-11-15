@@ -6,9 +6,9 @@
     .h { font: 600 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; opacity: .65; }
     .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
     .k { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; opacity: .7; }
-    .go { fill: #0b7fab; }
+    .go { fill: #007D9C; }
     .dir { fill: none; stroke: currentColor; stroke-opacity: .4; }
-    .tgt { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
+    .tgt { fill: #43A047; fill-opacity: .14; stroke: #43A047; stroke-width: 1.5; }
     .ext { fill: none; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
     .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
     .tc { stroke: currentColor; stroke-opacity: .45; stroke-width: 1.2; fill: none; }

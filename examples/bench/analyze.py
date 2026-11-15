@@ -24,7 +24,7 @@ import pandas as pd
 matplotlib.use("svg")
 import matplotlib.pyplot as plt
 
-GO = "#0b7fab"  # the go command's accent colour (STYLE.md)
+GO = "#00ADD8"  # the go command's accent colour (STYLE.md)
 INK = "#010203"  # written as currentColor, so that figures follow the page's theme
 FIGURES = Path(__file__).resolve().parents[2] / "book" / "figures"
 MB = 1e6

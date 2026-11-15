@@ -6,7 +6,7 @@
     .f64 .f64-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
     .f64 .f64-head { font-weight: 600; }
     .f64 .f64-dim { fill-opacity: 0.45; }
-    .f64 .f64-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f64 .f64-bz { fill: #43A047; fill-opacity: 0.12; stroke: #43A047; stroke-width: 1.5; }
     .f64 .f64-rm { fill: #7e57c2; fill-opacity: 0.12; stroke: #7e57c2; stroke-width: 1.5; }
     .f64 .f64-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f64 .f64-line { fill: none; stroke: currentColor; stroke-width: 1.4; }

@@ -4,8 +4,8 @@
     .f74 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f74 .f74-sm { font-size: 13px; opacity: 0.8; }
     .f74 .f74-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .f74 .f74-mn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; fill: #3f9142; }
-    .f74 .f74-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f74 .f74-mn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; fill: #388E3C; }
+    .f74 .f74-bz { fill: #43A047; fill-opacity: 0.12; stroke: #43A047; stroke-width: 1.5; }
     .f74 .f74-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
   </style>
   <defs>

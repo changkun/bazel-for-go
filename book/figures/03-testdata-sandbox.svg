@@ -6,14 +6,14 @@
     .b { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
     .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
     .gone { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; opacity: .45; }
-    .hgo { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #0b7fab; }
-    .hbz { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #3f9142; }
+    .hgo { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #007D9C; }
+    .hbz { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #388E3C; }
     .dir { fill: none; stroke: currentColor; stroke-opacity: .45; }
     .sbx { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.5; }
-    .rf { fill: #3f9142; fill-opacity: .08; stroke: #3f9142; stroke-opacity: .8; }
-    .pgo { fill: #0b7fab; fill-opacity: .14; stroke: #0b7fab; stroke-width: 1.5; }
-    .pbz { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
-    .hit { fill: #0b7fab; fill-opacity: .14; }
+    .rf { fill: #43A047; fill-opacity: .08; stroke: #43A047; stroke-opacity: .8; }
+    .pgo { fill: #00ADD8; fill-opacity: .14; stroke: #00ADD8; stroke-width: 1.5; }
+    .pbz { fill: #43A047; fill-opacity: .14; stroke: #43A047; stroke-width: 1.5; }
+    .hit { fill: #00ADD8; fill-opacity: .14; }
     .miss { fill: none; stroke: currentColor; stroke-opacity: .5; }
     .strike { stroke: currentColor; stroke-opacity: .6; stroke-width: 1.2; }
     .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
