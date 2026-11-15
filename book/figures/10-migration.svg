@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 384" role="img" aria-labelledby="f102-title" class="f102">
+  <title id="f102-title">A migration path in six steps. 1: Gazelle generates BUILD files. 2: CI builds and tests both ways, with Bazel and with go test. 3: a clean Gazelle diff becomes a required check. 4: a shared cache, written by CI. 5: CI moves first, then laptops, which read the cache. 6: remote execution, only if needed. From step 2 on, go vet and go test keep passing.</title>
+  <style>
+    .f102 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f102 .f102-head { font-size: 13px; fill-opacity: .65; }
+    .f102 .f102-label { font-size: 15px; font-weight: 600; }
+    .f102 .f102-sub { font-size: 13px; fill-opacity: .7; font-style: italic; }
+    .f102 .f102-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f102 .f102-gotext { fill: #007D9C; }
+    .f102 .f102-num { font-size: 13px; font-weight: 700; }
+    .f102 .f102-rail { stroke: currentColor; stroke-opacity: .3; stroke-width: 2; }
+    .f102 .f102-bz { fill: #43A047; fill-opacity: .16; stroke: #43A047; stroke-width: 1.5; }
+    .f102 .f102-rm { fill: #7e57c2; fill-opacity: .16; stroke: #7e57c2; stroke-width: 1.5; }
+    .f102 .f102-go { fill: none; stroke: #00ADD8; stroke-width: 2; }
+    .f102 .f102-rule { stroke: currentColor; stroke-opacity: .12; stroke-width: 1; }
+
+    /* The static state is the end state. One 9 s loop: steps 1 to 6 light up, then a pause. */
+    .f102 .f102-r1 { animation: f102-k1 9s linear infinite; }
+    .f102 .f102-r2 { animation: f102-k2 9s linear infinite; }
+    .f102 .f102-r3 { animation: f102-k3 9s linear infinite; }
+    .f102 .f102-r4 { animation: f102-k4 9s linear infinite; }
+    .f102 .f102-r5 { animation: f102-k5 9s linear infinite; }
+    .f102 .f102-r6 { animation: f102-k6 9s linear infinite; }
+    @keyframes f102-k1 { 0%, 3% { opacity: .15; } 7%, 100% { opacity: 1; } }
+    @keyframes f102-k2 { 0%, 15% { opacity: .15; } 19%, 100% { opacity: 1; } }
+    @keyframes f102-k3 { 0%, 27% { opacity: .15; } 31%, 100% { opacity: 1; } }
+    @keyframes f102-k4 { 0%, 39% { opacity: .15; } 43%, 100% { opacity: 1; } }
+    @keyframes f102-k5 { 0%, 51% { opacity: .15; } 55%, 100% { opacity: 1; } }
+    @keyframes f102-k6 { 0%, 63% { opacity: .15; } 67%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <text class="f102-head" x="70" y="22">step</text>
+  <text class="f102-head" x="372" y="22">what to run</text>
+  <line class="f102-rule" x1="16" y1="34" x2="704" y2="34"/>
+
+  <line class="f102-rail" x1="40" y1="75" x2="40" y2="101"/>
+  <line class="f102-rail" x1="40" y1="127" x2="40" y2="153"/>
+  <line class="f102-rail" x1="40" y1="179" x2="40" y2="205"/>
+  <line class="f102-rail" x1="40" y1="231" x2="40" y2="257"/>
+  <line class="f102-rail" x1="40" y1="283" x2="40" y2="309"/>
+
+  <!-- 1 -->
+  <g class="f102-r1">
+    <circle class="f102-bz" cx="40" cy="62" r="13"/>
+    <text class="f102-num" x="40" y="66.5" text-anchor="middle">1</text>
+    <text class="f102-label" x="70" y="67">Generate BUILD files</text>
+    <text class="f102-mono" x="372" y="67">bazel run //:gazelle</text>
+  </g>
+  <!-- 2 -->
+  <g class="f102-r2">
+    <circle class="f102-bz" cx="40" cy="114" r="13"/>
+    <text class="f102-num" x="40" y="118.5" text-anchor="middle">2</text>
+    <text class="f102-label" x="70" y="112">Build both ways in CI</text>
+    <text class="f102-sub" x="70" y="131">neither front end may break</text>
+    <text class="f102-mono" x="372" y="110">bazel test //...</text>
+    <text class="f102-mono f102-gotext" x="372" y="129">go vet ./... &amp;&amp; go test ./...</text>
+  </g>
+  <!-- 3 -->
+  <g class="f102-r3">
+    <circle class="f102-bz" cx="40" cy="166" r="13"/>
+    <text class="f102-num" x="40" y="170.5" text-anchor="middle">3</text>
+    <text class="f102-label" x="70" y="171">Require a clean Gazelle diff</text>
+    <text class="f102-mono" x="372" y="171">bazel run //:gazelle -- -mode=diff</text>
+  </g>
+  <!-- 4 -->
+  <g class="f102-r4">
+    <circle class="f102-rm" cx="40" cy="218" r="13"/>
+    <text class="f102-num" x="40" y="222.5" text-anchor="middle">4</text>
+    <text class="f102-label" x="70" y="216">Share a cache</text>
+    <text class="f102-sub" x="70" y="235">CI writes to it</text>
+    <text class="f102-mono" x="372" y="223">--remote_cache=…</text>
+  </g>
+  <!-- 5 -->
+  <g class="f102-r5">
+    <circle class="f102-bz" cx="40" cy="270" r="13"/>
+    <text class="f102-num" x="40" y="274.5" text-anchor="middle">5</text>
+    <text class="f102-label" x="70" y="268">Move CI, then laptops</text>
+    <text class="f102-sub" x="70" y="287">laptops only read the cache</text>
+    <text class="f102-mono" x="372" y="275">--remote_upload_local_results=false</text>
+  </g>
+  <!-- 6 -->
+  <g class="f102-r6">
+    <circle class="f102-rm" cx="40" cy="322" r="13"/>
+    <text class="f102-num" x="40" y="326.5" text-anchor="middle">6</text>
+    <text class="f102-label" x="70" y="320">Remote execution</text>
+    <text class="f102-sub" x="70" y="339">only if one machine is not enough</text>
+    <text class="f102-mono" x="372" y="327">--remote_executor=…</text>
+  </g>
+
+  <!-- the go front end keeps working from step 2 on -->
+  <g class="f102-r2">
+    <line class="f102-go" x1="16" y1="104" x2="16" y2="332"/>
+    <line class="f102-go" x1="16" y1="104" x2="24" y2="104"/>
+    <line class="f102-go" x1="16" y1="332" x2="24" y2="332"/>
+    <text class="f102-gotext" x="16" y="368" style="font-size:13px">From step 2 on, <tspan class="f102-mono">go vet</tspan> and <tspan class="f102-mono">go test</tspan> keep passing.</text>
+  </g>
+</svg>
