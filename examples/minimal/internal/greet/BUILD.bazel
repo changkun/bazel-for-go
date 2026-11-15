@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "greet",
+    srcs = ["greet.go"],
+    embedsrcs = ["greeting.tmpl"],
+    importpath = "example.com/minimal/internal/greet",
+    visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "greet_test",
+    srcs = ["greet_test.go"],
+    embed = [":greet"],
+    deps = ["@com_github_google_go_cmp//cmp"],
+)

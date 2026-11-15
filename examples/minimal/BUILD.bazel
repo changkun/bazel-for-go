@@ -1,0 +1,4 @@
+load("@gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix example.com/minimal
+gazelle(name = "gazelle")
