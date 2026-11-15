@@ -150,8 +150,9 @@ top-level `Test` function,[^rg-shard] so one slow function cannot be split.
 shard.[^shard-strategy] We recommend sharding only packages with many slow test functions.
 
 On a laptop the server is warm and few actions rerun, so finding changes takes a large share
-(Chapter 1). `--watchfs`, off by default, takes changes from the operating system instead of
-checking every file.[^watchfs] gopls, Go's language server, asks Bazel about packages through
+(Chapter 1). `--watchfs`, off by default, takes changes to source files from the operating system
+instead of checking each one;[^watchfs] the outputs of the last build are still checked
+(Chapter 6). gopls, Go's language server, asks Bazel about packages through
 `GOPACKAGESDRIVER` (Chapter 2). Each request runs Bazel commands, and a server runs one command
 at a time,[^client-server] so a long build delays the editor. rules_go's driver passes
 `GOPACKAGESDRIVER_BAZEL_FLAGS` before the command,[^gpd-flags] so `--output_base=<dir>` there
