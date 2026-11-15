@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 372" role="img" aria-labelledby="f101-title" class="f101">
-  <title id="f101-title">The book's view of where each tool fits, not a measurement. The horizontal axis is the size of one build, from one module to more than one machine can run; the vertical axis is how many machines build the same code, from one to a CI fleet. The go command alone fits small builds on few machines. The go command with a shared GOCACHEPROG store fits small builds on many machines. Bazel with a remote cache fits larger builds on many machines. Bazel with remote execution fits builds larger than one machine. The map assumes Go only; other languages or generators in the graph enlarge the regions where Bazel fits.</title>
+  <title id="f101-title">The book's view of where each tool fits, not a measurement. The horizontal axis is the size of one build, from one module to more than one machine can run; the vertical axis is how many machines build the same code, from one to a CI fleet. A curve marks where enough machines build the same code for a shared Go cache to pay: below it, the go command alone; above it, the go command with a shared GOCACHEPROG store. A diagonal marks where work that cache cannot share dominates CI time: beyond it, Bazel with a remote cache. Past a vertical line, where one build outgrows one machine, Bazel with remote execution. The map assumes Go only; other languages or generators in the graph enlarge the regions where Bazel fits.</title>
   <style>
     .f101 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f101 .f101-note { font-size: 13px; fill-opacity: .65; font-style: italic; }
     .f101 .f101-axis { font-size: 13px; fill-opacity: .8; }
     .f101 .f101-head { font-weight: 600; }
+    .f101 .f101-gotext { fill: #007D9C; }
+    .f101 .f101-bztext { fill: #388E3C; }
     .f101 .f101-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
     .f101 .f101-shared { fill: #7e57c2; }
     .f101 .f101-go { fill: #00ADD8; fill-opacity: .12; stroke: none; }
@@ -34,16 +36,16 @@
   <path class="f101-edge" d="M560,40 L560,300"/>
 
   <!-- labels -->
-  <text class="f101-head" x="250" y="246" text-anchor="middle">go command</text>
+  <text class="f101-head f101-gotext" x="250" y="246" text-anchor="middle">go command</text>
 
-  <text class="f101-head" x="200" y="100" text-anchor="middle">go command</text>
+  <text class="f101-head f101-gotext" x="200" y="100" text-anchor="middle">go command</text>
   <text class="f101-mono f101-shared" x="200" y="122" text-anchor="middle">+ GOCACHEPROG</text>
   <text class="f101-shared" x="200" y="142" text-anchor="middle" style="font-size:13px">shared store</text>
 
-  <text class="f101-head" x="486" y="84" text-anchor="middle">Bazel</text>
+  <text class="f101-head f101-bztext" x="486" y="84" text-anchor="middle">Bazel</text>
   <text class="f101-shared" x="486" y="106" text-anchor="middle">+ remote cache</text>
 
-  <text class="f101-head" x="632" y="148" text-anchor="middle">Bazel</text>
+  <text class="f101-head f101-bztext" x="632" y="148" text-anchor="middle">Bazel</text>
   <text class="f101-shared" x="632" y="170" text-anchor="middle">+ remote</text>
   <text class="f101-shared" x="632" y="190" text-anchor="middle">execution</text>
 
