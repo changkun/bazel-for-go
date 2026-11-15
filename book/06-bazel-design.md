@@ -104,7 +104,8 @@ ACTION_EXECUTION    120
 Before each command, Bazel looks for changed files. By default it runs `stat` on every file in
 the graph and compares its modification time, change time and inode number with the stored
 ones, without reading it.[^filestate] With `--watchfs`, off by default, it asks the operating
-system which files changed instead.[^watchfs] Every node that depends on a changed file,
+system which source files changed instead,[^watchfs] though by default it still checks every
+output of the last build.[^output-check] Every node that depends on a changed file,
 directly or not, is marked dirty.[^skyframe]
 
 Bazel then recomputes the dirty nodes from the bottom, with change pruning: "if a node is
@@ -117,7 +118,8 @@ outputs is then checked against the action cache (next section), which compares 
 On a hit it does not run, its value is unchanged, and pruning resumes above it (Figure 6.3).
 Together they give Chapter 1's early cutoff.
 
-The graph is what makes a repeated build cheap. In our measurements on 1,000 packages, a build
+The graph is what makes a repeated build cheap. In our measurements on the 1,000-package synthetic
+repository (Appendix A), a build
 with nothing to do took 0.2–0.4 s with a warm server. A new server must load and analyze
 everything again before it can tell that nothing changed: the same build took 3.6 s, and one
 that stopped after analysis (`--nobuild`) took 3.1 s.[^bench]
@@ -288,6 +290,11 @@ incremental builds slower.[^memory]
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
 
+[^output-check]: Bazel, `lib/pkgcache/PackageOptions.java`, `--experimental_check_output_files`
+    (default `true`), and `lib/buildtool/ExecutionTool.java`, which skips the output check only
+    when it is `false`.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/pkgcache/PackageOptions.java#L181-L191>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/ExecutionTool.java#L506-L511>
 [^pruning]: Bazel, `skyframe/IncrementalInMemoryNodeEntry.java`, `setValue`, and
     `skyframe/DirtyBuildingState.java`, `unchangedFromLastBuild`.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/skyframe/IncrementalInMemoryNodeEntry.java#L150-L160>

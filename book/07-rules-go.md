@@ -37,7 +37,7 @@ target.[^builder-exec]
 
 ## Two files per compile
 
-![Figure 7.2: A compile of `core`, Chapter 4's most widely imported package, writes `core.a` for the linker and `core.x` for importers.](figures/07-two-files.svg)
+![Figure 7.2: A compile of `core`, the most widely imported package of the synthetic repository (Appendix A), writes `core.a` for the linker and `core.x` for importers.](figures/07-two-files.svg)
 
 Under the go command, a compile writes one archive (a `.a` file) holding two parts: the export
 data, the summary of the package that its importers' compiles read, and the object code, the
@@ -87,7 +87,7 @@ direct importers' archives change and their own importers recompile. Under Bazel
 measurements none did: the synthetic packages use `core` only inside a function too large to
 inline.[^bench]
 
-On Chapter 4's 1,000-package repository:
+On the 1,000-package synthetic repository (Appendix A):
 
 | Edit to `core` | go command | Bazel |
 |---|---|---|

@@ -73,7 +73,8 @@ link.[^go-usecache] For `go build`, that is the only way to skip a link, because
 not store binaries: they are large and seldom reused.[^go-noexe] Go 1.24 made one exception, for
 binaries built by `go run` and `go tool`.[^go124] Without `-o`, `go build ./...` links every
 main package into a temporary directory and discards the result.[^go-discard] In our
-measurements, a `go build ./...` with nothing to do on 1,000 packages compiled nothing and
+measurements, a `go build ./...` with nothing to do on 1,000 packages (the synthetic
+repository of Appendix A) compiled nothing and
 relinked all 11 binaries.[^bench]
 
 The content ID gives an early cutoff: a step that reruns with the same output does not rerun its
