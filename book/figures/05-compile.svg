@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 296" role="img" aria-labelledby="f51-title">
+  <title id="f51-title">One compile process over time. The front end parses, type-checks, inlines and runs escape analysis on one thread. The back end then compiles the package's functions on -c worker goroutines, longest first, and the process ends by writing the archive.</title>
+  <style>
+    .f51 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f51-sm { font-size: 13px; }
+    .f51-head { font-size: 13px; fill-opacity: .7; }
+    .f51-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f51-fe { fill: currentColor; fill-opacity: .10; stroke: currentColor; stroke-width: 1.3; }
+    .f51-fn { fill: currentColor; fill-opacity: .10; stroke: currentColor; stroke-width: 1; }
+    .f51-edge { fill: none; stroke: currentColor; stroke-opacity: .5; stroke-width: 1.2; }
+    .f51-axis { fill: none; stroke: currentColor; stroke-width: 1.2; }
+    .f51-go { fill: #0b7fab; }
+    .f51-bz { fill: #3f9142; }
+    /* One 8 s loop: a cursor sweeps left to right and reveals the work done so far; hold at the end. */
+    .f51-curtain { animation: f51-sweep 8s linear infinite; }
+    .f51-now { opacity: 0; animation: f51-move 8s linear infinite; }
+    @keyframes f51-sweep { 0% { transform: scaleX(0.02) } 75%, 100% { transform: scaleX(1) } }
+    @keyframes f51-move { 0% { transform: translateX(0); opacity: 1 } 75% { transform: translateX(680px); opacity: 1 } 78%, 100% { transform: translateX(680px); opacity: 0 } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <defs>
+    <mask id="f51-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="720" height="224">
+      <rect class="f51-curtain" x="0" y="0" width="720" height="224" fill="#fff"/>
+    </mask>
+    <marker id="f51-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <g class="f51">
+    <text class="f51-head" x="20" y="90">front end: one thread</text>
+    <text class="f51-head" x="362" y="34">back end: <tspan class="f51-mono">-c</tspan> workers (here 4)</text>
+    <text class="f51-head" x="590" y="90">write</text>
+
+    <g mask="url(#f51-reveal)">
+    <rect class="f51-fe" x="20" y="102.0" width="140" height="34" rx="4"/>
+    <rect class="f51-fe" x="160" y="102.0" width="86" height="34" rx="4"/>
+    <rect class="f51-fe" x="246" y="102.0" width="86" height="34" rx="4"/>
+    <text class="f51-sm" x="90" y="124.0" text-anchor="middle">parse, types</text>
+    <text class="f51-sm" x="203" y="124.0" text-anchor="middle">inline</text>
+    <text class="f51-sm" x="289" y="124.0" text-anchor="middle">escape</text>
+
+    <path class="f51-edge" d="M332,119.0 C348,119.0 344,59.0 358,59.0"/>
+    <path class="f51-edge" d="M332,119.0 C348,119.0 344,99.0 358,99.0"/>
+    <path class="f51-edge" d="M332,119.0 C348,119.0 344,139.0 358,139.0"/>
+    <path class="f51-edge" d="M332,119.0 C348,119.0 344,179.0 358,179.0"/>
+    <rect class="f51-fn" x="362" y="46" width="78" height="26" rx="3"/>
+    <rect class="f51-fn" x="442" y="46" width="48" height="26" rx="3"/>
+    <rect class="f51-fn" x="492" y="46" width="31" height="26" rx="3"/>
+    <rect class="f51-fn" x="525" y="46" width="18" height="26" rx="3"/>
+    <rect class="f51-fn" x="545" y="46" width="9" height="26" rx="3"/>
+    <rect class="f51-fn" x="362" y="86" width="71" height="26" rx="3"/>
+    <rect class="f51-fn" x="435" y="86" width="46" height="26" rx="3"/>
+    <rect class="f51-fn" x="483" y="86" width="29" height="26" rx="3"/>
+    <rect class="f51-fn" x="514" y="86" width="20" height="26" rx="3"/>
+    <rect class="f51-fn" x="536" y="86" width="11" height="26" rx="3"/>
+    <rect class="f51-fn" x="549" y="86" width="5" height="26" rx="3"/>
+    <rect class="f51-fn" x="362" y="126" width="64" height="26" rx="3"/>
+    <rect class="f51-fn" x="428" y="126" width="42" height="26" rx="3"/>
+    <rect class="f51-fn" x="472" y="126" width="35" height="26" rx="3"/>
+    <rect class="f51-fn" x="509" y="126" width="22" height="26" rx="3"/>
+    <rect class="f51-fn" x="533" y="126" width="13" height="26" rx="3"/>
+    <rect class="f51-fn" x="362" y="166" width="60" height="26" rx="3"/>
+    <rect class="f51-fn" x="424" y="166" width="40" height="26" rx="3"/>
+    <rect class="f51-fn" x="466" y="166" width="31" height="26" rx="3"/>
+    <rect class="f51-fn" x="499" y="166" width="24" height="26" rx="3"/>
+    <rect class="f51-fn" x="525" y="166" width="16" height="26" rx="3"/>
+    <rect class="f51-fn" x="543" y="166" width="7" height="26" rx="3"/>
+    <path class="f51-edge" d="M557,59.0 C576,59.0 574,119.0 587,119.0"/>
+    <path class="f51-edge" d="M557,99.0 C576,99.0 574,119.0 587,119.0"/>
+    <path class="f51-edge" d="M549,139.0 C576,139.0 574,119.0 587,119.0"/>
+    <path class="f51-edge" d="M553,179.0 C576,179.0 574,119.0 587,119.0"/>
+
+    <rect class="f51-fe" x="590" y="102.0" width="110" height="34" rx="4"/>
+    <text class="f51-sm f51-mono" x="645.0" y="124.0" text-anchor="middle">.a file</text>
+    </g>
+
+    <line class="f51-now f51-axis" x1="20" y1="40" x2="20" y2="220" stroke-dasharray="3 3"/>
+    <line class="f51-axis" x1="20" y1="224" x2="700" y2="224" marker-end="url(#f51-arrow)"/>
+    <text class="f51-sm" x="700" y="246" text-anchor="end">time</text>
+
+    <text class="f51-sm" x="20" y="250"><tspan class="f51-go">go command</tspan>: <tspan class="f51-mono">-c</tspan> from a shared pool of tokens</text>
+    <text class="f51-sm" x="20" y="272"><tspan class="f51-bz">rules_go</tspan>: no <tspan class="f51-mono">-c</tspan>, so one worker per core</text>
+  </g>
+</svg>
