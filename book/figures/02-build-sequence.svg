@@ -37,7 +37,7 @@
   <text class="h" x="10" y="61">client</text>
   <text class="h" x="10" y="144">server</text>
   <text class="h" x="10" y="228">sandbox</text>
-  <path class="lane" d="M10,96 H710 M10,174 H710"/>
+  <path class="lane" d="M10,106 H710 M10,174 H710"/>
 
   <!-- Client issues the command -->
   <g class="s1">

@@ -1,4 +1,2 @@
-# Keep the action environment fixed so that cache keys do not depend on the caller's shell.
-common --incompatible_strict_action_env
 # Show test output only for failures.
 test --test_output=errors
