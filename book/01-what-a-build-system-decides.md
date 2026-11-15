@@ -1,20 +1,20 @@
 # 1. What a build system decides
 
 The go command and Bazel both turn Go source into binaries, but they make different choices at
-six points. This chapter names those six decisions and gives a model of where build time goes.
+six points.
 
-## A build is a function
+## Actions and keys
 
 ![Figure 1.1: A build is a graph of actions; each action's key is looked up in a cache.](figures/01-action-graph.svg)
 
-A build turns sources into outputs. Ideally it is a function: the same sources, tools and flags
-always give the same outputs. Rerunning all of it after every edit is too slow, so a build system
-splits it into steps and skips each step whose result it already has.
+A build turns sources into outputs. Rerunning all of it after every edit is too slow, so a build
+system splits it into steps and skips each step whose result it already has.
 
 - An **action** is one step: one run of one tool, such as compiling a package, with known
-  inputs and outputs.[^bazel-actions]
-- Its **key** is a hash of everything that can change its output: the input files, the outputs
-  of earlier actions, the tool and its flags.
+  inputs and outputs.[^bazel-actions] Actions form a **graph** (Figure 1.1): an edge runs from
+  each action to those that read its output.
+- Its **key** is a hash of everything that can change its output: its input files, what it reads
+  from earlier actions, the tool, the flags and the environment.
 - A **cache hit** means an output is already stored under that key, so the action is
   skipped.[^bazel-actions]
 - A build is **hermetic** when the same inputs always give the same output, whatever else is on
@@ -23,16 +23,16 @@ splits it into steps and skips each step whose result it already has.
 
 ## Cutoff and the critical path
 
-![Figure 1.2: Early cutoff stops an edit at d; the band marks the critical path.](figures/01-cutoff.svg)
+![Figure 1.2: Early cutoff stops an edit at d. The band marks the critical path of a full build.](figures/01-cutoff.svg)
 
 When a source changes, the action that reads it reruns, and its new output changes the keys of
 the actions that use it. The change spreads along the graph until **early cutoff** stops it: when
-an action reruns but its output is identical to last time, the actions after it need not
-run.[^alacarte-cutoff] In Figure 1.2, an edit reruns `a` and `d`. The output of `d` is unchanged,
-so nothing after `d` runs.
+an action reruns but its output is identical to last time, the actions after it need not run
+(Figure 1.2).[^alacarte-cutoff]
 
-The **critical path** is the longest chain of actions in which each needs the output of the one
-before. No number of cores or machines finishes a full build faster than this chain.
+The **critical path** is the chain of actions, each needing the output of the one before, that
+takes longest to run. No number of cores or machines finishes a build sooner than its critical
+path.
 
 ## Six decisions
 
@@ -47,32 +47,33 @@ How much does one action do? A large unit, such as a module, reruns more than an
 small unit, such as a file, reruns little but multiplies the fixed cost of starting each action.
 For Go, the compiler compiles one package per run,[^go-compile] and both the go command and
 rules_go (Bazel's Go support) make one compile action per
-package.[^go-compileaction][^rules-go-library]
+package.[^go-compileaction][^rules-go-compile]
 
 ### 2. Graph
 
 The graph can be derived from the sources, as the go command does from import
 statements,[^go-command] or declared in build files, as Bazel requires.[^bazel-build-files] A
-derived graph needs no upkeep, but it is derived again each time it is needed and describes only
-what the language can. A declared graph can describe anything, such as a code generator or a C
-library, and a long-lived process can keep it in memory.[^bazel-server] In exchange, someone must
-keep it in step with the code.
+derived graph needs no upkeep but describes only what the language can;[^go-command] the go
+command derives it again on every run (Chapter 4). A declared graph can describe anything, such
+as a code generator or a C library, and a long-lived process can keep it in memory.[^bazel-server]
+In exchange, someone must keep it in step with the code.
 
 ### 3. Change
 
-To find what changed since the last build, a system can hash every input again, compare saved
-file sizes and modification times, or be told by the operating system. Rehashing reads every
-byte. Comparing metadata visits every file but reads none. Notifications cost in proportion to
-the change. The last two need state kept between builds.
+To find what changed since the last build, a system can hash every input again,[^go-filehash]
+compare each file's saved metadata, such as its modification time,[^bazel-filestate] or be told
+by the operating system.[^bazel-watchfs] Rehashing reads every byte. Comparing metadata visits
+every file but reads none. Notifications cost in proportion to the change. The last two need
+state kept between builds.
 
 ### 4. Key
 
-A key that leaves out an input lets a stale output through. A key that includes something that
-does not affect the output, such as an environment variable that differs between machines,
-causes misses and stops machines sharing results.[^bazel-cache-issues] A subtler choice is how a
-dependency enters its users' keys. By its sources alone, the build cannot cut off
-early.[^alacarte-traces] By its whole output, any change to that output reruns every user. By
-only the part its users read, a change that leaves that part alone reruns none of them.
+A key that leaves out an input lets a stale output through: a wrong hit.[^bazel-cache-issues] A
+key that includes something that does not affect the output, such as an environment variable
+that differs between machines, causes misses.[^bazel-cache-issues] A subtler choice is which
+part of a dependency enters its dependents' keys. With its sources, there is no early
+cutoff.[^alacarte-traces] With its whole output, any change to that output reruns every
+dependent. With only the part dependents read, a change elsewhere reruns none of them (Chapter 7).
 
 ### 5. Sharing
 
@@ -89,51 +90,53 @@ then declare every input, because the remote machine has nothing else.[^bazel-re
 
 ## A cost model
 
-![Figure 1.4: Illustrative shares of build time on a warm laptop and across a CI fleet.](figures/01-cost.svg)
+![Figure 1.4: Illustrative shares of one build's time: an edit on a laptop with a long-lived process, and a fresh CI runner.](figures/01-cost.svg)
 
-We split the time of one build into four terms:
+We model the time of one build with four terms:
 
 ```text
-T = T_graph + T_detect + T_exec + T_transfer
+T ≤ T_graph + T_detect + T_exec + T_transfer
 ```
 
-- **T_graph**: obtaining the graph; on every run if it is derived, after each restart if a
-  long-lived process keeps it.
+- **T_graph**: obtaining the graph; on every run for a tool that exits after each build, after
+  each restart for a long-lived process that keeps it.
 - **T_detect**: finding what changed.
 - **T_exec**: running the actions that missed the cache. It is at least their critical path, and
   at least their total work divided by the cores or machines available.
 - **T_transfer**: moving bytes to and from a shared cache or remote machines.
 
-Each kind of scale drives different terms:
+The terms can overlap (Chapter 6), so the wait T can be shorter than their sum. A fleet's cost
+is T summed over its builds. Each kind of scale drives different terms:
 
 | Scale | Drives | What helps |
 |---|---|---|
 | Packages and files in the repository | T_graph, T_detect | A graph kept in memory; detection in proportion to the change |
 | Edits × actions that depend on what changed | T_exec | A precise key, so that cutoff comes early |
-| Engineers × machines × CI jobs | T_exec, summed over machines | A cache shared across machines |
+| Engineers × machines × CI jobs | T_exec and T_transfer, summed over builds | A cache shared across machines |
 | Size of the largest build | T_exec | Remote execution; a shorter critical path |
-| Languages and generated code | Uncached work outside the graph | A graph that can declare any action |
+| Languages and generated code | Uncached steps outside the graph, not in T | A graph that can declare any action |
 
-Figure 1.4 sketches what we expect. When one engineer edits one package on a laptop with warm
-caches, only a few actions rerun, so T_graph and T_detect take a large share of the wait. A CI
-fleet runs the same actions on many machines, so T_exec dominates, and sharing results is what
-reduces it.[^bazel-remote-caching] In our view, the go command is designed for the first case
-and Bazel for the second; Chapters 4 to 8 show why.
+Figure 1.4 sketches what we expect. On a laptop whose caches hold the last build, one edit
+reruns few actions, so finding the change takes a large share, and finding the graph too if no
+long-lived process keeps it. A fresh CI runner without a shared cache obtains the graph from
+scratch[^bazel-cache-issues] and runs every action, so T_exec dominates; across a fleet,
+sharing results reduces it.[^bazel-remote-caching] In our view, the go command is designed for
+one engineer on one machine with a repository small enough to rescan on every run, and Bazel
+for a large repository built on many machines; Chapters 4 to 8 show why.
 
 ## What this means at scale
 
-- Compare build systems by their six decisions, not by feature lists.
-- A build that is slow on a laptop and a build that is expensive across a fleet are different
-  problems, dominated by different terms.
-- A shared cache pays off only if keys are complete and match across machines. Check what enters
-  the key before paying for cache capacity.
-- The critical path is a floor that more cores and machines cannot lower. Shorten the chain
-  instead.
+- We recommend comparing build systems by their six decisions, not by feature lists.
+- Find which term dominates before optimizing: per build on a laptop, summed over builds across
+  a fleet (Chapter 9).
+- Before paying for a shared cache, check what enters the key: a missing input gives wrong hits,
+  and a value that differs between machines gives misses.
+- Once the critical path bounds a build, we recommend shortening it over adding cores or machines.
 
 ## References
 
-[^bazel-actions]: Bazel, "Remote Caching", section "Overview".
-    <https://bazel.build/remote/caching#overview>
+[^bazel-actions]: Bazel, "Remote Caching", sections "Overview" and "How a build uses remote
+    caching". <https://bazel.build/remote/caching#overview>
 [^bazel-hermetic]: Bazel, "Hermeticity", section "Overview".
     <https://bazel.build/basics/hermeticity#overview>
 [^bazel-remote-caching]: Bazel, "Distributed Builds", section "Remote caching".
@@ -145,18 +148,31 @@ and Bazel for the second; Chapters 4 to 8 show why.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 [^go-compileaction]: Go, `cmd/go/internal/work/action.go`, `CompileAction`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L628>
-[^rules-go-library]: rules_go, `docs/go/core/rules.md`, `go_library`.
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/go/core/rules.md?plain=1#L89>
-[^go-command]: Go, "About the go command", sections "Motivation" and "Go's conventions".
-    <https://go.dev/doc/articles/go_command>
+[^rules-go-compile]: rules_go, `go/private/actions/compilepkg.bzl`, `emit_compilepkg`: one
+    `GoCompilePkg` action per package.
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L201-L210>
+[^go-command]: Go, "About the go command", sections "Motivation" and "Configuration versus
+    convention". <https://go.dev/doc/articles/go_command>
 [^bazel-build-files]: Bazel, "Artifact-Based Build Systems", introduction and sections
     "Understanding artifact-based build systems" and "Extending the build system".
     <https://bazel.build/basics/artifact-based-builds#understanding-artifact-based-build-systems>
 [^bazel-server]: Bazel, "Client/server implementation".
     <https://bazel.build/run/client-server>
+[^go-filehash]: Go, `cmd/go/internal/cache/hash.go`, `FileHash`: hashes the whole file and
+    remembers the result only as long as the process lives.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
+[^bazel-filestate]: Bazel, `lib/actions/FileStateValue.java`,
+    `createRegularFileStateValueFromPath`, and `lib/actions/FileContentsProxy.java`: file times
+    and inode number stand in for contents unless the file system offers a fast digest.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L147>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L21-L38>
+[^bazel-watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option, default
+    `false`: use the operating system's file watch service "instead of scanning every file for a
+    change".
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
 [^bazel-cache-issues]: Bazel, "Remote Caching", section "Known issues": environment variables
-    leaking into an action, and tools outside the workspace.
-    <https://bazel.build/remote/caching#known-issues>
+    leaking into an action, tools outside the workspace, and in-memory state lost in CI
+    containers. <https://bazel.build/remote/caching#known-issues>
 [^alacarte-traces]: Mokhov, Mitchell and Peyton Jones, "Build Systems à la Carte", section 4.2.4,
     deep constructive traces. <https://doi.org/10.1145/3236774> (authors' copy:
     <https://github.com/snowleopard/build/releases/download/icfp-final/build-systems.pdf>)
