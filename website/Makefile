@@ -7,12 +7,16 @@
 #                              regenerating content/ when README.md or book/ changes
 #                              (rendered in memory, so public/ is left alone)
 #   make clean                 remove everything generated
+#   make deploy                build the last commit and publish it at $(BASEURL)
 
 BASEURL ?= https://changkun.de/bazel-for-go/
 HUGO    ?= hugo
 PORT    ?= 1313
+HOST    ?= changkunde
+DEST    ?= /www/changkun.de/bazel-for-go/
+SNAPSHOT ?= ../.cache/snapshot
 
-.PHONY: all build content serve clean
+.PHONY: all build content serve clean deploy
 
 all: build
 
@@ -27,3 +31,12 @@ serve:
 
 clean:
 	rm -rf content public resources .hugo_build.lock
+
+# Published builds come from the last commit, never the working tree, so a chapter that is
+# still being written is not published half-done.
+deploy:
+	rm -rf $(SNAPSHOT) && mkdir -p $(SNAPSHOT)
+	git -C .. archive HEAD | tar -x -C $(SNAPSHOT)
+	$(MAKE) -C $(SNAPSHOT)/website build BASEURL="$(BASEURL)"
+	rsync -az --delete $(SNAPSHOT)/website/public/ $(HOST):$(DEST)
+	@echo "published $$(git -C .. rev-parse --short HEAD) to $(BASEURL)"

@@ -12,3 +12,5 @@ bazel-*
 /website/public/
 /website/resources/
 /website/.hugo_build.lock
+# Snapshot of the last commit that make deploy builds from.
+/.cache/
