@@ -28,17 +28,29 @@
   </defs>
 
   <g class="f51">
-    <text class="f51-head" x="20" y="90">front end: serial after parsing</text>
+    <text class="f51-head" x="20" y="34">front end: parallel parse, then serial</text>
     <text class="f51-head" x="362" y="34">back end: <tspan class="f51-mono">-c</tspan> workers (here 4)</text>
     <text class="f51-head" x="590" y="90">write</text>
 
     <g mask="url(#f51-reveal)">
-    <rect class="f51-fe" x="20" y="102.0" width="140" height="34" rx="4"/>
-    <rect class="f51-fe" x="160" y="102.0" width="86" height="34" rx="4"/>
-    <rect class="f51-fe" x="246" y="102.0" width="86" height="34" rx="4"/>
-    <text class="f51-sm" x="90" y="124.0" text-anchor="middle">parse, types</text>
-    <text class="f51-sm" x="203" y="124.0" text-anchor="middle">inline</text>
-    <text class="f51-sm" x="289" y="124.0" text-anchor="middle">escape</text>
+    <rect class="f51-fn" x="20" y="73" width="60" height="20" rx="3"/>
+    <rect class="f51-fn" x="20" y="97" width="50" height="20" rx="3"/>
+    <rect class="f51-fn" x="20" y="121" width="56" height="20" rx="3"/>
+    <rect class="f51-fn" x="20" y="145" width="48" height="20" rx="3"/>
+    <text class="f51-sm" x="50" y="88" text-anchor="middle">parse</text>
+    <text class="f51-sm" x="45" y="112" text-anchor="middle">parse</text>
+    <text class="f51-sm" x="48" y="136" text-anchor="middle">parse</text>
+    <text class="f51-sm" x="44" y="160" text-anchor="middle">parse</text>
+    <path class="f51-edge" d="M81,83 C89,83 84,119 93,119"/>
+    <path class="f51-edge" d="M71,107 C79,107 84,119 93,119"/>
+    <path class="f51-edge" d="M77,131 C85,131 84,119 93,119"/>
+    <path class="f51-edge" d="M69,155 C77,155 84,119 93,119"/>
+    <rect class="f51-fe" x="96" y="102.0" width="80" height="34" rx="4"/>
+    <rect class="f51-fe" x="176" y="102.0" width="78" height="34" rx="4"/>
+    <rect class="f51-fe" x="254" y="102.0" width="78" height="34" rx="4"/>
+    <text class="f51-sm" x="136" y="124.0" text-anchor="middle">types</text>
+    <text class="f51-sm" x="215" y="124.0" text-anchor="middle">inline</text>
+    <text class="f51-sm" x="293" y="124.0" text-anchor="middle">escape</text>
 
     <path class="f51-edge" d="M332,119.0 C348,119.0 344,59.0 358,59.0"/>
     <path class="f51-edge" d="M332,119.0 C348,119.0 344,99.0 358,99.0"/>
