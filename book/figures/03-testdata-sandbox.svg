@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 330" role="img" aria-labelledby="t3-1">
+  <title id="t3-1">go test runs the test in the package directory; bazel test runs it in a runfiles tree that holds only declared files</title>
+  <style>
+    .t { font: 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; }
+    .d { font: 13px ui-sans-serif, system-ui, sans-serif; fill: currentColor; opacity: .7; }
+    .b { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
+    .m { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; }
+    .gone { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: currentColor; opacity: .45; }
+    .hgo { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #0b7fab; }
+    .hbz { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #3f9142; }
+    .dir { fill: none; stroke: currentColor; stroke-opacity: .45; }
+    .sbx { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.5; }
+    .rf { fill: #3f9142; fill-opacity: .08; stroke: #3f9142; stroke-opacity: .8; }
+    .pgo { fill: #0b7fab; fill-opacity: .14; stroke: #0b7fab; stroke-width: 1.5; }
+    .pbz { fill: #3f9142; fill-opacity: .14; stroke: #3f9142; stroke-width: 1.5; }
+    .hit { fill: #0b7fab; fill-opacity: .14; }
+    .miss { fill: none; stroke: currentColor; stroke-opacity: .5; }
+    .strike { stroke: currentColor; stroke-opacity: .6; stroke-width: 1.2; }
+    .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
+  </style>
+  <defs>
+    <marker id="a31" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- go test -->
+  <text class="hgo" x="10" y="22">go test ./golden</text>
+  <rect class="dir" x="10" y="36" width="340" height="150" rx="6"/>
+  <text class="b" x="22" y="60">golden/</text>
+  <text class="d" x="90" y="60">package directory</text>
+  <text class="m" x="22" y="88">golden.go</text>
+  <text class="m" x="22" y="112">golden_test.go</text>
+  <rect class="hit" x="16" y="122" width="190" height="24" rx="4"/>
+  <text class="m" x="22" y="139">testdata/report.golden</text>
+
+  <path class="edge" d="M110,212 V150" marker-end="url(#a31)"/>
+  <text class="t" x="120" y="204">open: found</text>
+  <rect class="pgo" x="10" y="212" width="340" height="46" rx="6"/>
+  <text class="m" x="22" y="231">golden.test</text>
+  <text class="t" x="22" y="249">working directory: golden/</text>
+
+  <text class="d" x="10" y="292">The test reads the source tree directly.</text>
+
+  <!-- bazel test -->
+  <text class="hbz" x="370" y="22">bazel test //golden:golden_test</text>
+  <rect class="sbx" x="370" y="36" width="340" height="232" rx="8"/>
+  <text class="d" x="698" y="56" text-anchor="end">sandbox</text>
+
+  <rect class="rf" x="382" y="66" width="316" height="122" rx="6"/>
+  <text class="b" x="394" y="88">_main/golden/</text>
+  <text class="d" x="504" y="88">runfiles tree</text>
+  <text class="m" x="394" y="114">golden_test_/golden_test</text>
+  <rect class="miss" x="388" y="124" width="190" height="24" rx="4"/>
+  <text class="gone" x="394" y="141">testdata/report.golden</text>
+  <path class="strike" d="M392,136.5 H570"/>
+  <text class="t" x="590" y="141">not declared</text>
+  <text class="t" x="480" y="176">open: no such file</text>
+
+  <path class="edge" d="M470,214 V152" marker-end="url(#a31)"/>
+  <rect class="pbz" x="382" y="214" width="316" height="44" rx="6"/>
+  <text class="m" x="394" y="232">golden_test</text>
+  <text class="t" x="394" y="250">working directory: _main/golden/</text>
+
+  <text class="d" x="370" y="292">The file in the source tree is not in it.</text>
+  <text class="m" x="370" y="316">data = glob(["testdata/**"])</text>
+  <text class="t" x="604" y="316">adds it</text>
+</svg>

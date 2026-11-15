@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+# go:generate becomes a build action: Bazel runs the generator and
+# Gazelle adds its output to the go_library below.
+genrule(
+    name = "gen",
+    outs = ["version_gen.go"],
+    cmd = "$(execpath //tools/genversion) -o $@",
+    tools = ["//tools/genversion"],
+)
+
+go_library(
+    name = "version",
+    srcs = [
+        "version.go",
+        "version_gen.go",
+    ],
+    importpath = "example.com/constraints/version",
+    visibility = ["//visibility:public"],
+)
