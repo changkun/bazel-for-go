@@ -8,8 +8,8 @@ able to predict where each system stops scaling, and to place each build workloa
 machine. The book is about mechanisms. Measurements appear only as small illustrations inside
 the chapters, and the full set sits in an appendix.
 
-Budget: about 25,000 words in all. Each chapter is 1,500 to 3,000 words, opens with what it
-answers, and ends with "What this means at scale": three to five consequences a reader can act
+Budget: the word ceilings in STYLE.md, about 14,000 words of prose in all. Each chapter opens
+with figures, and ends with "What this means at scale": three to five consequences a reader can act
 on. Claims about internals cite the source file and function they come from (Go 1.27.3,
 Bazel 9.3.2, rules_go 0.65.0).
 
