@@ -42,6 +42,12 @@ func (s Shape) withDefaults() Shape {
 	if s.Bins == 0 {
 		s.Bins = max(2, s.Pkgs/100)
 	}
+	if s.CoreFrac == 0 {
+		s.CoreFrac = 0.3
+	}
+	if s.GenEvery == 0 {
+		s.GenEvery = 10
+	}
 	if s.Seed == 0 {
 		s.Seed = 1
 	}
