@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 444" role="img" aria-labelledby="f65-title" class="f65">
+  <title id="f65-title">Remote execution. The client looks up the Action's hash in the action cache and misses, uploads the inputs the content-addressed store lacks, and sends the Action to execute. Executors run actions in parallel and store outputs and results in the remote cache. The client downloads only the top-level output, hello; the intermediate archives stay remote.</title>
+  <style>
+    .f65 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f65 .f65-sm { font-size: 13px; opacity: 0.8; }
+    .f65 .f65-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f65 .f65-head { font-weight: 600; }
+    .f65 .f65-num { font-size: 12px; font-weight: 700; }
+    .f65 .f65-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f65 .f65-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f65 .f65-rm { fill: #7e57c2; fill-opacity: 0.12; stroke: #7e57c2; stroke-width: 1.5; }
+    .f65 .f65-rmline { fill: none; stroke: #7e57c2; stroke-width: 1.5; }
+    .f65 .f65-badge { fill: #7e57c2; fill-opacity: 0.2; stroke: #7e57c2; stroke-width: 1.2; }
+    .f65 .f65-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
+    .f65 .f65-runbadge { fill: #d9822b; fill-opacity: 0.2; stroke: #d9822b; stroke-width: 1.2; }
+    .f65 .f65-line { fill: none; stroke: currentColor; stroke-width: 1.4; }
+
+    /* The static state is the end state. One 9 s loop, steps 1 to 6, then a pause. */
+    .f65 .f65-s1 { animation: f65-k1 9s linear infinite; }
+    .f65 .f65-s2 { animation: f65-k2 9s linear infinite; }
+    .f65 .f65-s3 { animation: f65-k3 9s linear infinite; }
+    .f65 .f65-s4a { animation: f65-k4a 9s linear infinite; }
+    .f65 .f65-s4b { animation: f65-k4b 9s linear infinite; }
+    .f65 .f65-s4c { animation: f65-k4c 9s linear infinite; }
+    .f65 .f65-s4d { animation: f65-k4d 9s linear infinite; }
+    .f65 .f65-s5 { animation: f65-k5 9s linear infinite; }
+    .f65 .f65-s6 { animation: f65-k6 9s linear infinite; }
+    @keyframes f65-k1 { 0%, 4% { opacity: 0; } 8%, 100% { opacity: 1; } }
+    @keyframes f65-k2 { 0%, 14% { opacity: 0; } 18%, 100% { opacity: 1; } }
+    @keyframes f65-k3 { 0%, 24% { opacity: 0; } 28%, 100% { opacity: 1; } }
+    @keyframes f65-k4a { 0%, 34% { opacity: 0; } 38%, 100% { opacity: 1; } }
+    @keyframes f65-k4b { 0%, 37% { opacity: 0; } 41%, 100% { opacity: 1; } }
+    @keyframes f65-k4c { 0%, 40% { opacity: 0; } 44%, 100% { opacity: 1; } }
+    @keyframes f65-k4d { 0%, 43% { opacity: 0; } 47%, 100% { opacity: 1; } }
+    @keyframes f65-k5 { 0%, 52% { opacity: 0; } 56%, 100% { opacity: 1; } }
+    @keyframes f65-k6 { 0%, 64% { opacity: 0; } 68%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <defs>
+    <marker id="f65-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Client -->
+  <rect class="f65-bz" x="20" y="150" width="170" height="80" rx="8"/>
+  <text x="105" y="184" text-anchor="middle" class="f65-head">your machine</text>
+  <text x="105" y="206" text-anchor="middle" class="f65-sm">Bazel client, server</text>
+
+  <!-- Remote cache -->
+  <rect class="f65-rm" x="240" y="30" width="240" height="320" rx="10" fill-opacity="0.05"/>
+  <text x="256" y="54" class="f65-head">remote cache</text>
+  <rect class="f65-rm" x="256" y="66" width="208" height="62" rx="8"/>
+  <text x="270" y="90" class="f65-head">action cache</text>
+  <text x="270" y="114" class="f65-mono">hash → output hashes</text>
+  <rect class="f65-rm" x="256" y="142" width="208" height="196" rx="8"/>
+  <text x="270" y="164" class="f65-head">CAS</text>
+
+  <g class="f65-s2">
+    <rect class="f65-box" x="268" y="176" width="96" height="24" rx="6"/>
+    <text x="316" y="193" text-anchor="middle" class="f65-mono">greet.go</text>
+  </g>
+  <g class="f65-s5">
+    <rect class="f65-box" x="268" y="208" width="96" height="24" rx="6"/>
+    <text x="316" y="225" text-anchor="middle" class="f65-mono">greet.a</text>
+    <rect class="f65-box" x="268" y="240" width="96" height="24" rx="6"/>
+    <text x="316" y="257" text-anchor="middle" class="f65-mono">greet.x</text>
+    <rect class="f65-box" x="268" y="272" width="96" height="24" rx="6"/>
+    <text x="316" y="289" text-anchor="middle" class="f65-mono">hello.a</text>
+    <rect class="f65-box" x="268" y="304" width="96" height="24" rx="6"/>
+    <text x="316" y="321" text-anchor="middle" class="f65-mono">hello</text>
+  </g>
+  <g class="f65-s6">
+    <path class="f65-line" d="M372,210 q6,0 6,6 L378,246 q0,6 6,6 q-6,0 -6,6 L378,288 q0,6 -6,6"/>
+    <text x="390" y="248" class="f65-sm">stay</text>
+    <text x="390" y="266" class="f65-sm">remote</text>
+  </g>
+
+  <!-- Executors -->
+  <rect class="f65-box" x="550" y="40" width="150" height="56" rx="8"/>
+  <rect class="f65-run f65-s4a" x="550" y="40" width="150" height="56" rx="8"/>
+  <text x="625" y="73" text-anchor="middle">executor</text>
+  <rect class="f65-box" x="550" y="116" width="150" height="56" rx="8"/>
+  <rect class="f65-run f65-s4b" x="550" y="116" width="150" height="56" rx="8"/>
+  <text x="625" y="149" text-anchor="middle">executor</text>
+  <rect class="f65-box" x="550" y="192" width="150" height="56" rx="8"/>
+  <rect class="f65-run f65-s4c" x="550" y="192" width="150" height="56" rx="8"/>
+  <text x="625" y="225" text-anchor="middle">executor</text>
+  <rect class="f65-box" x="550" y="268" width="150" height="56" rx="8"/>
+  <rect class="f65-run f65-s4d" x="550" y="268" width="150" height="56" rx="8"/>
+  <text x="625" y="301" text-anchor="middle">executor</text>
+
+  <!-- 1. look up the Action's hash -->
+  <g class="f65-s1">
+    <line class="f65-line" x1="190" y1="166" x2="254" y2="100" marker-end="url(#f65-arrow)"/>
+    <circle class="f65-badge" cx="222" cy="133" r="9"/>
+    <text x="222" y="137" text-anchor="middle" class="f65-num">1</text>
+  </g>
+  <!-- 2. upload missing inputs -->
+  <g class="f65-s2">
+    <line class="f65-line" x1="190" y1="200" x2="266" y2="189" marker-end="url(#f65-arrow)"/>
+    <circle class="f65-badge" cx="226" cy="195" r="9"/>
+    <text x="226" y="199" text-anchor="middle" class="f65-num">2</text>
+  </g>
+  <!-- 3. execute -->
+  <g class="f65-s3">
+    <path class="f65-line" d="M105,150 L105,14 L625,14 L625,38" marker-end="url(#f65-arrow)"/>
+    <circle class="f65-badge" cx="360" cy="14" r="9"/>
+    <text x="360" y="18" text-anchor="middle" class="f65-num">3</text>
+  </g>
+  <!-- 4. run -->
+  <g class="f65-s4a">
+    <circle class="f65-runbadge" cx="625" cy="342" r="9"/>
+    <text x="625" y="346" text-anchor="middle" class="f65-num">4</text>
+  </g>
+  <!-- 5. store outputs and results -->
+  <g class="f65-s5">
+    <line class="f65-line" x1="550" y1="68" x2="466" y2="97" marker-end="url(#f65-arrow)"/>
+    <line class="f65-line" x1="550" y1="144" x2="466" y2="220" marker-end="url(#f65-arrow)"/>
+    <line class="f65-line" x1="550" y1="220" x2="466" y2="252" marker-end="url(#f65-arrow)"/>
+    <line class="f65-line" x1="550" y1="296" x2="466" y2="316" marker-end="url(#f65-arrow)"/>
+    <circle class="f65-badge" cx="508" cy="182" r="9"/>
+    <text x="508" y="186" text-anchor="middle" class="f65-num">5</text>
+  </g>
+  <!-- 6. download only the top-level output -->
+  <g class="f65-s6">
+    <path class="f65-line" d="M266,316 L105,316 L105,232" marker-end="url(#f65-arrow)"/>
+    <circle class="f65-badge" cx="186" cy="316" r="9"/>
+    <text x="186" y="320" text-anchor="middle" class="f65-num">6</text>
+  </g>
+
+  <!-- Legend -->
+  <g class="f65-sm">
+    <text x="20" y="384">1 look up the Action's hash: miss</text>
+    <text x="20" y="406">2 upload inputs the CAS lacks</text>
+    <text x="20" y="428">3 send the Action to execute</text>
+    <text x="370" y="384">4 executors run actions in parallel</text>
+    <text x="370" y="406">5 store outputs and results</text>
+    <text x="370" y="428">6 download only the top-level output</text>
+  </g>
+</svg>

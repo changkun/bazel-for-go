@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 450" role="img" aria-labelledby="f61-title" class="f61">
+  <title id="f61-title">The minimal example. Three targets declared in BUILD files, each passing a provider up to the target that depends on it, and the actions they register: compile greet, compile hello and link hello, connected by the files they write and read.</title>
+  <style>
+    .f61 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f61 .f61-sm { font-size: 13px; opacity: 0.8; }
+    .f61 .f61-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f61 .f61-head { font-weight: 600; }
+    .f61 .f61-target { fill: #3f9142; fill-opacity: 0.14; stroke: #3f9142; stroke-width: 1.5; }
+    .f61 .f61-action { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f61 .f61-prov { fill: none; stroke: #3f9142; stroke-width: 2; }
+    .f61 .f61-provtext { fill: #3f9142; font-weight: 600; }
+    .f61 .f61-file { fill: none; stroke: currentColor; stroke-width: 1.3; }
+    .f61 .f61-reg { fill: none; stroke: currentColor; stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.55; }
+  </style>
+  <defs>
+    <marker id="f61-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="f61-garrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3f9142"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="28" class="f61-head">Targets (BUILD files)</text>
+  <text x="330" y="28" class="f61-head">Actions</text>
+
+  <!-- Targets -->
+  <rect class="f61-target" x="20" y="94" width="230" height="56" rx="8"/>
+  <text x="34" y="118" class="f61-mono">//cmd/hello:hello</text>
+  <text x="34" y="139" class="f61-sm">go_binary</text>
+
+  <rect class="f61-target" x="20" y="214" width="230" height="56" rx="8"/>
+  <text x="34" y="238" class="f61-mono">//cmd/hello:hello_lib</text>
+  <text x="34" y="259" class="f61-sm">go_library</text>
+
+  <rect class="f61-target" x="20" y="334" width="230" height="56" rx="8"/>
+  <text x="34" y="358" class="f61-mono">//internal/greet:greet</text>
+  <text x="34" y="379" class="f61-sm">go_library</text>
+
+  <!-- Providers flow up the dependency edges -->
+  <line class="f61-prov" x1="80" y1="212" x2="80" y2="153" marker-end="url(#f61-garrow)"/>
+  <text x="92" y="180" class="f61-mono f61-provtext">GoInfo</text>
+  <text x="92" y="198" class="f61-sm">embed</text>
+  <line class="f61-prov" x1="80" y1="332" x2="80" y2="273" marker-end="url(#f61-garrow)"/>
+  <text x="92" y="300" class="f61-mono f61-provtext">GoArchive</text>
+  <text x="92" y="318" class="f61-sm">deps</text>
+
+  <!-- Each target registers actions -->
+  <line class="f61-reg" x1="250" y1="112" x2="328" y2="122"/>
+  <line class="f61-reg" x1="250" y1="140" x2="328" y2="236"/>
+  <line class="f61-reg" x1="250" y1="362" x2="328" y2="362"/>
+  <text x="256" y="352" class="f61-sm">registers</text>
+
+  <!-- Actions -->
+  <rect class="f61-action" x="330" y="100" width="160" height="44" rx="8"/>
+  <text x="410" y="127" text-anchor="middle" class="f61-mono">GoLink</text>
+  <rect class="f61-action" x="330" y="220" width="160" height="44" rx="8"/>
+  <text x="410" y="247" text-anchor="middle" class="f61-mono">GoCompilePkg</text>
+  <rect class="f61-action" x="330" y="340" width="160" height="44" rx="8"/>
+  <text x="410" y="367" text-anchor="middle" class="f61-mono">GoCompilePkg</text>
+
+  <!-- Files (artifacts) flow between actions -->
+  <line class="f61-file" x1="410" y1="422" x2="410" y2="386" marker-end="url(#f61-arrow)"/>
+  <text x="410" y="440" text-anchor="middle" class="f61-mono">greet.go greeting.tmpl</text>
+
+  <line class="f61-file" x1="410" y1="340" x2="410" y2="266" marker-end="url(#f61-arrow)"/>
+  <text x="420" y="308" class="f61-mono">greet.x</text>
+
+  <line class="f61-file" x1="566" y1="242" x2="492" y2="242" marker-end="url(#f61-arrow)"/>
+  <text x="572" y="247" class="f61-mono">main.go</text>
+
+  <line class="f61-file" x1="410" y1="220" x2="410" y2="146" marker-end="url(#f61-arrow)"/>
+  <text x="420" y="188" class="f61-mono">hello.a</text>
+
+  <path class="f61-file" d="M490,370 L660,370 L660,114 L492,114" marker-end="url(#f61-arrow)"/>
+  <text x="652" y="318" text-anchor="end" class="f61-mono">greet.a</text>
+
+  <line class="f61-file" x1="410" y1="100" x2="410" y2="66" marker-end="url(#f61-arrow)"/>
+  <text x="410" y="56" text-anchor="middle" class="f61-mono">hello</text>
+</svg>

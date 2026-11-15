@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="f64-title" class="f64">
+  <title id="f64-title">Bazel's caches. Top: the local action cache finds an entry by the output's path and compares one hash over the action key and the hashes of all inputs and outputs. Bottom: a disk or remote cache hashes an Action, made of the Command's hash and the input tree's Merkle hash, looks that up in the action cache to get output hashes, and fetches the bytes from the content-addressed store. All paths are relative to the execroot, so two checkouts at different paths produce the same key.</title>
+  <style>
+    .f64 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f64 .f64-sm { font-size: 13px; opacity: 0.8; }
+    .f64 .f64-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f64 .f64-head { font-weight: 600; }
+    .f64 .f64-dim { fill-opacity: 0.45; }
+    .f64 .f64-bz { fill: #3f9142; fill-opacity: 0.12; stroke: #3f9142; stroke-width: 1.5; }
+    .f64 .f64-rm { fill: #7e57c2; fill-opacity: 0.12; stroke: #7e57c2; stroke-width: 1.5; }
+    .f64 .f64-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f64 .f64-line { fill: none; stroke: currentColor; stroke-width: 1.4; }
+    .f64 .f64-tree { fill: none; stroke: #7e57c2; stroke-width: 1.3; }
+    .f64 .f64-sep { stroke: currentColor; stroke-width: 1; opacity: 0.25; }
+    .f64 .f64-link { fill: none; stroke: #7e57c2; stroke-width: 1.3; stroke-dasharray: 4 4; }
+  </style>
+  <defs>
+    <marker id="f64-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Local action cache -->
+  <text x="20" y="24" class="f64-head">Local action cache (one per output base)</text>
+
+  <rect class="f64-bz" x="20" y="40" width="200" height="84" rx="8"/>
+  <text x="34" y="66">look up by output path</text>
+  <text x="34" y="92" class="f64-mono">bazel-out/…/greet.a</text>
+
+  <line class="f64-line" x1="220" y1="82" x2="254" y2="82" marker-end="url(#f64-arrow)"/>
+
+  <rect class="f64-bz" x="258" y="40" width="226" height="84" rx="8"/>
+  <text x="272" y="66">entry: one hash over</text>
+  <text x="272" y="88" class="f64-sm">the action key and the hash</text>
+  <text x="272" y="108" class="f64-sm">of every input and output</text>
+
+  <line class="f64-line" x1="484" y1="82" x2="518" y2="82" marker-end="url(#f64-arrow)"/>
+
+  <rect class="f64-box" x="522" y="40" width="178" height="84" rx="8"/>
+  <text x="536" y="66">same as the files now?</text>
+  <text x="536" y="88" class="f64-sm">yes: skip; the outputs</text>
+  <text x="536" y="108" class="f64-sm">in bazel-out are current</text>
+
+  <line class="f64-sep" x1="20" y1="148" x2="700" y2="148"/>
+
+  <!-- Disk or remote cache -->
+  <text x="20" y="178" class="f64-head">Disk or remote cache (Remote Execution API)</text>
+
+  <rect class="f64-rm" x="20" y="194" width="236" height="138" rx="8"/>
+  <text x="34" y="322" class="f64-mono">platform, timeout</text>
+  <text x="34" y="218" class="f64-mono f64-head">Action</text>
+  <text x="34" y="242" class="f64-mono">command_digest</text>
+  <text x="44" y="260" class="f64-sm">args, env, output paths</text>
+  <text x="34" y="282" class="f64-mono">input_root_digest</text>
+  <text x="44" y="300" class="f64-sm">Merkle tree, below</text>
+
+
+  <line class="f64-line" x1="256" y1="232" x2="286" y2="232" marker-end="url(#f64-arrow)"/>
+  <text x="271" y="222" text-anchor="middle" class="f64-sm">hash</text>
+
+  <rect class="f64-rm" x="290" y="194" width="200" height="98" rx="8"/>
+  <text x="304" y="218" class="f64-head">action cache</text>
+  <text x="304" y="242" class="f64-mono">4f1c… →</text>
+  <text x="314" y="262" class="f64-mono">greet.a: 9c41…</text>
+  <text x="314" y="280" class="f64-mono">greet.x: 77b0…</text>
+
+  <line class="f64-line" x1="490" y1="258" x2="520" y2="258" marker-end="url(#f64-arrow)"/>
+
+  <rect class="f64-rm" x="524" y="194" width="176" height="98" rx="8"/>
+  <text x="538" y="218" class="f64-head">CAS</text>
+  <text x="538" y="242" class="f64-mono">9c41… →</text>
+  <text x="548" y="262" class="f64-sm">the bytes of greet.a</text>
+
+  <!-- Merkle tree of the input root -->
+  <line class="f64-link" x1="60" y1="332" x2="60" y2="348"/>
+  <text x="34" y="362" class="f64-mono">(input root) 3e9a…</text>
+  <path class="f64-tree" d="M44,368 L44,388 L58,388 M44,388 L44,448 L58,448"/>
+  <text x="62" y="392" class="f64-mono">internal/greet/ b21d…</text>
+  <path class="f64-tree" d="M74,398 L74,412 L88,412 M74,412 L74,430 L88,430"/>
+  <text x="92" y="416" class="f64-mono">greet.go a7c0…</text>
+  <text x="92" y="434" class="f64-mono">greeting.tmpl 5f3e…</text>
+  <text x="62" y="452" class="f64-mono">external/… 0d8b…</text>
+
+  <!-- Paths are relative to the execroot -->
+  <text x="300" y="350">paths are relative to the execroot</text>
+  <text x="300" y="376" class="f64-mono"><tspan class="f64-dim">/Users/ana/src/repo/</tspan>internal/greet/greet.go</text>
+  <text x="300" y="396" class="f64-mono"><tspan class="f64-dim">/ci/work/repo/</tspan>internal/greet/greet.go</text>
+  <line class="f64-line" x1="420" y1="404" x2="420" y2="430" marker-end="url(#f64-arrow)"/>
+  <text x="300" y="452" class="f64-mono">internal/greet/greet.go</text>
+  <text x="496" y="452" class="f64-sm">same key</text>
+</svg>
