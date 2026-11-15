@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" role="img" aria-labelledby="f41-title" class="f41">
-  <title id="f41-title">The steps of one go build. Loading, the action graph, and each action's ID and cache lookup run on every build.</title>
+  <title id="f41-title">The steps of one go build. Loading, the action graph, and each action's ID and cache lookup run on every build; the tool runs only on a miss.</title>
   <style>
     .f41 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f41 .f41-sm { font-size: 13px; opacity: 0.8; }
@@ -44,12 +44,12 @@
 
   <rect class="f41-run" x="270" y="186" width="160" height="64" rx="8"/>
   <text x="350" y="213" text-anchor="middle">look up</text>
-  <text x="350" y="233" text-anchor="middle" class="f41-sm f41-mono">GOCACHE</text>
+  <text x="350" y="233" text-anchor="middle" class="f41-sm"><tspan class="f41-mono">GOCACHE</tspan> or <tspan class="f41-mono">-o</tspan> dir</text>
 
   <rect class="f41-hit" x="490" y="164" width="190" height="48" rx="8"/>
   <text x="585" y="193" text-anchor="middle">hit: reuse output</text>
 
-  <rect class="f41-box" x="490" y="228" width="190" height="48" rx="8"/>
+  <rect class="f41-run" x="490" y="228" width="190" height="48" rx="8"/>
   <text x="585" y="257" text-anchor="middle">miss: run the tool</text>
 
   <line class="f41-line" x1="220" y1="218" x2="266" y2="218" marker-end="url(#f41-arrow)"/>
@@ -58,7 +58,7 @@
 
   <!-- Legend -->
   <rect class="f41-run" x="20" y="308" width="22" height="16" rx="3"/>
-  <text x="50" y="321" class="f41-sm">runs on every build, even when nothing changed</text>
+  <text x="50" y="321" class="f41-sm">runs; all but the tool run on every build</text>
   <rect class="f41-hit" x="440" y="308" width="22" height="16" rx="3"/>
-  <text x="470" y="321" class="f41-sm">skipped on a cache hit</text>
+  <text x="470" y="321" class="f41-sm">cache hit: the tool is skipped</text>
 </svg>

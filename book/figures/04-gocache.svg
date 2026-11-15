@@ -42,8 +42,8 @@
   <text x="416" y="70" class="f44-runtext">no entry</text>
   <text x="416" y="96" class="f44-sm">links are not stored</text>
 
-  <text x="400" y="164" class="f44-sm">A binary survives only where <tspan class="f44-mono">-o</tspan></text>
-  <text x="400" y="184" class="f44-sm">puts it, as a one-element cache.</text>
+  <text x="400" y="164" class="f44-sm">A binary survives only where <tspan class="f44-mono">-o</tspan> or</text>
+  <text x="400" y="184" class="f44-sm"><tspan class="f44-mono">go install</tspan> puts it, as a one-element cache.</text>
   <text x="400" y="212" class="f44-sm">Since Go 1.24, binaries built by</text>
   <text x="400" y="232" class="f44-sm"><tspan class="f44-mono">go run</tspan> and <tspan class="f44-mono">go tool</tspan> are stored.</text>
 </svg>
