@@ -3,15 +3,15 @@
   <style>
     .f92 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f92 .f92-head { font-weight: 600; }
-    .f92 .f92-key { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; opacity: 0.7; }
+    .f92 .f92-key { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; opacity: 0.7; }
     .f92 .f92-val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
     .f92 .f92-sm { font-size: 13px; opacity: 0.8; }
     .f92 .f92-card { fill: none; stroke: currentColor; stroke-width: 1.3; opacity: 0.6; }
     .f92 .f92-rule { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.18; }
-    .f92 .f92-diff { fill: #d9822b; fill-opacity: 0.16; stroke: #d9822b; stroke-width: 1.5; }
-    .f92 .f92-difftext { fill: #d9822b; font-weight: 600; }
+    .f92 .f92-diff { fill: currentColor; fill-opacity: 0.08; stroke: currentColor; stroke-opacity: 0.7; stroke-width: 1.5; }
+    .f92 .f92-difftext { font-weight: 700; }
     .f92 .f92-same { font-size: 16px; opacity: 0.55; }
-    .f92 .f92-ne { font-size: 16px; fill: #d9822b; font-weight: 700; }
+    .f92 .f92-ne { font-size: 16px; font-weight: 700; }
     /* The static state is the end state. One 9 s loop: the rows are compared top to bottom,
        the differing input and key light up, then the status files appear, then a pause. */
     .f92 .f92-c1 { animation: f92-k1 9s linear infinite; }
@@ -70,9 +70,9 @@
     <text x="396" y="112" class="f92-val">//cmd/hello:hello</text>
 
     <text x="28" y="135" class="f92-key">command_args</text>
-    <text x="28" y="152" class="f92-val">builder link -stamp … -X …</text>
+    <text x="28" y="152" class="f92-val">builder link -X … -stamp …</text>
     <text x="396" y="135" class="f92-key">command_args</text>
-    <text x="396" y="152" class="f92-val">builder link -stamp … -X …</text>
+    <text x="396" y="152" class="f92-val">builder link -X … -stamp …</text>
 
     <text x="28" y="175" class="f92-key">environment_variables</text>
     <text x="28" y="192" class="f92-val">GOOS=linux GOARCH=amd64 …</text>

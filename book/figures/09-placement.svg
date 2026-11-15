@@ -7,7 +7,7 @@
     .f93 .f93-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
     .f93 .f93-bz { fill: #43A047; fill-opacity: 0.12; stroke: #43A047; stroke-width: 1.5; }
     .f93 .f93-bztext { fill: #388E3C; font-weight: 600; }
-    .f93 .f93-pool { fill: #7e57c2; fill-opacity: 0.06; stroke: #7e57c2; stroke-width: 1.5; }
+    .f93 .f93-pool { fill: #7e57c2; fill-opacity: 0.12; stroke: #7e57c2; stroke-width: 1.5; }
     .f93 .f93-pooltext { fill: #7e57c2; }
     .f93 .f93-box { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.55; }
     .f93 .f93-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
@@ -49,23 +49,21 @@
   <text x="692" y="36" text-anchor="end" class="f93-sm f93-pooltext">platform's properties</text>
   <text x="316" y="56" class="f93-sm">many small machines: cores, modest memory</text>
   <g>
-    <rect class="f93-box" x="316" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="370" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="424" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="478" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="532" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="586" y="70" width="44" height="48" rx="5"/>
-    <rect class="f93-box" x="640" y="70" width="44" height="48" rx="5"/>
+    <rect class="f93-box" x="316" y="70" width="52" height="48" rx="5"/>
+    <rect class="f93-box" x="380" y="70" width="52" height="48" rx="5"/>
+    <rect class="f93-box" x="444" y="70" width="52" height="48" rx="5"/>
+    <rect class="f93-box" x="508" y="70" width="52" height="48" rx="5"/>
+    <rect class="f93-box" x="572" y="70" width="52" height="48" rx="5"/>
+    <rect class="f93-box" x="636" y="70" width="52" height="48" rx="5"/>
   </g>
   <g class="f93-s2">
-    <rect class="f93-run" x="324" y="84" width="28" height="20" rx="3"/>
-    <rect class="f93-run" x="378" y="84" width="28" height="20" rx="3"/>
-    <rect class="f93-run" x="432" y="84" width="28" height="20" rx="3"/>
+    <rect class="f93-run" x="328" y="84" width="28" height="20" rx="3"/>
+    <rect class="f93-run" x="392" y="84" width="28" height="20" rx="3"/>
+    <rect class="f93-run" x="456" y="84" width="28" height="20" rx="3"/>
   </g>
   <g class="f93-s3">
-    <rect class="f93-run" x="486" y="84" width="28" height="20" rx="3"/>
-    <rect class="f93-run" x="540" y="84" width="28" height="20" rx="3"/>
-    <rect class="f93-run" x="594" y="84" width="28" height="20" rx="3"/>
+    <rect class="f93-run" x="520" y="84" width="28" height="20" rx="3"/>
+    <rect class="f93-run" x="584" y="84" width="28" height="20" rx="3"/>
     <rect class="f93-run" x="648" y="84" width="28" height="20" rx="3"/>
   </g>
 
