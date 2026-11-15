@@ -50,7 +50,7 @@ In our view, Bazel pays when one or more of these hold:
   generators.** Bazel caches each, test runs included,[^bazel-test-spawn] as an action keyed by
   its declared inputs (Chapter 6), in a remote cache: a server shared by every machine.
 - **Other languages or code generators share the graph.** Bazel's BUILD files can declare
-  actions in any language (Chapter 3).
+  actions in any language (Chapters 6 and 8).
 - **One build outgrows one machine.** Remote execution runs actions on a pool of
   machines,[^bazel-rbe] though no pool shortens the critical path, the longest chain of dependent
   actions (Chapter 5).
