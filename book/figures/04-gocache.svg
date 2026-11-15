@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" role="img" aria-labelledby="f44-title" class="f44">
+  <title id="f44-title">GOCACHE holds an entry per compile, from its action ID to an output file named by the output's hash. A link has no entry.</title>
+  <style>
+    .f44 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f44 .f44-sm { font-size: 13px; opacity: 0.8; }
+    .f44 .f44-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f44 .f44-head { font-weight: 600; }
+    .f44 .f44-go { fill: #0b7fab; fill-opacity: 0.12; stroke: #0b7fab; stroke-width: 1.5; }
+    .f44 .f44-run { fill: #d9822b; fill-opacity: 0.15; stroke: #d9822b; stroke-width: 1.5; }
+    .f44 .f44-runtext { fill: #d9822b; }
+    .f44 .f44-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f44 .f44-sep { stroke: currentColor; stroke-width: 1; opacity: 0.25; }
+  </style>
+  <defs>
+    <marker id="f44-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Compile column -->
+  <text x="20" y="28" class="f44-head">compile core</text>
+  <text x="140" y="28" class="f44-mono">action ID 3f2a…</text>
+
+  <rect class="f44-go" x="20" y="44" width="320" height="76" rx="8"/>
+  <text x="36" y="70" class="f44-mono">$GOCACHE/3f/3f2a…-a</text>
+  <text x="36" y="96" class="f44-sm">output ID, size, time</text>
+
+  <line class="f44-line" x1="180" y1="120" x2="180" y2="172" marker-end="url(#f44-arrow)"/>
+  <text x="192" y="151" class="f44-sm">output ID 9c41…</text>
+
+  <rect class="f44-go" x="20" y="176" width="320" height="76" rx="8"/>
+  <text x="36" y="202" class="f44-mono">$GOCACHE/9c/9c41…-d</text>
+  <text x="36" y="228" class="f44-sm">the archive, named by its hash</text>
+
+  <line class="f44-sep" x1="370" y1="12" x2="370" y2="258"/>
+
+  <!-- Link column -->
+  <text x="400" y="28" class="f44-head">link app00</text>
+  <text x="496" y="28" class="f44-mono">action ID 7b10…</text>
+
+  <rect class="f44-run" x="400" y="44" width="300" height="76" rx="8"/>
+  <text x="416" y="70" class="f44-runtext">no entry</text>
+  <text x="416" y="96" class="f44-sm">links are not stored</text>
+
+  <text x="400" y="164" class="f44-sm">A binary survives only where <tspan class="f44-mono">-o</tspan></text>
+  <text x="400" y="184" class="f44-sm">puts it, as a one-element cache.</text>
+  <text x="400" y="212" class="f44-sm">Since Go 1.24, binaries built by</text>
+  <text x="400" y="232" class="f44-sm"><tspan class="f44-mono">go run</tspan> and <tspan class="f44-mono">go tool</tspan> are stored.</text>
+</svg>

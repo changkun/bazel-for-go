@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 350" role="img" aria-labelledby="f43-title" class="f43">
+  <title id="f43-title">An edit to a function body in core. Core and its direct importers recompile, the packages above them hit the cache, and both binaries relink.</title>
+  <style>
+    .f43 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f43 .f43-sm { font-size: 13px; opacity: 0.8; }
+    .f43 .f43-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f43 .f43-node { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f43 .f43-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
+    .f43 .f43-hit { fill: #8a8f98; fill-opacity: 0.14; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .f43 .f43-edge { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.45; }
+    .f43 .f43-hot { fill: none; stroke: #d9822b; stroke-width: 2; }
+    .f43 .f43-runtext { fill: #d9822b; font-weight: 600; }
+    .f43 .f43-hittext { fill: #8a8f98; font-weight: 600; }
+    .f43 .f43-editline { fill: none; stroke: #d9822b; stroke-width: 1.5; }
+
+    /* The static state is the end state; each step fades in once per 9 s loop. */
+    .f43 .f43-s0 { animation: f43-k0 9s linear infinite; }
+    .f43 .f43-s1 { animation: f43-k1 9s linear infinite; }
+    .f43 .f43-s2 { animation: f43-k2 9s linear infinite; }
+    .f43 .f43-s3 { animation: f43-k3 9s linear infinite; }
+    .f43 .f43-s3off { opacity: 0; animation: f43-k3off 9s linear infinite; }
+    .f43 .f43-s4 { animation: f43-k4 9s linear infinite; }
+    @keyframes f43-k0 { 0%, 2% { opacity: 0; } 6%, 100% { opacity: 1; } }
+    @keyframes f43-k1 { 0%, 10% { opacity: 0; } 14%, 100% { opacity: 1; } }
+    @keyframes f43-k2 { 0%, 28% { opacity: 0; } 32%, 100% { opacity: 1; } }
+    @keyframes f43-k3 { 0%, 46% { opacity: 0; } 50%, 100% { opacity: 1; } }
+    @keyframes f43-k3off { 0%, 46% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    @keyframes f43-k4 { 0%, 62% { opacity: 0; } 66%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- Import edges (importer above, import below) -->
+  <g class="f43-edge">
+    <line x1="120" y1="60" x2="70" y2="110"/>
+    <line x1="120" y1="60" x2="210" y2="110"/>
+    <line x1="300" y1="60" x2="210" y2="110"/>
+    <line x1="300" y1="60" x2="350" y2="110"/>
+    <line x1="70" y1="150" x2="70" y2="200"/>
+    <line x1="70" y1="150" x2="210" y2="200"/>
+    <line x1="210" y1="150" x2="210" y2="200"/>
+    <line x1="350" y1="150" x2="350" y2="200"/>
+    <line x1="70" y1="240" x2="210" y2="290"/>
+    <line x1="210" y1="240" x2="210" y2="290"/>
+    <line x1="350" y1="240" x2="210" y2="290"/>
+  </g>
+  <!-- core's new content ID reaches its direct importers -->
+  <g class="f43-hot f43-s2">
+    <line x1="70" y1="240" x2="210" y2="290"/>
+    <line x1="210" y1="240" x2="210" y2="290"/>
+    <line x1="350" y1="240" x2="210" y2="290"/>
+  </g>
+
+  <!-- Binaries: relink -->
+  <rect class="f43-node" x="70" y="20" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s4" x="70" y="20" width="100" height="40" rx="8"/>
+  <text x="120" y="45" text-anchor="middle" class="f43-mono">app00</text>
+  <rect class="f43-node" x="250" y="20" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s4" x="250" y="20" width="100" height="40" rx="8"/>
+  <text x="300" y="45" text-anchor="middle" class="f43-mono">app01</text>
+
+  <!-- Two levels above core: cache hit -->
+  <rect class="f43-node f43-s3off" x="20" y="110" width="100" height="40" rx="8"/>
+  <rect class="f43-hit f43-s3" x="20" y="110" width="100" height="40" rx="8"/>
+  <text x="70" y="135" text-anchor="middle" class="f43-mono">api</text>
+  <rect class="f43-node f43-s3off" x="160" y="110" width="100" height="40" rx="8"/>
+  <rect class="f43-hit f43-s3" x="160" y="110" width="100" height="40" rx="8"/>
+  <text x="210" y="135" text-anchor="middle" class="f43-mono">store</text>
+  <rect class="f43-node f43-s3off" x="300" y="110" width="100" height="40" rx="8"/>
+  <rect class="f43-hit f43-s3" x="300" y="110" width="100" height="40" rx="8"/>
+  <text x="350" y="135" text-anchor="middle" class="f43-mono">jobs</text>
+
+  <!-- Direct importers: recompile -->
+  <rect class="f43-node" x="20" y="200" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s2" x="20" y="200" width="100" height="40" rx="8"/>
+  <text x="70" y="225" text-anchor="middle" class="f43-mono">auth</text>
+  <rect class="f43-node" x="160" y="200" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s2" x="160" y="200" width="100" height="40" rx="8"/>
+  <text x="210" y="225" text-anchor="middle" class="f43-mono">billing</text>
+  <rect class="f43-node" x="300" y="200" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s2" x="300" y="200" width="100" height="40" rx="8"/>
+  <text x="350" y="225" text-anchor="middle" class="f43-mono">search</text>
+
+  <!-- core: recompile -->
+  <rect class="f43-node" x="160" y="290" width="100" height="40" rx="8"/>
+  <rect class="f43-run f43-s1" x="160" y="290" width="100" height="40" rx="8"/>
+  <text x="210" y="315" text-anchor="middle" class="f43-mono">core</text>
+
+  <!-- The edit -->
+  <g class="f43-s0">
+    <text x="20" y="315" class="f43-runtext">edit</text>
+    <line class="f43-editline" x1="56" y1="310" x2="154" y2="310"/>
+    <path d="M154,305 L160,310 L154,315 z" fill="#d9822b"/>
+  </g>
+
+  <!-- Row labels -->
+  <g class="f43-s4">
+    <text x="440" y="37" class="f43-runtext">relink</text>
+    <text x="440" y="56" class="f43-sm">core's content ID is in every link key</text>
+  </g>
+  <g class="f43-s3">
+    <text x="440" y="127" class="f43-hittext">cache hit</text>
+    <text x="440" y="146" class="f43-sm">the packages below came out identical</text>
+  </g>
+  <g class="f43-s2">
+    <text x="440" y="217" class="f43-runtext">recompile</text>
+    <text x="440" y="236" class="f43-sm">core's content ID changed</text>
+  </g>
+  <g class="f43-s1">
+    <text x="440" y="307" class="f43-runtext">recompile</text>
+    <text x="440" y="326" class="f43-sm">a source file changed</text>
+  </g>
+</svg>

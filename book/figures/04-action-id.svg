@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" role="img" aria-labelledby="f42-title" class="f42">
+  <title id="f42-title">The inputs hashed into a compile's action ID. The package directory differs between checkouts, so two checkouts get different IDs.</title>
+  <style>
+    .f42 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f42 .f42-sm { font-size: 13px; opacity: 0.8; }
+    .f42 .f42-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f42 .f42-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f42 .f42-dir { fill: #d9822b; fill-opacity: 0.15; stroke: #d9822b; stroke-width: 1.5; }
+    .f42 .f42-dirtext { fill: #d9822b; }
+    .f42 .f42-go { fill: #0b7fab; fill-opacity: 0.15; stroke: #0b7fab; stroke-width: 1.5; }
+    .f42 .f42-funnel { fill: currentColor; fill-opacity: 0.06; stroke: currentColor; stroke-width: 1.5; }
+    .f42 .f42-line { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.6; }
+    .f42 .f42-dirline { fill: none; stroke: #d9822b; stroke-width: 1.5; }
+    .f42 .f42-arrowline { fill: none; stroke: currentColor; stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="f42-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- Inputs -->
+  <rect class="f42-box" x="20" y="20" width="300" height="40" rx="6"/>
+  <text x="34" y="45">compiler version and flags</text>
+
+  <rect class="f42-box" x="20" y="70" width="300" height="40" rx="6"/>
+  <text x="34" y="95">GOOS, GOARCH, GOEXPERIMENT</text>
+
+  <rect class="f42-box" x="20" y="120" width="300" height="40" rx="6"/>
+  <text x="34" y="145">import path</text>
+  <text x="306" y="145" text-anchor="end" class="f42-mono">example.com/core</text>
+
+  <rect class="f42-dir" x="20" y="170" width="300" height="56" rx="6"/>
+  <text x="34" y="192">package directory</text>
+  <text x="34" y="214" class="f42-mono">/ci/run-41/src/core</text>
+
+  <rect class="f42-box" x="20" y="236" width="300" height="40" rx="6"/>
+  <text x="34" y="261">each source file's contents</text>
+
+  <rect class="f42-box" x="20" y="286" width="300" height="40" rx="6"/>
+  <text x="34" y="311">each import's content ID</text>
+
+  <!-- Lines into the funnel -->
+  <path class="f42-line" d="M320,40 C360,40 370,70 400,70"/>
+  <path class="f42-line" d="M320,90 C360,90 370,115 400,115"/>
+  <path class="f42-line" d="M320,140 C360,140 370,160 400,160"/>
+  <path class="f42-dirline" d="M320,198 C360,198 370,205 400,205"/>
+  <path class="f42-line" d="M320,256 C360,256 370,250 400,250"/>
+  <path class="f42-line" d="M320,306 C360,306 370,295 400,295"/>
+
+  <!-- Funnel -->
+  <path class="f42-funnel" d="M400,50 L400,315 L500,205 L500,160 Z"/>
+  <text x="448" y="187" text-anchor="middle" class="f42-sm">SHA-256</text>
+
+  <line class="f42-arrowline" x1="500" y1="182" x2="546" y2="182" marker-end="url(#f42-arrow)"/>
+
+  <!-- Output -->
+  <rect class="f42-go" x="550" y="156" width="150" height="52" rx="8"/>
+  <text x="625" y="178" text-anchor="middle">action ID</text>
+  <text x="625" y="198" text-anchor="middle" class="f42-mono">3f2a…</text>
+
+  <!-- Note -->
+  <text x="550" y="250" class="f42-dirtext">Another checkout path</text>
+  <text x="550" y="270" class="f42-dirtext">gives another ID.</text>
+  <text x="550" y="294" class="f42-sm"><tspan class="f42-mono">-trimpath</tspan> leaves</text>
+  <text x="550" y="312" class="f42-sm">the directory out.</text>
+</svg>
