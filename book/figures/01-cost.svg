@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 212" role="img" aria-labelledby="f14-title">
+  <title id="f14-title">Illustrative shares of build time, not to scale. For one engineer on a laptop with warm caches, obtaining the graph and detecting change take most of the time, with a few actions run. For a fleet of CI jobs, running actions dominates, and moving bytes to and from shared caches takes a visible share.</title>
+  <style>
+    .f14 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f14-note { font-size: 13px; fill-opacity: .65; font-style: italic; }
+    .f14-term { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f14-graph { fill: currentColor; fill-opacity: .2; stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
+    .f14-detect { fill: url(#f14-hatch); stroke: currentColor; stroke-opacity: .7; stroke-width: 1.2; }
+    .f14-exec { fill: #d9822b; fill-opacity: .18; stroke: #d9822b; stroke-width: 1.2; }
+    .f14-transfer { fill: #7e57c2; fill-opacity: .18; stroke: #7e57c2; stroke-width: 1.2; }
+    .f14-tick { stroke: currentColor; stroke-opacity: .6; stroke-width: 1; }
+  </style>
+  <defs>
+    <pattern id="f14-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-opacity=".22" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <g class="f14">
+    <text class="f14-note" x="696" y="20" text-anchor="end">illustrative shares of one build's time, not to scale</text>
+
+    <!-- one engineer, warm laptop -->
+    <text x="24" y="50">One engineer, warm laptop</text>
+    <rect class="f14-graph" x="24" y="60" width="252" height="34" rx="3"/>
+    <rect class="f14-detect" x="279" y="60" width="178" height="34" rx="3"/>
+    <rect class="f14-exec" x="460" y="60" width="236" height="34" rx="3"/>
+    <text class="f14-term" x="150" y="81.5" text-anchor="middle">T_graph</text>
+    <text class="f14-term" x="368" y="81.5" text-anchor="middle">T_detect</text>
+    <text class="f14-term" x="578" y="81.5" text-anchor="middle">T_exec</text>
+
+    <!-- a fleet of CI jobs -->
+    <text x="24" y="128">A fleet of CI jobs</text>
+    <rect class="f14-graph" x="24" y="138" width="78" height="34" rx="3"/>
+    <rect class="f14-detect" x="105" y="138" width="31" height="34" rx="3"/>
+    <rect class="f14-exec" x="139" y="138" width="420" height="34" rx="3"/>
+    <rect class="f14-transfer" x="562" y="138" width="134" height="34" rx="3"/>
+    <text class="f14-term" x="63" y="159.5" text-anchor="middle">T_graph</text>
+    <text class="f14-term" x="349" y="159.5" text-anchor="middle">T_exec</text>
+    <text class="f14-term" x="629" y="159.5" text-anchor="middle">T_transfer</text>
+    <line class="f14-tick" x1="120.5" y1="174" x2="120.5" y2="186"/>
+    <text class="f14-term" x="120.5" y="201" text-anchor="middle">T_detect</text>
+  </g>
+</svg>

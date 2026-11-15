@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 272" role="img" aria-labelledby="f12-title">
+  <title id="f12-title">Early cutoff and the critical path. An edit to a reruns a. Its new output reruns d, but d's output comes out unchanged, so f, g and h are cache hits, and b, c and e were never affected. A band marks the critical path, the longest chain a, d, f, g, h.</title>
+  <style>
+    .f12 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f12-small { font-size: 13px; }
+    .f12-node rect { stroke-width: 1.5; }
+    .f12-node text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+    .f12-edge { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.3; }
+
+    /* End state (shown without animation). */
+    .f12-ran rect { fill: #d9822b; fill-opacity: .16; stroke: #d9822b; }
+    .f12-hit rect { fill: #8a8f98; fill-opacity: .15; stroke: #8a8f98; stroke-dasharray: 5 3; }
+    .f12-hot { stroke: #d9822b; stroke-opacity: 1; stroke-width: 1.8; }
+    .f12-band { fill: none; stroke: currentColor; stroke-opacity: .09; stroke-width: 50; stroke-linecap: round; stroke-linejoin: round; }
+    .f12-edit rect { fill: #d9822b; fill-opacity: .16; stroke: #d9822b; stroke-width: 1.3; }
+    .f12-badge rect { fill: none; stroke: currentColor; stroke-width: 1; }
+    .f12-stop { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+
+    /* One 9 s loop: edit, a reruns, d reruns, d's output is the same,
+       the rest stay cache hits, then the critical path; hold at the end. */
+    .f12-edit  { animation: f12-show-edit 9s infinite; }
+    .f12-a rect { animation: f12-run-a 9s infinite; }
+    .f12-hot   { animation: f12-hot-ad 9s infinite; }
+    .f12-d rect { animation: f12-run-d 9s infinite; }
+    .f12-badge { animation: f12-show-badge 9s infinite; }
+    .f12-stop  { animation: f12-show-stop 9s infinite; }
+    .f12-hit rect { animation: f12-skip 9s infinite; }
+    .f12-band, .f12-cp-label { animation: f12-show-cp 9s infinite; }
+
+    @keyframes f12-show-edit  { 0%, 6%  { opacity: 0 } 10%, 100% { opacity: 1 } }
+    @keyframes f12-run-a      { 0%, 12% { fill-opacity: 0; stroke: currentColor } 16%, 100% { fill-opacity: .16; stroke: #d9822b } }
+    @keyframes f12-hot-ad     { 0%, 19% { stroke: currentColor; stroke-opacity: .55 } 23%, 100% { stroke: #d9822b; stroke-opacity: 1 } }
+    @keyframes f12-run-d      { 0%, 25% { fill-opacity: 0; stroke: currentColor } 29%, 100% { fill-opacity: .16; stroke: #d9822b } }
+    @keyframes f12-show-badge { 0%, 35% { opacity: 0 } 39%, 100% { opacity: 1 } }
+    @keyframes f12-show-stop  { 0%, 41% { opacity: 0 } 45%, 100% { opacity: 1 } }
+    @keyframes f12-skip {
+      0%, 47%   { fill-opacity: 0; stroke: currentColor; stroke-dasharray: none }
+      51%, 100% { fill-opacity: .15; stroke: #8a8f98; stroke-dasharray: 5 3 }
+    }
+    @keyframes f12-show-cp    { 0%, 60% { opacity: 0 } 67%, 100% { opacity: 1 } }
+
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <defs>
+    <marker id="f12-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor" fill-opacity=".7"/>
+    </marker>
+  </defs>
+
+  <g class="f12">
+    <!-- critical path band, behind everything -->
+    <path class="f12-band" d="M88,60 L378,60 L508,112 L668,112"/>
+    <text class="f12-cp-label f12-small" x="378" y="24" text-anchor="middle">critical path</text>
+
+    <!-- edges -->
+    <path class="f12-edge f12-hot" d="M166,60 L198,60" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M296,60 L328,60" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M426,66 L458,100" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M296,160 C380,160 400,124 458,120" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M166,136 L198,154" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M166,194 L198,176" marker-end="url(#f12-arrow)"/>
+    <path class="f12-edge" d="M556,112 L588,112" marker-end="url(#f12-arrow)"/>
+
+    <!-- stop mark: d's output is the same, so nothing passes to f -->
+    <path class="f12-stop" d="M312,49 L312,71"/>
+
+    <!-- nodes -->
+    <g class="f12-node f12-ran f12-a"><rect x="70" y="43" width="96" height="34" rx="6"/><text x="118" y="65" text-anchor="middle">a</text></g>
+    <g class="f12-node f12-hit"><rect x="70" y="113" width="96" height="34" rx="6"/><text x="118" y="135" text-anchor="middle">b</text></g>
+    <g class="f12-node f12-hit"><rect x="70" y="183" width="96" height="34" rx="6"/><text x="118" y="205" text-anchor="middle">c</text></g>
+    <g class="f12-node f12-ran f12-d"><rect x="200" y="43" width="96" height="34" rx="6"/><text x="248" y="65" text-anchor="middle">d</text></g>
+    <g class="f12-node f12-hit"><rect x="200" y="148" width="96" height="34" rx="6"/><text x="248" y="170" text-anchor="middle">e</text></g>
+    <g class="f12-node f12-hit"><rect x="330" y="43" width="96" height="34" rx="6"/><text x="378" y="65" text-anchor="middle">f</text></g>
+    <g class="f12-node f12-hit"><rect x="460" y="95" width="96" height="34" rx="6"/><text x="508" y="117" text-anchor="middle">g</text></g>
+    <g class="f12-node f12-hit"><rect x="590" y="95" width="96" height="34" rx="6"/><text x="638" y="117" text-anchor="middle">h</text></g>
+
+    <!-- edit marker on a -->
+    <g class="f12-edit">
+      <rect x="10" y="47" width="46" height="26" rx="13"/>
+      <text class="f12-small" x="33" y="64.5" text-anchor="middle">edit</text>
+      <path class="f12-edge" d="M56,60 L68,60" style="stroke:#d9822b;stroke-opacity:1"/>
+    </g>
+
+    <!-- d's output is the same as last time -->
+    <g class="f12-badge">
+      <rect x="203" y="86" width="90" height="22" rx="11"/>
+      <text class="f12-small" x="248" y="101.5" text-anchor="middle">same output</text>
+    </g>
+
+    <!-- legend -->
+    <g transform="translate(70,248)">
+      <rect x="0" y="-12" width="26" height="16" rx="4" fill="#d9822b" fill-opacity=".16" stroke="#d9822b" stroke-width="1.3"/>
+      <text class="f12-small" x="34" y="1">reran</text>
+      <rect x="110" y="-12" width="26" height="16" rx="4" fill="#8a8f98" fill-opacity=".15" stroke="#8a8f98" stroke-width="1.3" stroke-dasharray="5 3"/>
+      <text class="f12-small" x="144" y="1">cache hit</text>
+      <path d="M248,-4 L276,-4" stroke="currentColor" stroke-opacity=".09" stroke-width="16" stroke-linecap="round"/>
+      <text class="f12-small" x="290" y="1">critical path: the longest chain</text>
+    </g>
+  </g>
+</svg>

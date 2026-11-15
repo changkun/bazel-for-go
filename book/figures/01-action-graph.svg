@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 350" role="img" aria-labelledby="f11-title">
+  <title id="f11-title">A build as a graph of actions. Sources feed compile actions, which feed a link that produces the binary. One action, compile b, is shown up close: its inputs are hashed into a key, and the key is looked up in a cache, which either hits and reuses the stored output or misses and runs the action.</title>
+  <style>
+    .f11 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f11-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f11-head { font-size: 13px; fill-opacity: .65; }
+    .f11-small { font-size: 13px; }
+    .f11-b { font-weight: 600; }
+    .f11-box { fill: none; stroke: currentColor; stroke-width: 1.3; }
+    .f11-file { fill: currentColor; fill-opacity: .06; stroke: currentColor; stroke-opacity: .6; stroke-width: 1; }
+    .f11-focus { fill: none; stroke: currentColor; stroke-width: 2.6; }
+    .f11-edge { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.3; }
+    .f11-panel { fill: none; stroke: currentColor; stroke-opacity: .35; stroke-width: 1; }
+    .f11-leader { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-dasharray: 3 3; }
+    .f11-hit { fill: #8a8f98; fill-opacity: .15; stroke: #8a8f98; stroke-width: 1.3; stroke-dasharray: 5 3; }
+    .f11-miss { fill: #d9822b; fill-opacity: .15; stroke: #d9822b; stroke-width: 1.3; }
+    .f11-hit-edge { fill: none; stroke: #8a8f98; stroke-width: 1.3; stroke-dasharray: 5 3; }
+    .f11-miss-edge { fill: none; stroke: #d9822b; stroke-width: 1.3; }
+  </style>
+  <defs>
+    <marker id="f11-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor" fill-opacity=".7"/>
+    </marker>
+    <marker id="f11-arrow-hit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8f98"/>
+    </marker>
+    <marker id="f11-arrow-miss" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d9822b"/>
+    </marker>
+  </defs>
+
+  <g class="f11">
+    <!-- column heads -->
+    <text class="f11-head" x="132" y="22" text-anchor="middle">sources</text>
+    <text class="f11-head" x="375" y="22" text-anchor="middle">actions</text>
+    <text class="f11-head" x="598" y="22" text-anchor="middle">output</text>
+
+    <!-- sources -->
+    <rect class="f11-file" x="100" y="39" width="64" height="26" rx="3"/>
+    <text class="f11-mono" x="132" y="56.5" text-anchor="middle">c.go</text>
+    <rect class="f11-file" x="100" y="95" width="64" height="26" rx="3"/>
+    <text class="f11-mono" x="132" y="112.5" text-anchor="middle">a.go</text>
+    <rect class="f11-file" x="100" y="151" width="64" height="26" rx="3"/>
+    <text class="f11-mono" x="132" y="168.5" text-anchor="middle">b.go</text>
+
+    <!-- compile actions -->
+    <rect class="f11-box" x="240" y="37" width="112" height="30" rx="6"/>
+    <text x="296" y="57" text-anchor="middle">compile c</text>
+    <rect class="f11-box" x="240" y="93" width="112" height="30" rx="6"/>
+    <text x="296" y="113" text-anchor="middle">compile a</text>
+    <rect class="f11-focus" x="240" y="149" width="112" height="30" rx="6"/>
+    <text class="f11-b" x="296" y="169" text-anchor="middle">compile b</text>
+
+    <!-- link and output -->
+    <rect class="f11-box" x="430" y="93" width="80" height="30" rx="6"/>
+    <text x="470" y="113" text-anchor="middle">link</text>
+    <rect class="f11-file" x="570" y="95" width="56" height="26" rx="3"/>
+    <text class="f11-mono" x="598" y="112.5" text-anchor="middle">app</text>
+
+    <!-- edges -->
+    <path class="f11-edge" d="M164,52 L238,52" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M164,108 L238,108" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M164,164 L238,164" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M296,93 L296,69" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M296,123 L296,147" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M352,52 C392,52 392,100 428,104" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M352,108 L428,108" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M352,164 C392,164 392,116 428,112" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M510,108 L568,108" marker-end="url(#f11-arrow)"/>
+
+    <!-- leader to the close-up -->
+    <path class="f11-leader" d="M296,179 L296,214"/>
+
+    <!-- close-up panel -->
+    <rect class="f11-panel" x="12" y="214" width="696" height="128" rx="8"/>
+    <text class="f11-head" x="28" y="236">inputs of compile b</text>
+
+    <rect class="f11-file" x="28" y="246" width="164" height="24" rx="3"/>
+    <text class="f11-mono" x="40" y="262.5">b.go</text>
+    <rect class="f11-file" x="28" y="276" width="164" height="24" rx="3"/>
+    <text class="f11-small" x="40" y="292.5">output of compile a</text>
+    <rect class="f11-file" x="28" y="306" width="164" height="24" rx="3"/>
+    <text class="f11-small" x="40" y="322.5">compiler and flags</text>
+
+    <path class="f11-edge" d="M192,258 C214,258 214,280 238,282" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M192,288 L238,288" marker-end="url(#f11-arrow)"/>
+    <path class="f11-edge" d="M192,318 C214,318 214,296 238,294" marker-end="url(#f11-arrow)"/>
+
+    <rect class="f11-box" x="240" y="262" width="140" height="52" rx="6"/>
+    <text class="f11-b" x="310" y="284" text-anchor="middle">key</text>
+    <text class="f11-small" x="310" y="302" text-anchor="middle">hash of the inputs</text>
+
+    <path class="f11-edge" d="M380,288 L436,288" marker-end="url(#f11-arrow)"/>
+    <text class="f11-small" x="409" y="280" text-anchor="middle">look up</text>
+
+    <!-- cache cylinder -->
+    <path class="f11-box" d="M440,268 L440,308 A40,9 0 0 0 520,308 L520,268"/>
+    <ellipse class="f11-box" cx="480" cy="268" rx="40" ry="9"/>
+    <text x="480" y="296" text-anchor="middle">cache</text>
+
+    <!-- hit and miss -->
+    <path class="f11-hit-edge" d="M522,278 C546,278 546,258 568,256" marker-end="url(#f11-arrow-hit)"/>
+    <rect class="f11-hit" x="572" y="240" width="124" height="32" rx="6"/>
+    <text class="f11-small" x="634" y="261" text-anchor="middle">hit: reuse output</text>
+
+    <path class="f11-miss-edge" d="M522,298 C546,298 546,318 568,320" marker-end="url(#f11-arrow-miss)"/>
+    <rect class="f11-miss" x="572" y="304" width="124" height="32" rx="6"/>
+    <text class="f11-small" x="634" y="325" text-anchor="middle">miss: run, store</text>
+  </g>
+</svg>
