@@ -301,7 +301,7 @@ func (r *Repo) writePkg(p *pkg, putGo func(string, []byte) error, put func(strin
 
 	// api.go: the entry point importers call, which calls every dependency.
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "// Package %s is synthetic, generated for the measurements in Chapter 8.\npackage %s\n\nimport (\n\t\"strconv\"\n", name, name)
+	fmt.Fprintf(&b, "// Package %s is synthetic, generated for the measurements in Chapter 9.\npackage %s\n\nimport (\n\t\"strconv\"\n", name, name)
 	var deps []string
 	for _, j := range p.deps {
 		fmt.Fprintf(&b, "\t%q\n", modPath+"/"+r.pkgs[j].dir())

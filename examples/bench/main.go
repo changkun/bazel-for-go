@@ -1,5 +1,5 @@
 // Command bench generates synthetic Go repositories and measures how long the go command and
-// Bazel take to build and test them. Chapters 6 and 8 of the book report its results.
+// Bazel take to build and test them. Chapters 5 and 9 of the book report its results.
 //
 //	bench gen -pkgs 1000 -o /tmp/synth   generate one repository
 package main
