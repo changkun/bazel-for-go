@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="f91-title" class="f91">
+  <title id="f91-title">The critical path of two Bazel builds of 1,000 packages, drawn to one time scale. Cold build, 30.4 seconds: building rules_go's builder 14.1 s, the standard library for tools 9.5 s, the code generator 2.0 s, thirteen compiles 2.4 s and one link 2.3 s. The first two, 23.6 s, are rules_go's own setup and the same on every machine. After an edit to a function body in core, 3.3 seconds: one compile of 0.1 s, then one link of 3.2 s.</title>
+  <style>
+    .f91 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f91 .f91-sm { font-size: 13px; opacity: 0.8; }
+    .f91 .f91-head { font-weight: 600; }
+    .f91 .f91-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
+    .f91 .f91-slice { fill: none; stroke: #d9822b; stroke-width: 1; }
+    .f91 .f91-rm { fill: none; stroke: #7e57c2; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .f91 .f91-rmtext { fill: #7e57c2; font-size: 13px; }
+    .f91 .f91-lead { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.5; }
+    .f91 .f91-axis { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.6; }
+    /* The static state is the end state. One 9 s loop: the cold path's steps appear in the
+       order they ran, then the edit's, then a pause. */
+    .f91 .f91-a1 { animation: f91-k1 9s linear infinite; }
+    .f91 .f91-a2 { animation: f91-k2 9s linear infinite; }
+    .f91 .f91-a3 { animation: f91-k3 9s linear infinite; }
+    .f91 .f91-a4 { animation: f91-k4 9s linear infinite; }
+    .f91 .f91-a5 { animation: f91-k5 9s linear infinite; }
+    .f91 .f91-a6 { animation: f91-k6 9s linear infinite; }
+    .f91 .f91-a7 { animation: f91-k7 9s linear infinite; }
+    .f91 .f91-a8 { animation: f91-k8 9s linear infinite; }
+    @keyframes f91-k1 { 0%, 3% { opacity: 0; } 7%, 100% { opacity: 1; } }
+    @keyframes f91-k2 { 0%, 13% { opacity: 0; } 17%, 100% { opacity: 1; } }
+    @keyframes f91-k3 { 0%, 23% { opacity: 0; } 27%, 100% { opacity: 1; } }
+    @keyframes f91-k4 { 0%, 29% { opacity: 0; } 33%, 100% { opacity: 1; } }
+    @keyframes f91-k5 { 0%, 35% { opacity: 0; } 39%, 100% { opacity: 1; } }
+    @keyframes f91-k6 { 0%, 45% { opacity: 0; } 49%, 100% { opacity: 1; } }
+    @keyframes f91-k7 { 0%, 57% { opacity: 0; } 61%, 100% { opacity: 1; } }
+    @keyframes f91-k8 { 0%, 63% { opacity: 0; } 67%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- Cold build -->
+  <text x="56" y="22"><tspan class="f91-head">Cold build</tspan><tspan class="f91-sm" dx="8">critical path 30.4 s</tspan></text>
+
+  <g class="f91-a6">
+    <path class="f91-rm" d="M57,58 L57,46 L527,46 L527,58"/>
+    <text x="292" y="38" text-anchor="middle" class="f91-rmtext">rules_go's setup, 23.6 s: the same on every machine</text>
+  </g>
+
+  <g class="f91-a1">
+    <rect class="f91-run" x="56" y="58" width="281" height="38" rx="4"/>
+    <text x="196.5" y="74" text-anchor="middle">build rules_go's builder</text>
+    <text x="196.5" y="90" text-anchor="middle" class="f91-sm">14.1 s</text>
+  </g>
+  <g class="f91-a2">
+    <rect class="f91-run" x="337" y="58" width="191" height="38" rx="4"/>
+    <text x="432.5" y="74" text-anchor="middle">standard library, tools</text>
+    <text x="432.5" y="90" text-anchor="middle" class="f91-sm">9.5 s</text>
+  </g>
+  <g class="f91-a3">
+    <rect class="f91-run" x="528" y="58" width="40.5" height="38" rx="4"/>
+    <line class="f91-lead" x1="548" y1="96" x2="548" y2="112"/>
+    <text x="544" y="126" text-anchor="end" class="f91-sm">code generator 2.0 s</text>
+  </g>
+  <g class="f91-a4">
+    <rect class="f91-run" x="568.5" y="58" width="48.8" height="38" rx="2"/>
+    <g class="f91-slice">
+      <line x1="571.3" y1="58" x2="571.3" y2="96"/>
+      <line x1="575.9" y1="58" x2="575.9" y2="96"/>
+      <line x1="579.1" y1="58" x2="579.1" y2="96"/>
+      <line x1="582.4" y1="58" x2="582.4" y2="96"/>
+      <line x1="586.4" y1="58" x2="586.4" y2="96"/>
+      <line x1="591.1" y1="58" x2="591.1" y2="96"/>
+      <line x1="597.6" y1="58" x2="597.6" y2="96"/>
+      <line x1="600.7" y1="58" x2="600.7" y2="96"/>
+      <line x1="603.6" y1="58" x2="603.6" y2="96"/>
+      <line x1="606.6" y1="58" x2="606.6" y2="96"/>
+      <line x1="611.5" y1="58" x2="611.5" y2="96"/>
+      <line x1="614.9" y1="58" x2="614.9" y2="96"/>
+    </g>
+    <line class="f91-lead" x1="593" y1="96" x2="593" y2="132"/>
+    <text x="589" y="146" text-anchor="end" class="f91-sm">13 compiles 2.4 s</text>
+  </g>
+  <g class="f91-a5">
+    <rect class="f91-run" x="617.4" y="58" width="47" height="38" rx="4"/>
+    <line class="f91-lead" x1="641" y1="96" x2="641" y2="152"/>
+    <text x="637" y="166" text-anchor="end" class="f91-sm">link 2.3 s</text>
+  </g>
+
+  <!-- After an edit -->
+  <text x="56" y="196" class="f91-a7"><tspan class="f91-head">After an edit to a function body in core</tspan><tspan class="f91-sm" dx="8">critical path 3.3 s</tspan></text>
+  <g class="f91-a7">
+    <rect class="f91-run" x="56" y="208" width="3" height="38" rx="1"/>
+  </g>
+  <g class="f91-a8">
+    <rect class="f91-run" x="59" y="208" width="63.5" height="38" rx="4"/>
+    <text x="134" y="224">compile core 0.1 s, then one link 3.2 s</text>
+    <text x="134" y="240" class="f91-sm">core's importers hit the action cache</text>
+  </g>
+
+  <!-- Time axis, shared by both rows -->
+  <line class="f91-axis" x1="56" y1="264" x2="664" y2="264"/>
+  <g class="f91-axis">
+    <line x1="56" y1="264" x2="56" y2="270"/>
+    <line x1="156" y1="264" x2="156" y2="268"/>
+    <line x1="256" y1="264" x2="256" y2="270"/>
+    <line x1="356" y1="264" x2="356" y2="268"/>
+    <line x1="456" y1="264" x2="456" y2="270"/>
+    <line x1="556" y1="264" x2="556" y2="268"/>
+    <line x1="656" y1="264" x2="656" y2="270"/>
+  </g>
+  <g class="f91-sm">
+    <text x="56" y="286" text-anchor="middle">0 s</text>
+    <text x="256" y="286" text-anchor="middle">10 s</text>
+    <text x="456" y="286" text-anchor="middle">20 s</text>
+    <text x="656" y="286" text-anchor="middle">30 s</text>
+  </g>
+</svg>
