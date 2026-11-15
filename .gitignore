@@ -1,0 +1,8 @@
+# Project-local tools (bazelisk) installed by Appendix A's setup step.
+/.tools/
+# Bazel convenience symlinks, in any example workspace.
+bazel-*
+# Generated benchmark workspaces and scratch output; only results/ is kept.
+/examples/bench/work/
+/examples/bench/out/
+.DS_Store
