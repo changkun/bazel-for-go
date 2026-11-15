@@ -6,7 +6,7 @@ to its source. When in doubt, cut.
 Rules for every chapter. The reader is a staff or principal engineer: experienced, short of
 time, and not necessarily a build-system specialist.
 
-Word ceilings (prose only; figures, code, tables and references do not count): Preface 500;
+Word ceilings (prose only; headings, figures, code, tables and references do not count): Preface 500;
 Chapters 1, 2 and 10: 1,000; Chapters 3, 4, 5, 7 and 8: 1,400; Chapters 6 and 9: 1,800;
 Appendix A: 1,200.
 
@@ -31,6 +31,8 @@ Appendix A: 1,200.
    - Gazelle: `https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/<path>#L<n>`
    - Go issues and proposals: `https://go.dev/issue/<n>`. Bazel docs: `https://bazel.build/...`.
      Bazel proposals: `https://github.com/bazelbuild/proposals/...`.
+   A line link into a Markdown or reStructuredText file needs `?plain=1` before the `#L<n>`,
+   or GitHub renders the file and ignores the line.
    Cite with a Markdown footnote placed right after the claim, named for its content, and
    list every footnote at the bottom of the chapter under a final `## References` heading:
 
