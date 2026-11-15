@@ -79,9 +79,9 @@ relinked all 11 binaries.[^bench]
 The content ID gives an early cutoff: a step that reruns with the same output does not rerun its
 dependents. The cutoff is coarse, because the content ID covers the whole archive, export data
 and object code together.[^go-archive] Figure 4.3 shows an edit to the body of a function in
-`core` that the compiler does not inline. The export data stays the same, since it keeps only
-inlinable bodies[^go-exportdata] and the edit moves no declaration to another
-line,[^go-exportpos] but the object code changes, so `core`'s content ID changes and every
+`core` that the compiler does not inline. The export data stays the same: the function stays
+non-inlinable, no declaration moves, and the same parameters escape to the
+heap,[^go-exportfunc] but the object code changes, so `core`'s content ID changes and every
 direct importer recompiles. In our measurements their archives came out identical, since an
 importer's object code records only a fingerprint, a hash, of each import's export
 data,[^go-fingerprint] so the packages above them hit the cache. Every binary that contains
@@ -275,10 +275,14 @@ module, or depends on the time is cached anyway.
     data (`__.PKGDEF`) and the object code (`_go_.o`).
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/gc/obj.go#L53-L71>
 
-[^go-exportpos]: Go, `cmd/compile/internal/noder/writer.go`, `pos`, which writes a line and
-    column, called from `doObj` for each declaration in the export data.
+[^go-exportfunc]: Go, `cmd/compile/internal/noder/unified.go`: export data keeps only inlinable
+    bodies; `noder/writer.go`, `pos`, which writes a line and column, called from `doObj` for
+    each declaration; `noder/linker.go`, `relocFuncExt`, which writes each function's
+    parameter escape results and, if it is inlinable, its inlining cost.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/unified.go#L168-L169>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L391-L404>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L859>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
 
 [^go-fingerprint]: Go, `internal/pkgbits/encoder.go`, `DumpTo`, which hashes the export data
     and appends the hash as its fingerprint; `cmd/compile/internal/noder/unified.go`,
