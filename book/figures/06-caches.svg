@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="f64-title" class="f64">
-  <title id="f64-title">Bazel's caches. Top: the local action cache finds an entry by the output's path and compares one hash over the action key and the hashes of all inputs and outputs. Bottom: a disk or remote cache hashes an Action, made of the Command's hash and the input tree's Merkle hash, looks that up in the action cache to get output hashes, and fetches the bytes from the content-addressed store. All paths are relative to the execroot, so two checkouts at different paths produce the same key.</title>
+  <title id="f64-title">Bazel's caches. Top: the local action cache finds an entry by the output's path and compares one hash over the action key and the hashes of all inputs and outputs. Bottom: a disk or remote cache hashes an Action, made of the Command's hash and the input tree's Merkle hash, looks that up in the remote action cache to get output hashes, and fetches the bytes from the content-addressed store. All paths are relative to the execroot, so two checkouts whose output bases sit at different paths produce the same key.</title>
   <style>
     .f64 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f64 .f64-sm { font-size: 13px; opacity: 0.8; }
@@ -44,7 +44,7 @@
   <line class="f64-sep" x1="20" y1="148" x2="700" y2="148"/>
 
   <!-- Disk or remote cache -->
-  <text x="20" y="178" class="f64-head">Disk or remote cache (Remote Execution API)</text>
+  <text x="20" y="178" class="f64-head">Disk or remote cache</text>
 
   <rect class="f64-rm" x="20" y="194" width="236" height="138" rx="8"/>
   <text x="34" y="322" class="f64-mono">platform, timeout</text>
@@ -59,7 +59,7 @@
   <text x="271" y="222" text-anchor="middle" class="f64-sm">hash</text>
 
   <rect class="f64-rm" x="290" y="194" width="200" height="98" rx="8"/>
-  <text x="304" y="218" class="f64-head">action cache</text>
+  <text x="304" y="218" class="f64-head">remote action cache</text>
   <text x="304" y="242" class="f64-mono">4f1c… →</text>
   <text x="314" y="262" class="f64-mono">greet.a: 9c41…</text>
   <text x="314" y="280" class="f64-mono">greet.x: 77b0…</text>
@@ -82,10 +82,10 @@
   <text x="62" y="452" class="f64-mono">external/… 0d8b…</text>
 
   <!-- Paths are relative to the execroot -->
-  <text x="300" y="350">paths are relative to the execroot</text>
-  <text x="300" y="376" class="f64-mono"><tspan class="f64-dim">/Users/ana/src/repo/</tspan>internal/greet/greet.go</text>
-  <text x="300" y="396" class="f64-mono"><tspan class="f64-dim">/ci/work/repo/</tspan>internal/greet/greet.go</text>
-  <line class="f64-line" x1="420" y1="404" x2="420" y2="430" marker-end="url(#f64-arrow)"/>
-  <text x="300" y="452" class="f64-mono">internal/greet/greet.go</text>
-  <text x="496" y="452" class="f64-sm">same key</text>
+  <text x="280" y="350">paths are relative to the execroot</text>
+  <text x="280" y="376" class="f64-mono"><tspan class="f64-dim">/Users/ana/…/execroot/_main/</tspan>internal/greet/greet.go</text>
+  <text x="280" y="396" class="f64-mono"><tspan class="f64-dim">/ci/…/execroot/_main/</tspan>internal/greet/greet.go</text>
+  <line class="f64-line" x1="370" y1="404" x2="370" y2="430" marker-end="url(#f64-arrow)"/>
+  <text x="280" y="452" class="f64-mono">internal/greet/greet.go</text>
+  <text x="476" y="452" class="f64-sm">same key</text>
 </svg>

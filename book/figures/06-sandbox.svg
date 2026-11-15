@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" role="img" aria-labelledby="f6s-title" class="f6s">
+  <title id="f6s-title">The execroot holds every source and output. The sandbox for compile greet holds symlinks to its declared inputs only: greet.go, greeting.tmpl and the Go SDK. Undeclared files such as greet_test.go and main.go are absent. The compile writes greet.a inside the sandbox, and Bazel moves it back to bazel-out.</title>
+  <style>
+    .f6s text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .f6s .f6s-sm { font-size: 13px; opacity: 0.8; }
+    .f6s .f6s-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .f6s .f6s-head { font-weight: 600; }
+    .f6s .f6s-bzhead { font-weight: 600; fill: #388E3C; }
+    .f6s .f6s-dim { opacity: 0.4; }
+    .f6s .f6s-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .f6s .f6s-bz { fill: #43A047; fill-opacity: 0.12; stroke: #43A047; stroke-width: 1.5; }
+    .f6s .f6s-link { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-dasharray: 4 3; }
+    .f6s .f6s-line { fill: none; stroke: currentColor; stroke-width: 1.4; }
+  </style>
+  <defs>
+    <marker id="f6s-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- The execroot: every file -->
+  <rect class="f6s-box" x="20" y="30" width="280" height="220" rx="10"/>
+  <text x="34" y="56" class="f6s-head">execroot</text>
+  <text x="34" y="92" class="f6s-mono">internal/greet/greet.go</text>
+  <text x="34" y="116" class="f6s-mono">internal/greet/greeting.tmpl</text>
+  <text x="34" y="140" class="f6s-mono f6s-dim">internal/greet/greet_test.go</text>
+  <text x="34" y="164" class="f6s-mono f6s-dim">cmd/hello/main.go</text>
+  <text x="34" y="188" class="f6s-mono">external/rules_go++go_sdk…/</text>
+  <text x="34" y="226" class="f6s-mono">bazel-out/…/greet.a</text>
+
+  <!-- The sandbox: declared inputs only -->
+  <rect class="f6s-bz" x="420" y="30" width="280" height="220" rx="10"/>
+  <text x="434" y="56" class="f6s-bzhead">sandbox for <tspan class="f6s-mono">compile greet</tspan></text>
+  <text x="434" y="92" class="f6s-mono">internal/greet/greet.go</text>
+  <text x="434" y="116" class="f6s-mono">internal/greet/greeting.tmpl</text>
+  <text x="434" y="152" class="f6s-sm">undeclared files absent</text>
+  <text x="434" y="188" class="f6s-mono">external/rules_go++go_sdk…/</text>
+  <text x="434" y="226" class="f6s-mono">bazel-out/…/greet.a</text>
+
+  <!-- Symlinks from the sandbox to the real inputs -->
+  <text x="360" y="78" text-anchor="middle" class="f6s-sm">symlinks</text>
+  <line class="f6s-link" x1="414" y1="88" x2="306" y2="88" marker-end="url(#f6s-arrow)"/>
+  <line class="f6s-link" x1="414" y1="112" x2="306" y2="112" marker-end="url(#f6s-arrow)"/>
+  <line class="f6s-link" x1="414" y1="184" x2="306" y2="184" marker-end="url(#f6s-arrow)"/>
+
+  <!-- The output moves back -->
+  <line class="f6s-line" x1="414" y1="222" x2="306" y2="222" marker-end="url(#f6s-arrow)"/>
+  <text x="360" y="242" text-anchor="middle" class="f6s-sm">moved back</text>
+</svg>

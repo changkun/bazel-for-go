@@ -7,8 +7,8 @@
     .f66 .f66-head { font-weight: 600; }
     .f66 .f66-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f66 .f66-bz { fill: #43A047; fill-opacity: 0.12; stroke: #43A047; stroke-width: 1.5; }
-    .f66 .f66-run { fill: #d9822b; fill-opacity: 0.15; stroke: #d9822b; stroke-width: 1.5; }
-    .f66 .f66-runtext { fill: #d9822b; font-weight: 600; }
+    .f66 .f66-lost { fill: currentColor; fill-opacity: 0.08; stroke: currentColor; stroke-width: 1.2; stroke-opacity: 0.6; }
+    .f66 .f66-losttext { font-weight: 600; }
     .f66 .f66-line { fill: none; stroke: currentColor; stroke-width: 1.4; }
     .f66 .f66-node { fill: #43A047; fill-opacity: 0.5; }
     .f66 .f66-edge { stroke: #43A047; stroke-width: 1.2; opacity: 0.7; }
@@ -48,8 +48,8 @@
     <circle cx="305" cy="158" r="5"/><circle cx="350" cy="158" r="5"/><circle cx="400" cy="158" r="5"/>
   </g>
   <text x="248" y="182" class="f66-sm">grows with the build graph</text>
-  <rect class="f66-run" x="234" y="202" width="218" height="28" rx="6"/>
-  <text x="343" y="221" text-anchor="middle" class="f66-runtext">lost on restart</text>
+  <rect class="f66-lost" x="234" y="202" width="218" height="28" rx="6"/>
+  <text x="343" y="221" text-anchor="middle" class="f66-losttext">lost on restart</text>
 
   <line class="f66-line" x1="468" y1="130" x2="512" y2="130" marker-end="url(#f66-arrow)"/>
 

@@ -6,11 +6,13 @@
     .f63 .f63-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
     .f63 .f63-node { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f63 .f63-run { fill: #d9822b; fill-opacity: 0.18; stroke: #d9822b; stroke-width: 1.5; }
-    .f63 .f63-dirty { fill: none; stroke: #d9822b; stroke-width: 2; stroke-dasharray: 6 4; }
+    .f63 .f63-dirty { fill: none; stroke: #d9822b; stroke-width: 2.5; }
     .f63 .f63-hit { fill: #8a8f98; fill-opacity: 0.14; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 5 4; }
     .f63 .f63-edge { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.45; }
     .f63 .f63-runtext { fill: #d9822b; font-weight: 600; }
     .f63 .f63-hittext { fill: #8a8f98; font-weight: 600; }
+    .f63 .f63-res { fill: none; stroke: #8a8f98; stroke-width: 1.5; stroke-dasharray: 2 3; }
+    .f63 .f63-restag { fill: #8a8f98; font-size: 13px; }
 
     /* The static state is the end state. One 9 s loop: edit, invalidate upward, rerun, cache hits, resurrect. */
     .f63 .f63-a1 { animation: f63-a1 9s linear infinite; }
@@ -54,9 +56,10 @@
 
   <!-- hello, the top-level target -->
   <rect class="f63-node f63-a7off" x="120" y="20" width="150" height="40" rx="8"/>
-  <rect class="f63-hit f63-a7" x="120" y="20" width="150" height="40" rx="8"/>
+  <rect class="f63-res f63-a7" x="120" y="20" width="150" height="40" rx="8"/>
   <rect class="f63-dirty f63-dt" x="120" y="20" width="150" height="40" rx="8"/>
   <text x="195" y="45" text-anchor="middle"><tspan class="f63-mono">hello</tspan> built</text>
+  <text x="278" y="45" class="f63-restag f63-a7">not recomputed</text>
 
   <!-- link hello -->
   <rect class="f63-node f63-a6off" x="120" y="100" width="150" height="40" rx="8"/>

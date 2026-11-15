@@ -1,21 +1,20 @@
 # 6. Bazel's design
 
 Bazel builds one repository that holds many languages, builds and tests it on many machines,
-and aims to give the result a clean build would. This chapter shows how Bazel 9.3 is designed
-for that, and what the design costs. Chapter 8 sets each choice beside the go command's.
+and aims to give the result a clean build would.
 
-Three statements set the goals. The vision: "Any software developer can efficiently build,
+Two statements set the goals. The vision: "Any software developer can efficiently build,
 test, and package any project, of any size or complexity".[^vision] The README: "{Fast,
-Correct} - Choose two".[^readme] The FAQ, on why Google built it: "A long time ago, Google
-built its software using large, generated Makefiles. These led to slow and unreliable
-builds".[^faq] In our reading, each goal forces a choice:
+Correct} - Choose two".[^readme] In our reading, each goal forces a choice:
 
 - **Many languages in one repository.** No one language's imports describe the whole graph, so
   the graph is declared in build files.
-- **Many machines.** A result computed on one machine must hold on another, so actions must be
+- **Many machines.** A result computed on one machine must hold on another, so actions are
   "isolated and can be offloaded",[^vision] and their keys must not depend on the machine.
 - **Correct.** An incremental build must equal a clean one, so every input is declared and
   every change is found.
+
+Bazel's answers to Chapter 1's six decisions, which Chapter 8 weighs for Go:
 
 | Decision (Chapter 1) | Bazel's answer |
 |---|---|
@@ -38,13 +37,31 @@ kind.[^glossary]
 
 To analyze a target, Bazel runs its rule's function, which does two things. It registers
 **actions**: commands with declared inputs and outputs, such as "compile `greet.go` into
-`greet.a`".[^rules-actions] And it returns **providers**: data for the targets that depend on
-it. A rule reads only its direct dependencies' providers, so each target passes on what its
-dependents need.[^rules-providers] `go_library` returns `GoArchive`, "the compiled form ... with
-everything needed to link it into a binary".[^rules-go-providers] The go command borrowed the
-word: its `Action` type has a `Provider` field, "Similar to a Bazel provider".[^go-provider]
-The files that actions read and write are **artifacts**; each output is written by exactly one
-action.[^glossary]
+`greet.a`",[^rules-actions] plus `greet.x`, the export data that importers compile against
+(Chapter 7). And it returns **providers**: data for the targets that depend on it. A rule reads
+only its direct dependencies' providers, so each target passes on what its dependents
+need.[^rules-providers] `go_library` returns `GoArchive`, "the compiled form ... with
+everything needed to link it into a binary", and `GoInfo`, the inputs that a binary embedding
+the library compiles itself.[^rules-go-providers] The files that actions read and write are
+**artifacts**; each output is written by exactly one action.[^glossary]
+
+A **configuration** is the set of settings outside the rules, such as the target platform (the
+operating system and CPU to build for)[^platforms] and the command-line flags, that shapes the
+actions a target produces. A target built in two configurations is analyzed twice and has two
+sets of actions.[^glossary] Tools that run during the build are built in an exec configuration,
+for the machine that runs the actions.[^rules-configurations] For `//cmd/hello` and its
+dependencies, `bazel aquery`, which prints the actions analysis registers, lists 19 in the
+target configuration and 21 in the exec configuration, which builds rules_go's builder program:
+
+```text
+$ bazel aquery 'deps(//cmd/hello)' --output=summary
+Configurations:
+  darwin_arm64-fastbuild: 19
+  darwin_arm64-opt-exec: 21
+```
+
+A `go_binary` that sets `goos` and `goarch`, or `race`, moves itself and its dependencies into
+another configuration (Chapter 7).[^rules-go-transition]
 
 The inputs and outputs of every action "must be known during the analysis phase" and cannot
 depend on the result of running anything.[^rules-actions] Everything below relies on that.
@@ -57,8 +74,7 @@ A command runs in three phases.[^phases] **Loading** evaluates BUILD files into 
 **Analysis** runs the rules and produces the action graph. **Execution** runs the actions
 whose outputs are needed and not up to date. Loading interleaves with analysis.[^phases] Since
 Bazel 7.0, execution overlaps them too: Bazel "starts executing actions while it is still
-analyzing other top-level targets", the targets named on the command line.[^skymeld] In
-Figure 6.2, `greet` compiles while `greet_test` is still being analyzed.
+analyzing other top-level targets", the targets named on the command line.[^skymeld]
 
 ## Skyframe
 
@@ -94,25 +110,25 @@ directly or not, is marked dirty.[^skyframe]
 Bazel then recomputes the dirty nodes from the bottom, with change pruning: "if a node is
 invalidated, but upon rebuild, it is discovered that its new value is the same as its old
 value, the nodes that were invalidated due to a change in this node are
-'resurrected'".[^skyframe][^pruning] On an ordinary local disk, an action that reruns does not
-count as unchanged even when it writes the same bytes, because its value records each output's
-file times as well as its hash.[^action-value] The actions that read its outputs are then
-checked against the action cache (next section), which compares hashes only. If those match, the
-action does not run, its value is unchanged, and pruning resumes above it (Figure 6.3).
+'resurrected'".[^skyframe][^pruning] An action that reruns and writes its outputs to local disk
+does not count as unchanged even when the bytes are the same: its value records each output's
+file times and inode number, not only its hash.[^action-value] Each action that reads those
+outputs is then checked against the action cache (next section), which compares hashes only.
+On a hit it does not run, its value is unchanged, and pruning resumes above it (Figure 6.3).
 Together they give Chapter 1's early cutoff.
 
 The graph is what makes a repeated build cheap. In our measurements on 1,000 packages, a build
-with nothing to do took about 0.2 s with a warm server. A new server must load and analyze
-everything again before it can tell that nothing changed: the same build took 3.6 s, of which
-starting the server, loading and analysis took 3.1 s.[^bench]
+with nothing to do took 0.2–0.4 s with a warm server. A new server must load and analyze
+everything again before it can tell that nothing changed: the same build took 3.6 s, and one
+that stopped after analysis (`--nobuild`) took 3.1 s.[^bench]
 
 ## Action keys and two caches
 
 ![Figure 6.4: Bazel's caches. Top: the local action cache. Bottom: a disk or remote cache, keyed by the hash of an Action.](figures/06-caches.svg)
 
-Actions run in the **execroot**, a directory where every action runs with relative paths:
-sources, external repositories and the output tree `bazel-out` appear under it at fixed
-places.[^output-dirs] Command lines name files by those paths:
+Actions run in the **execroot**, a directory in which sources, external repositories and the
+output tree `bazel-out` appear at fixed relative paths.[^output-dirs] Command lines name files
+by those paths:
 
 ```text
 $ bazel aquery //internal/greet:greet
@@ -122,41 +138,44 @@ action 'GoCompilePkg internal/greet/greet.a'
   Outputs: [bazel-out/darwin_arm64-fastbuild/bin/internal/greet/greet.a, ...]
 ```
 
-The **action key** hashes what an action does: its command line, environment variables,
-mnemonic (a name for its kind, such as `GoCompilePkg`) and platform.[^action-key] Unlike
-Chapter 1's key, it leaves out the contents of the inputs. Those enter the local **action
-cache**, a table in the output base (the directory that holds a checkout's outputs and state).
-The entry for an action, found by the path of its main output, holds one hash over the action
-key and the content hash of every input and output.[^action-cache] If the hash computed from
-the current files matches, the outputs already in `bazel-out` are current and the action is
-skipped. This cache stores no file contents.
+Bazel's **action key** is only part of Chapter 1's key: it hashes the command line, environment
+variables, mnemonic (a name for its kind, such as `GoCompilePkg`) and platform, but not the
+contents of the inputs.[^action-key] Those enter the local **action cache**, a table in the
+output base (the directory that holds a checkout's outputs and state). The entry for an action,
+found by the path of its main output, holds one hash over the action key and the content hash
+of every input and output.[^action-cache] If the hash computed from the current files matches,
+the outputs already in `bazel-out` are current and the action is skipped. This cache stores no
+file contents.
 
-A remote cache follows the Remote Execution API, an open protocol,[^rbe] and a disk cache
-(`--disk_cache`) is a local directory that Bazel uses as one.[^remote-caching] In both, an
-action becomes an **Action** message: the hash of a **Command**
-(arguments, environment, output paths), the hash of the input root, the platform and a
-timeout.[^reapi] The input root's hash is a Merkle tree hash, a single hash computed over the
-whole directory tree of inputs, so it changes when any input does. The hash of the Action is
-the key. The cache has two parts: an action cache from an Action's hash to the hashes of its
-outputs, and a content-addressed store (CAS) from each hash to the bytes.[^remote-caching]
-GOCACHE makes the same split between action entries and content entries (Chapter 4).
+A remote cache speaks the Remote Execution API, an open gRPC protocol,[^rbe] or a simpler HTTP
+protocol, and a disk cache (`--disk_cache`) is a local directory that Bazel uses as
+one.[^remote-caching] In all of them, an action becomes an **Action** message: the hash of a
+**Command** (arguments, environment, output paths), the hash of the input root, the platform
+and a timeout.[^reapi] The input root's hash is a Merkle tree hash, a single hash computed over
+the whole directory tree of inputs, so it changes when any input does. The hash of the Action
+is the key. The cache has two parts: a remote action cache from an Action's hash to the hashes
+of its outputs, and a content-addressed store (CAS) from each hash to the
+bytes.[^remote-caching] GOCACHE makes the same split between action entries and content
+entries (Chapter 4).
 
 Every path in the Command and the tree is relative to the execroot, so the checkout's location
 does not enter the key unless a rule writes an absolute path into a command.[^path-resolver] The
 output base is named by a hash of the checkout's path, so each checkout has its own local action
 cache,[^output-dirs] but checkouts and machines can share a disk or remote cache. In our
-measurements, a second checkout of 1,000 packages at another path, with a new output base and
-the first checkout's disk cache, ran none of the 1,127 actions that a cold build runs in a
-sandbox: all were cache hits. It took 5.6 s, against 39.5 s for a cold build.[^bench]
+measurements (one run each), a second checkout of 1,000 packages at another path, with a new
+output base and the first checkout's disk cache, ran none of the 1,127 actions that a cold build
+runs in a sandbox: all were cache hits. It took 5.6 s, against 39.5 s for a cold build.[^bench]
 
 ## Sandboxes and persistent workers
 
+![Figure 6.5: The sandbox for `compile greet` links in only its declared inputs; Bazel moves the output back to `bazel-out`.](figures/06-sandbox.svg)
+
 By default Bazel runs each action with the first of these strategies that supports it: remote
-(when configured), worker, sandboxed, local.[^strategies] A **sandbox** gives an action its own
-execroot holding only its declared inputs, confined by `sandbox-exec` on macOS and containers on
-Linux. A tool then sees no undeclared file unless it knows the file's absolute path. Setting up
-and tearing down each sandbox costs time; on Linux, sandboxed builds are "rarely more than a few
-percent slower".[^sandboxing]
+(when a remote executor is set), worker, sandboxed, local.[^strategies] A **sandbox** gives an
+action its own execroot holding only its declared inputs, confined by `sandbox-exec` on macOS
+and containers on Linux. A tool then sees no undeclared file unless it knows the file's
+absolute path. Setting up and tearing down each sandbox costs time; on Linux, sandboxed builds
+are "rarely more than a few percent slower".[^sandboxing]
 
 A **persistent worker** is a long-running process that serves many actions, saving a tool's
 start-up on each one. The tool must speak Bazel's worker protocol.[^workers] rules_go's actions
@@ -164,46 +183,23 @@ do not ask for workers, so every Go compile and link is a new process.[^rules-go
 
 ## Remote caching and remote execution
 
-![Figure 6.5: Remote execution. Executors share one cache; the client downloads only the top-level output.](figures/06-remote.svg)
+![Figure 6.6: Remote execution. Executors share one cache; the client downloads only the top-level output.](figures/06-remote.svg)
 
 With a remote cache, Bazel looks up each action's hash before running it and uploads the
-results of the actions it runs.[^remote-caching] With remote execution it sends the Action
-instead: it uploads the inputs the CAS lacks, and an executor from a shared pool runs the
-command and stores the outputs in the CAS.[^reapi-exec] An executor has nothing but the input root,
-which is why every input must be declared. Parallelism is then bounded by the pool rather than
-by one machine's cores.
+results of the actions it runs.[^remote-caching] With remote execution it sends the Action to
+an execution service instead: it uploads the inputs the CAS lacks, and an executor from the
+service's pool runs the command and stores the outputs in the CAS.[^reapi-exec] An executor
+gets no file of the checkout outside the input root, which is why every input must be
+declared.[^reapi] Parallelism is then bounded by the pool rather than by one machine's cores.
 
-Since 7.0, Bazel by default downloads only the outputs of top-level targets and those
-that local actions need, and knows the rest by hash alone. This is "Build without the
-Bytes".[^bwob] The remote cache may then evict an output that a later action needs. Since 9.3,
-Bazel recovers by default by rewinding: it reruns the actions that produced the lost
-outputs.[^rewind]
-
-## Configurations, platforms and toolchains
-
-A **configuration** is the set of settings outside the rules, such as the target platform and
-the command-line flags, that shapes the actions a target produces. A target built in two
-configurations is analyzed twice and has two sets of actions.[^glossary] Tools that run during
-the build are built in an exec configuration, for the machine that runs the
-actions.[^rules-configurations] For `//cmd/hello` and its dependencies, `bazel aquery` lists 19
-actions in the target configuration and 21 in the exec configuration, which builds rules_go's
-builder program:
-
-```text
-$ bazel aquery 'deps(//cmd/hello)' --output=summary
-Configurations:
-  darwin_arm64-fastbuild: 19
-  darwin_arm64-opt-exec: 21
-```
-
-A **platform** describes a machine by constraints such as operating system and CPU; a
-**toolchain** is a language's set of tools, chosen to suit the platforms.[^platforms] A
-`go_binary` that sets `goos` or `race` moves itself and its dependencies into another
-configuration (Chapter 7).[^rules-go-transition]
+Since 7.0, Bazel by default downloads only the outputs of top-level targets and those that
+local actions need, and knows the rest by hash alone ("Build without the Bytes").[^bwob] The
+remote cache may then evict an output that a later action needs. Since 9.3, rewinding is the
+default: Bazel reruns only the actions that produced the lost outputs.[^rewind]
 
 ## What the design costs
 
-![Figure 6.6: The client is short-lived. The server holds the graph in memory, which a restart loses; the output base on disk survives.](figures/06-server.svg)
+![Figure 6.7: The client is short-lived. The server holds the graph in memory, which a restart loses; the output base on disk survives.](figures/06-server.svg)
 
 | Cost | Cause | Grows with |
 |---|---|---|
@@ -212,24 +208,20 @@ configuration (Chapter 7).[^rules-go-transition]
 | A fixed cost per action | A process, a sandbox, hashes and a cache entry for every action[^sandboxing][^rules-go-workers] | The number of actions |
 | Loading and analysis after every start | The graph lives only in memory[^cache-issues] | The number of targets; paid by every new CI runner[^bench] |
 
-In our measurements, after a build of 1,000 packages the server's heap held 88 MB after
-garbage collection, and 129 MB once their tests had also been built and run.[^bench] That is
-small, but a build too big for the heap fails with an `OutOfMemoryError`, and the flags that
-discard parts of the graph to save memory make incremental builds slower.[^memory]
+The heap grows with the graph; Chapter 5 measures it. A build too big for the heap fails with
+an `OutOfMemoryError`, and the flags that discard parts of the graph to save memory make
+incremental builds slower.[^memory]
 
 ## What this means at scale
 
-- Keep servers warm. A CI job that starts a new server pays for starting it, loading and
-  analysis before it can find a single cache hit: 3.1 s on 1,000 packages in our
-  measurements.[^bench]
-- Track server memory as the repository grows with `bazel info used-heap-size-after-gc`, and set
-  the heap limit explicitly with `--host_jvm_args=-Xmx...`.
+- Keep servers warm. A CI job that starts a new server pays again for starting it, loading and
+  analysis: 3.1 s on 1,000 packages in our measurements.[^bench]
+- Track server memory with `bazel info used-heap-size-after-gc` as the repository grows
+  (Chapter 9 sets the limit).
 - Share a disk or remote cache across checkouts and machines. The checkout path does not enter
   the key, but environment variables and the platform do, so keep them identical.
-- On a large tree, try `--watchfs`, which replaces a `stat` of every known file with
-  notifications from the operating system.
-- Build without the Bytes keeps intermediate outputs in the remote cache. Download only what a
-  person or a later job will read.
+- Leave Build without the Bytes on; fetch more with `--remote_download_regex` only for files a
+  person or a later job reads.[^bwob]
 
 ## References
 
@@ -238,14 +230,13 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
 [^readme]: Bazel, `README.md`, the tagline.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/README.md?plain=1#L3>
 
-[^faq]: Bazel, "FAQ", section "Why did Google build Bazel?". <https://bazel.build/about/faq>
-
-[^glossary]: Bazel, "Glossary", entries "Package", "Target", "Rule", "Artifact" and
-    "Configuration". <https://bazel.build/reference/glossary#package>
+[^glossary]: Bazel, "Glossary", entries "Package", "Target", "Rule", "Artifact",
+    "Configuration" and "Configured target". <https://bazel.build/reference/glossary#package>
     <https://bazel.build/reference/glossary#target>
     <https://bazel.build/reference/glossary#rule>
     <https://bazel.build/reference/glossary#artifact>
     <https://bazel.build/reference/glossary#configuration>
+    <https://bazel.build/reference/glossary#configured-target>
 
 [^rules-actions]: Bazel, "Rules", section "Actions".
     <https://bazel.build/extending/rules#actions>
@@ -253,13 +244,21 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
 [^rules-providers]: Bazel, "Rules", section "Providers".
     <https://bazel.build/extending/rules#providers>
 
-[^rules-go-providers]: rules_go, `go/private/providers.bzl`, `GoArchive`; and
-    `go/private/rules/library.bzl`, `_go_library_impl`, which returns it.
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/providers.bzl#L26-L29>
+[^rules-go-providers]: rules_go, `go/private/providers.bzl`, `GoInfo` and `GoArchive`; and
+    `go/private/rules/library.bzl`, `_go_library_impl`, which returns both.
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/providers.bzl#L15-L29>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/library.bzl#L60-L62>
 
-[^go-provider]: Go, `cmd/go/internal/work/action.go`, `Action.Provider`.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L94>
+[^platforms]: Bazel, "Platforms". <https://bazel.build/concepts/platforms>
+
+[^rules-configurations]: Bazel, "Rules", section "Configurations".
+    <https://bazel.build/extending/rules#configurations>
+
+[^rules-go-transition]: rules_go, `go/private/rules/binary.bzl`, the rule's `cfg`, and
+    `go/private/rules/transition.bzl`, `_go_transition_impl` and `go_transition`.
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary.bzl#L262>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L78-L170>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L172-L180>
 
 [^phases]: Bazel, "Extension Overview", section "Evaluation model"; "Glossary", entry
     "Loading phase". <https://bazel.build/extending/concepts#evaluation-model>
@@ -279,7 +278,7 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
 [^filestate]: Bazel, `lib/actions/FileStateValue.java`, `createRegularFileStateValueFromPath`,
     and `lib/actions/FileContentsProxy.java`: file metadata stands in for contents unless the
     file system offers a fast digest.
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L145>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L172>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
 
 [^watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option (default
@@ -297,23 +296,24 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
 [^action-value]: Bazel, `lib/skyframe/ActionExecutionValue.java`, `equals`, which compares the
     outputs' metadata; `lib/actions/FileArtifactValue.java`, `RegularFileArtifactValue.equals`,
     which compares the hash, the contents proxy (file times and inode) and the size;
-    `lib/skyframe/ActionOutputMetadataStore.java`, which builds an output's metadata from `stat`;
-    `lib/actions/FileStateValue.java`, which keeps the proxy unless the file system supplies a
-    hash;
+    `lib/skyframe/ActionOutputMetadataStore.java`, `fileArtifactValueFromStat`, which builds an
+    output's metadata from `stat` and keeps the proxy; `lib/actions/FileStateValue.java`, which
+    keeps the proxy unless the file system supplies a hash;
+    `lib/skyframe/ActionExecutionFunction.java`, which on an action cache hit builds the value
+    from the outputs' current metadata;
     and `FileArtifactValue.addTo`, which puts only the hash in the action cache: "Modifying a
     timestamp while keeping the contents of a file the same should not cause rebuilds."
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionExecutionValue.java#L232-L245>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L593-L603>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L219-L226>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L566-L589>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L158-L171>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionExecutionFunction.java#L717-L724>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L254-L264>
 
 [^bench]: This book's measurements, `examples/bench/results/2026-11-15/results.jsonl`:
     configuration `n1000` (1,000 packages), tool `bazel`, scenarios `noop` (reps 0 to 2),
     `noop-cold-server`, `analysis-cold-server` (`bazel build --nobuild` on a new server),
-    `cold`, `clone-diskcache` (1,127 disk cache hits, no sandboxed processes),
-    `server-heap-after-build` and `server-heap-after-test` (`bazel info
-    used-heap-size-after-gc`).
+    `cold` and `clone-diskcache` (1,127 disk cache hits, no sandboxed processes).
     [results.jsonl](../examples/bench/results/2026-11-15/results.jsonl)
 
 [^output-dirs]: Bazel, "Output Directory Layout", sections "Current layout" and "Layout
@@ -336,20 +336,17 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
 
 [^rbe]: Bazel, "Remote Execution Overview". <https://bazel.build/remote/rbe>
 
+[^remote-caching]: Bazel, "Remote Caching", sections "Overview", "How a build uses remote
+    caching", "HTTP caching protocol" and "Disk cache".
+    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#remote-caching>
+    <https://bazel.build/remote/caching#http-caching> <https://bazel.build/remote/caching#disk-cache>
+
 [^reapi]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, messages
     `Action` and `Command`; Bazel, `lib/remote/RemoteExecutionService.java`,
     `buildRemoteAction`.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L608-L673>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L683-L820>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/RemoteExecutionService.java#L511-L570>
-
-[^reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, services
-    `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
-
-[^remote-caching]: Bazel, "Remote Caching", sections "Overview" and "Disk cache".
-    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
 
 [^path-resolver]: Bazel, `lib/remote/common/RemotePathResolver.java`,
     `DefaultRemotePathResolver`: the execroot is the input root, and output paths are relative
@@ -372,8 +369,13 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L201-L210>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/utils.bzl#L10-L14>
 
-[^bwob]: Bazel 7.0.0 release notes; `lib/remote/options/RemoteOptions.java`,
-    `--remote_download_outputs`, default `toplevel`.
+[^reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, services
+    `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
+
+[^bwob]: Bazel 7.0.0 release notes, which also name `--remote_download_regex`;
+    `lib/remote/options/RemoteOptions.java`, `--remote_download_outputs`, default `toplevel`.
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L519-L533>
 
@@ -383,20 +385,8 @@ discard parts of the graph to save memory make incremental builds slower.[^memor
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L372-L378>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/rewinding/ActionRewindStrategy.java#L86-L90>
 
-[^rules-configurations]: Bazel, "Rules", section "Configurations".
-    <https://bazel.build/extending/rules#configurations>
-
-[^platforms]: Bazel, "Platforms" and "Toolchains". <https://bazel.build/concepts/platforms>
-    <https://bazel.build/extending/toolchains>
-
-[^rules-go-transition]: rules_go, `go/private/rules/binary.bzl`, the rule's `cfg`, and
-    `go/private/rules/transition.bzl`, `_go_transition_impl` and `go_transition`.
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary.bzl#L262>
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L78-L170>
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L172-L180>
+[^cache-issues]: Bazel, "Remote Caching", section "Known issues".
+    <https://bazel.build/remote/caching#known-issues>
 
 [^memory]: Bazel, "Optimize Memory", section "Trade incremental build speeds for memory".
     <https://bazel.build/advanced/performance/memory#trade-incremental>
-
-[^cache-issues]: Bazel, "Remote Caching", section "Known issues".
-    <https://bazel.build/remote/caching#known-issues>
