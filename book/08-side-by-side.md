@@ -1,8 +1,7 @@
 # 8. The designs side by side
 
-This chapter sets the go command's answer to each of Chapter 1's six decisions beside that of
-Bazel with rules_go (Bazel's rules for Go): why each chose as it did, and what the choice costs
-as the repository grows.
+This chapter sets the answers of the go command and of Bazel with rules_go (Bazel's rules for
+Go) to Chapter 1's six decisions side by side, with what each costs as the repository grows.
 
 ## Six decisions, two answers
 
@@ -15,8 +14,8 @@ its output.
 
 Both run one compile per package, the compiler's unit, and one link per
 binary.[^go-compile][^go-compileaction][^rules-go-actions] Bazel adds a fixed cost to every
-action: it starts rules_go's builder, a program that wraps the compiler,[^rules-go-builder] in a
-sandbox, a directory holding only the declared inputs,[^bazel-sandboxing] and hashes inputs and
+action: it runs rules_go's builder (a program that wraps the compiler)[^rules-go-builder] in a
+sandbox (a directory holding only the declared inputs),[^bazel-sandboxing] and hashes inputs and
 outputs for its action cache, its record of actions already run.[^bazel-action-cache] In our
 view, the cost buys the isolation that remote machines and shared caches need, and weighs most
 where packages are many and small.
@@ -31,9 +30,9 @@ keeps it in the memory of its server, a long-lived process behind each `bazel`
 command.[^bazel-client-server] In our reading, it declares the graph because no one language's
 imports describe a repository of many. The go command thus pays T_graph, the time to obtain the
 graph, on every run; Bazel pays it after each server start, by loading the BUILD files and
-analyzing them into actions, and maintains a second description: Gazelle, a tool that writes
-BUILD files from the imports, must rerun whenever imports change, and continuous integration
-(CI) must check that it did.[^gazelle][^gazelle-diff]
+analyzing them into actions, and needs a second description kept in step: Gazelle, a tool that
+writes BUILD files from the imports, must rerun whenever imports change, and we recommend that
+continuous integration (CI) check that it did.[^gazelle][^gazelle-diff]
 
 ### 3. Change
 
@@ -42,28 +41,30 @@ again.[^go-filehash] That needs no saved state but reads every byte. Bazel's ser
 each known file's timestamps and inode number (the file's identifier on disk) with the last
 build's, without reading it, or, with `--watchfs`, asks the operating system what
 changed.[^bazel-filestate][^bazel-watchfs] T_detect, the time to find what changed, thus grows
-with the bytes of source under the go command, with the number of files under Bazel, and with
-the change only under `--watchfs`.
+with the bytes of source under the go command and with the number of files under Bazel.
+`--watchfs` makes Bazel's check of sources follow the change, but by default it still stats
+every output of the last build.[^bazel-output-check]
 
 ### 4. Key
 
 A go compile's key, its action ID, hashes the sources, flags and tools, the package's directory
-unless `-trimpath` removes paths from the output, and each direct import's content ID: a hash of
-that import's whole compiled archive, cheap to read because the archive stores
-it.[^go-buildactionid][^go-actionid-dir][^go-buildid] But the archive holds both the export
-data, the summary that importers' compiles read, and the object code that only links
-read.[^go-archive] So a body edit to a function that the compiler does not inline (copy into its
-callers) recompiles every direct importer, and an edit to the package's API, its exported names,
-reaches two levels, because object code records a hash of each import's export
-data.[^go-fingerprint]
+unless `-trimpath` removes paths from the output, and each direct import's content ID, a hash of
+its whole archive that the archive itself stores.[^go-buildactionid][^go-actionid-dir][^go-buildid]
+The archive holds both the export data, the summary that importers' compiles read, and the
+object code that only links read.[^go-archive] So a body edit to a function that the compiler
+does not inline (copy into its callers) recompiles every direct importer. An edit that changes
+the export data reaches two levels: each importer's object code records a hash of it, so the
+importers' archives change too.[^go-fingerprint]
 
 rules_go splits the two, as the compiler's source suggests for "a distributed build setting":
 object code to a `.a` file for links, export data to a `.x` file for
-importers.[^gc-linkobj][^rules-go-compilego] Bazel keys an action by the contents of its
-inputs,[^bazel-action-cache] and an importer reads only the `.x`,[^rules-go-compile-inputs] so
-the same body edit stops at the edited package (Figure 7.3). The `.x` also records declaration
-positions and inlinable bodies, so moving a declaration or editing a small function still
-reaches every direct importer.[^go-export-pos][^go-export-inline]
+importers.[^gc-linkobj][^rules-go-compilego] Bazel's action cache compares the contents of an
+action's inputs,[^bazel-action-cache] and an importer reads only the `.x`,[^rules-go-compile-inputs]
+so the body edit stops at the edited package if the `.x` is unchanged (Figure 7.3). Besides the
+API, the `.x` records the position of each declaration it describes, inlinable bodies and which
+parameters escape to the heap,[^go-export-pos][^go-export-inline][^go-export-ext] so an edit to
+any of these reaches every direct importer, and the next level where an importer's `.x` copies
+the changed declaration.[^go-export-reloc]
 
 Both relink every binary that contains a changed
 package,[^go-linkactionid][^rules-go-link-inputs] but GOCACHE keeps no binary from `go build`
@@ -73,25 +74,25 @@ link like any other action.[^rules-go-actions][^bazel-remote-caching]
 ### 5. Sharing
 
 GOCACHE, the go command's build cache, belongs to one user on one machine.[^go-defaultdir] Since
-Go 1.24, `GOCACHEPROG` can hand it to a program that stores entries anywhere; the keys stay the
-same, so without `-trimpath` a checkout at another path misses, and binaries are not
-stored.[^go-cacheprog][^go-noexe-prog] Bazel runs every action in the execroot, a directory
-under which all paths are relative, so its keys ignore where the checkout
-lies.[^bazel-path-resolver] Its local action cache serves one checkout,[^bazel-output-dirs] but
-a disk cache, a local directory, serves every checkout on a machine, and a remote cache a team,
-links included.[^bazel-remote-caching] Environment variables and the platform, the kind of
-machine that runs the action, enter the key and must match.[^bazel-reapi][^bazel-cache-issues]
-In our reading, the go command was built for one machine, Bazel for many.
+Go 1.24,[^go124] `GOCACHEPROG` can hand it to a program that stores entries anywhere; the keys
+stay the same, so without `-trimpath` a checkout at another path misses, and binaries are not
+stored.[^go-cacheprog][^go-noexe-prog] Bazel runs every action in the execroot, where every
+input and output has a fixed relative path, so its keys ignore where the checkout lies unless a
+rule writes an absolute path into a command.[^bazel-path-resolver] Its local action cache serves
+one checkout,[^bazel-output-dirs] but a disk cache, a local directory, serves every checkout on
+a machine, and a remote cache a team, links included.[^bazel-remote-caching] Environment
+variables and the platform, the kind of machine that runs the action, enter the key and must
+match.[^bazel-reapi][^bazel-cache-issues]
 
 ### 6. Execution
 
 The go command runs every action as a child process on one machine, `-p` at a time, by default
-one per CPU core,[^go-do] and rations the compiler's back-end workers (`-c`) among the compiles
-running at once.[^go-tokens] One machine's cores then bound T_exec, the time to run the actions
-that missed the cache. Bazel runs actions locally by default; with remote execution it sends
-them to a pool of machines, uploading the inputs they lack,[^bazel-reapi-exec] so the pool
-bounds parallelism. That adds T_transfer, the time to move bytes, which Build without the Bytes
-(default since Bazel 7.0) limits by downloading only the outputs asked for on the command line
+one per CPU core.[^go-do] One machine's cores then set the floor of T_exec, the time to run the
+actions that missed the cache. Bazel runs actions locally by default; with remote execution it
+sends them to a pool of machines, uploading the inputs the remote cache
+lacks,[^bazel-reapi-exec] so the pool bounds parallelism. That adds T_transfer, the time to move
+bytes to and from remote machines and caches, which Build without the Bytes (default since
+Bazel 7.0) limits by downloading only the outputs asked for on the command line
 and those local actions need.[^bazel-bwob]
 
 ## End to end
@@ -119,8 +120,10 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 | Test after the body edit | TBD | TBD | TBD | TBD |
 | Fresh checkout, warm cache | TBD | TBD | TBD | TBD |
 
-The repository is Chapter 5's synthetic one, `core` its most widely imported package, and the
-builds are `go build -o <dir> ./...` and `bazel build` of the same binaries:
+The repository is the 1,000-package synthetic repository (Appendix A), also generated at 3,000
+packages, `core` its most widely imported package. The builds are `go build -o <dir> ./...` and
+`bazel build` of the same binaries; the test row runs `go test -vet=off ./...` and
+`bazel test //...`:
 
 - **Cold build:** both compile everything, the standard library
   included.[^go-no-prebuilt-std][^rules-go-stdlib] Bazel also starts its server, loads,
@@ -132,13 +135,13 @@ builds are `go build -o <dir> ./...` and `bazel build` of the same binaries:
 - **Test after the body edit:** both rerun every test whose binary contains `core`, since each
   keys a test result by its binary.[^go-testcache][^bazel-cache-tests] In our view, the `.x`
   saves compiles here, not links or test runs.
-- **Fresh checkout:** a copy at another path, given the first build's cache. Without
-  `-trimpath`, the action ID of every package in the checkout changes with its directory.
-  Bazel's keys match, but its new server must load and analyze first.
+- **Fresh checkout:** a copy at another path, given the first build's cache (for Bazel, its disk
+  cache). Without `-trimpath`, the action ID of every package in the checkout changes with its
+  directory. Bazel's disk-cache keys match, but its new server must load and analyze first.
 
 ## Where each stops scaling
 
-![Figure 8.2: One body edit, by Chapter 1's cost terms. Finding the graph and the change grows with the repository.](figures/08-scaling.svg)
+![Figure 8.2: One local body edit that leaves the export data unchanged, by Chapter 1's cost terms. Finding the graph and the change grows with the repository.](figures/08-scaling.svg)
 
 In our analysis, the go command stops scaling where a run's work grows with the repository
 rather than the change: every invocation pays T_graph and T_detect over the whole tree (Figure
@@ -147,26 +150,26 @@ are relinked on every machine. Generated code and other languages stay outside t
 uncached: the go command builds only Go and never runs `go generate`
 itself.[^go-about][^go-generate]
 
-Bazel, in our analysis, stops scaling where its fixed costs grow with the graph. Server memory
+Bazel, in our analysis, stops scaling where its overheads grow with the graph. Server memory
 grows with the graph; a heap too small fails the build, and the flags that save memory slow
 incremental builds.[^bazel-client-server][^bazel-memory] Every server start, as on each new CI
 runner, repeats loading and analysis,[^bazel-cache-issues] and, as Chapter 2's restart shows,
-checks every action against the action cache again. Per-action costs multiply with the actions.
-And every import change must reach the BUILD files.
+checks every action against the action cache again.
 
 ## What this means at scale
 
 - Time a no-op build as the repository grows. If it grows with the tree, T_graph and T_detect
-  are the limit; we expect a warm Bazel server with `--watchfs` to make both follow the change.
-- Before sharing a cache across machines, make keys path-independent: `-trimpath` with
-  `GOCACHEPROG`, or a matching environment and platform under Bazel. Only Bazel's shared cache
+  are the limit. A warm Bazel server keeps the graph, and `--watchfs` stops it rescanning
+  sources, but it still checks every output of the last build.
+- Before sharing a cache across machines, make keys match across them: `-trimpath` with
+  `GOCACHEPROG`; a matching environment and platform under Bazel. Only Bazel's shared cache
   holds links.
-- Under the go command, any body edit to a widely imported package recompiles every direct
-  importer; under Bazel, only edits to its API, declaration positions or inlinable bodies do.
-  Under both, its binaries relink, so keep binaries small.
-- Budget for Bazel's fixed costs: server memory, analysis per server start, a cost per action,
-  BUILD files per import change. We recommend warm servers and a Gazelle check in CI (Chapter
-  3).
+- Under the go command, any edit to a widely imported package recompiles every direct importer,
+  and one that changes its export data their importers too. Under Bazel, only an edit that
+  changes its `.x` (API, declaration positions, inlinable bodies, escape results) recompiles
+  importers. Under both, every binary that contains it relinks.
+- Budget for Bazel's overheads: server memory, analysis per server start, a cost per action, and
+  BUILD files kept in step with every import change.
 - If generated code or other languages are a large share of the build, we expect only a declared
   graph to bring them into the cache.
 
@@ -211,11 +214,11 @@ And every import change must reach the BUILD files.
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/gazelle-reference.md?plain=1#L53-L59>
 [^go-filehash]: Go, `cmd/go/internal/cache/hash.go`, `FileHash`: hashes the whole file and
     remembers the result in a map that lives as long as the process.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L158>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
 [^bazel-filestate]: Bazel, `lib/actions/FileStateValue.java`,
     `createRegularFileStateValueFromPath`, and `lib/actions/FileContentsProxy.java`: file
     metadata stands in for contents unless the file system offers a fast digest.
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L145>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L147>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
 [^bazel-watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option (default
     `false`) and `EVERYTHING_MODIFIED`, used when it is off; `lib/skyframe/SkyframeExecutor.java`,
@@ -223,6 +226,15 @@ And every import change must reach the BUILD files.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
+[^bazel-output-check]: Bazel, `lib/pkgcache/PackageOptions.java`,
+    `--experimental_check_output_files`, default `true`; `lib/buildtool/ExecutionTool.java`, which
+    skips the check only when it is false; `lib/vfs/LocalOutputService.java`, `startBuild`, which
+    reports every output as possibly modified; `lib/skyframe/FilesystemValueChecker.java`,
+    `getDirtyActionValues`, which stats the outputs of every action in the graph.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/pkgcache/PackageOptions.java#L181-L191>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/ExecutionTool.java#L506-L512>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/vfs/LocalOutputService.java#L59-L85>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/FilesystemValueChecker.java#L213-L264>
 [^go-buildactionid]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`: platform, compiler
     tool ID and flags, input files, and each dependency's content ID.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L264-L442>
@@ -257,6 +269,14 @@ And every import change must reach the BUILD files.
 [^go-export-inline]: Go, `cmd/compile/internal/noder/linker.go`, `exportBody`: a body is
     exported if the function is inlinable.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L214-L251>
+[^go-export-ext]: Go, `cmd/compile/internal/noder/linker.go`, `relocFuncExt`: the
+    escape-analysis tag of each parameter and the inlining cost of each function.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
+[^go-export-reloc]: Go, `cmd/compile/internal/noder/linker.go`, the `linker` comment ("a single,
+    self-contained export data file") and `relocObj`, which copies an imported object's
+    definition.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L36-L38>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L137-L212>
 [^go-linkactionid]: Go, `cmd/go/internal/work/exec.go`, `linkActionID`, the `packagefile`
     line. <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
 [^rules-go-link-inputs]: rules_go, `go/private/actions/link.bzl`, `emit_link`: `archive.libs`,
@@ -265,10 +285,13 @@ And every import change must reach the BUILD files.
 [^go-noexe]: Go, `cmd/go/internal/work/buildid.go`, `updateBuildID`: "Executables are not
     cached by default".
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L730-L742>
-[^go124]: Go 1.24 release notes, "Go command" and "GOCACHEPROG"; commits 3ff868f2f5 (cache
-    executables built for `go run`) and 83a7626687 (enable `GOCACHEPROG` by default).
-    <https://go.dev/doc/go1.24> <https://go.googlesource.com/go/+/3ff868f2f5>
-    <https://go.googlesource.com/go/+/83a7626687>
+[^go124]: Go 1.24 release notes, section "Go command": executables created by `go run` and
+    `go tool` "are now cached in the Go build cache" (commit 3ff868f2f5); section
+    "GOCACHEPROG": a program named by the `GOCACHEPROG` environment variable can now implement
+    the cache, which "was previously behind a GOEXPERIMENT". Unless the variable is set, the
+    disk cache is used.
+    <https://go.dev/doc/go1.24#go-command> <https://go.dev/doc/go1.24#gocacheprog>
+    <https://go.googlesource.com/go/+/3ff868f2f5>
 [^bazel-remote-caching]: Bazel, "Remote Caching", sections "Overview" (action outputs are what
     is cached) and "Disk cache" (shared across checkouts).
     <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
@@ -295,11 +318,11 @@ And every import change must reach the BUILD files.
     leaking into an action, and in-memory state lost when the server does not survive.
     <https://bazel.build/remote/caching#known-issues>
 [^go-do]: Go, `cmd/go/internal/work/exec.go`, `Builder.Do`, which starts `-p` goroutines;
-    `cmd/go/internal/cfg/cfg.go`, `BuildP`, which defaults to `GOMAXPROCS`.
+    `cmd/go/internal/cfg/cfg.go`, `BuildP`, which defaults to `GOMAXPROCS`;
+    `cmd/go/internal/work/shell.go`, `Shell.runOut`, which runs each tool as a child process.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L223-L229>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L87>
-[^go-tokens]: Go, `cmd/go/internal/work/gc.go`, `compilerConcurrency`.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L184-L235>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/shell.go#L626>
 [^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel,
     services `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
@@ -311,15 +334,17 @@ And every import change must reach the BUILD files.
 [^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
     configurations `n1000` and `n3000`; Appendix A describes the repository and the harness.
     [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
-[^go-no-prebuilt-std]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`: "we no longer ship
-    precompiled archive files as of Go 1.20".
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L289-L292>
+[^go-no-prebuilt-std]: Go 1.20 release notes, "Go command": "The directory `$GOROOT/pkg` no
+    longer stores pre-compiled package archives for the standard library".
+    <https://go.dev/doc/go1.20#go-command>
 [^rules-go-stdlib]: rules_go, `go/private/actions/stdlib.bzl`, `emit_stdlib`, which always
     calls `_build_stdlib`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/stdlib.bzl#L36-L47>
 [^rules-go-builder-exec]: rules_go, `go/private/go_toolchain.bzl`, the `builder` attribute with
-    `cfg = "exec"`, built from source.
+    `cfg = "exec"`; `go/private/rules/binary_wrapper.sh`, which builds it from source with
+    `go build -trimpath`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
 [^go-testcache]: Go, `cmd/go/internal/test/test.go`, `tryCacheWithID`: the test ID uses the
     link's inputs as a proxy for the test binary.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1882-L1909>
