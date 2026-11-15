@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 528" role="img" aria-labelledby="f73-title" class="f73">
-  <title id="f73-title">Two edits to core, in the go command and in Bazel. A body edit to a function that is not inlined: the go command recompiles core and its direct importers, Bazel only core; both relink every binary. A comment that shifts the lines of core's types: the go command recompiles two levels of importers, Bazel one.</title>
+  <title id="f73-title">Two edits to core, in the go command and in Bazel, in a repository whose importers use core only inside function bodies. A body edit to a function that is not inlined: the go command recompiles core and its direct importers, Bazel only core; both relink every binary. A comment that shifts the lines of core's types: the go command recompiles two levels of importers, Bazel one.</title>
   <style>
     .f73 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f73 .f73-sm { font-size: 13px; opacity: 0.8; }

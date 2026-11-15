@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 250" role="img" aria-labelledby="f74-title" class="f74">
-  <title id="f74-title">go_test compiles three packages: the library with its in-package tests, the external _test package, and a generated main package that imports both. A link turns them into the test binary.</title>
+  <title id="f74-title">go_test compiles three packages: the library with its in-package tests, the external _test package, and a generated main package that imports both. Arrows between packages point to the imported package; the link reads the .a of all three and turns them into the test binary.</title>
   <style>
     .f74 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f74 .f74-sm { font-size: 13px; opacity: 0.8; }
@@ -23,7 +23,7 @@
   <!-- 2. the external test package -->
   <rect class="f74-bz" x="20" y="156" width="220" height="74" rx="8"/>
   <text x="36" y="180" class="f74-mono">package greet_test</text>
-  <text x="36" y="199" class="f74-sm">tests that import greet</text>
+  <text x="36" y="199" class="f74-sm">imports greet + its tests</text>
   <text x="36" y="218" class="f74-mn">GoCompilePkgExternal</text>
 
   <!-- 3. the generated main package -->
@@ -44,4 +44,5 @@
   <path class="f74-line" d="M300,110 L270,110 L270,57 L244,57" marker-end="url(#f74-arrow)"/>
   <path class="f74-line" d="M300,140 L270,140 L270,193 L244,193" marker-end="url(#f74-arrow)"/>
   <line class="f74-line" x1="536" y1="125" x2="576" y2="125" marker-end="url(#f74-arrow)"/>
+  <text x="556" y="116" text-anchor="middle" class="f74-sm">all .a</text>
 </svg>

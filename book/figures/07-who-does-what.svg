@@ -10,7 +10,7 @@
     .f71 .f71-golabel { fill: #007D9C; font-weight: 600; }
     .f71 .f71-bzlabel { fill: #388E3C; font-weight: 600; }
     .f71 .f71-box { fill: none; stroke: currentColor; stroke-width: 1.5; }
-    .f71 .f71-tools { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .f71 .f71-tools { fill: none; stroke: currentColor; stroke-width: 1.5; }
     .f71 .f71-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
   </style>
   <defs>
