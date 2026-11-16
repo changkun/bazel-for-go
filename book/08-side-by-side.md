@@ -133,7 +133,7 @@ packages, `core` its most widely imported package. The builds are `go build -o <
   importers more than Bazel; both relink.
 - **Test after the body edit:** both rerun every test whose binary contains `core`, since each
   keys a test result by its binary.[^go-testcache][^bazel-cache-tests] In our view, the `.x`
-  saves compiles here, not links or test runs. Bazel took longer, in links and test runs alike
+  saves compiles here, not links or test runs. Bazel's first-run links and test runs were slower
   (Chapter 5).
 - **Fresh checkout:** a copy at another path, given the first build's cache (for Bazel, its disk
   cache). Without `-trimpath`, the action ID of every package in the checkout changes with its

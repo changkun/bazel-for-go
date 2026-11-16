@@ -208,7 +208,7 @@ default: Bazel reruns only the actions that produced the lost outputs.[^rewind]
 | A second description of the graph | The graph is declared, not derived | Every change to imports must reach the BUILD files (Chapter 3) |
 | Server memory | Skyframe keeps every node in the server's heap[^client-server] | Targets and configurations |
 | A fixed cost per action | A process, a sandbox, hashes and a cache entry for every action[^sandboxing][^rules-go-workers] | The number of actions |
-| Loading and analysis after every start | The graph lives only in memory[^cache-issues] | The number of targets; paid by every new CI runner[^bench] |
+| Loading and analysis after every start | The graph lives only in memory[^cache-issues] | The number of targets; paid by every new continuous integration (CI) runner[^bench] |
 
 The heap grows with the graph; Chapter 5 measures it. A build too big for the heap fails with
 an `OutOfMemoryError`, and the flags that discard parts of the graph to save memory make
