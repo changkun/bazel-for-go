@@ -358,6 +358,10 @@ tables and redraws its figures.
     for `n1000-local`'s no-op; the `System load average` counter of Bazel's cold-build profiles
     averaged 47.1 to 68.3 in the first run, 8.7 to 11.0 in the rerun):
     [`examples/bench/results/2026-11-16-variants/results.jsonl`](../examples/bench/results/2026-11-16-variants/results.jsonl).
+    Table A.5's `n1000` rows come from the first run, whose Bazel cold build averaged 21.4; in the
+    second run (Table A.7), at 36.5, their three-run medians moved by at most 1.25 times and
+    Bazel's `cold` by 1.29, more than the 1.01 to 1.22 times between it and the variants' Bazel
+    `cold`.
 [^a-workload]: This book's measurements, one record per process:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl).
 [^a-second]: This book's measurements, a second run of `n1000` and `n10000` with
