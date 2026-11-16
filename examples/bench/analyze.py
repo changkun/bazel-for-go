@@ -168,35 +168,55 @@ def workload(w, graphs):
     return w, links
 
 
-def fig_process_cost(d, repo):
-    """Figure 5.2: peak memory against wall time, one point per compile or link process."""
-    fig, ax = plt.subplots(figsize=(10, 4.4))
+def fig_process_cost(d, links, repo):
+    """Figure 5.2. Left: peak memory against wall time, one point per compile or link process.
+    Right: each test link's peak memory and wall time against the repository packages it links."""
+    fig = plt.figure(figsize=(10, 4.6))
+    grid = fig.add_gridspec(2, 2, width_ratios=[1.45, 1], hspace=.12, wspace=.32)
+    ax = fig.add_subplot(grid[:, 0])
+    plain = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
+
+    def ticks(axis, values, lo, hi):
+        axis.set_major_formatter(plain)
+        axis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        axis.set_ticks([v for v in values if lo / 1.5 < v < hi * 1.5])
+
+    hollow = dict(marker="o", s=20, facecolors="none", edgecolors=INK, linewidths=.7, alpha=.5)
     for kind, label, style in [
-        ("compile", "compile, one per process", dict(marker="o", s=9, color=GO, alpha=.3, linewidths=0)),
-        ("link (test)", "link, one per test binary", dict(marker="o", s=20, facecolors="none", edgecolors=INK, linewidths=.7, alpha=.5)),
-        ("link", "link, one per go build binary", dict(marker="D", s=36, color=INK, linewidths=0)),
+        ("compile", "compile", dict(marker="o", s=9, color=GO, alpha=.3, linewidths=0)),
+        ("link (test)", "test link", hollow),
+        ("link", "go build link", dict(marker="D", s=36, color=INK, linewidths=0)),
     ]:
         k = d[d.kind == kind]
         ax.scatter(k.wall_ms / 1000, k.rss_mb, label=f"{label} ({len(k):,})", **style)
     ax.set(xscale="log", yscale="log", xlabel="wall time per process (s)", ylabel="peak memory (MB)")
-    plain = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
-    for axis in (ax.xaxis, ax.yaxis):
-        axis.set_major_formatter(plain)
-        axis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     shown = d[d.kind.isin(["compile", "link (test)", "link"])]
     secs = shown.wall_ms / 1000
-    ax.set_xticks([v for v in [.005, .01, .02, .05, .1, .2, .5, 1, 2, 5, 10] if secs.min() / 1.5 < v < secs.max() * 1.5])
-    ax.set_yticks([v for v in [10, 20, 50, 100, 200, 500, 1000, 2000]
-                   if shown.rss_mb.min() / 1.5 < v < shown.rss_mb.max() * 1.5])
+    ticks(ax.xaxis, [.005, .01, .02, .05, .1, .2, .5, 1, 2, 5, 10], secs.min(), secs.max())
+    ticks(ax.yaxis, [10, 20, 50, 100, 200, 500, 1000, 2000], shown.rss_mb.min(), shown.rss_mb.max())
     for rt in d[(d.kind == "compile") & (d.target == "runtime")].itertuples():  # the compile the text names
         ax.scatter([rt.wall_ms / 1000], [rt.rss_mb], marker="o", s=20, color=GO, linewidths=0)
-        ax.annotate("runtime", (rt.wall_ms / 1000, rt.rss_mb), xytext=(6, -2), textcoords="offset points",
-                    ha="left", va="center", color=INK)
-    leg = ax.legend(loc="upper left", handletextpad=.2, borderaxespad=0, markerscale=1.5)
+        ax.annotate("runtime", (rt.wall_ms / 1000, rt.rss_mb), xytext=(0, -10), textcoords="offset points",
+                    ha="center", va="top", color=INK)
+    leg = ax.legend(loc="upper left", handletextpad=.2, borderaxespad=.3, markerscale=1.5, frameon=False)
     for h in getattr(leg, "legend_handles", None) or leg.legendHandles:
         h.set_alpha(1)  # the points are faint so that they show density; the key need not be
+
+    # Test links whose size the go build's action graph gives (chapter_numbers counts the rest).
+    t = links[links.config.isin(set(d.config))].dropna(subset=["pkgs"])
+    mem, time = fig.add_subplot(grid[0, 1]), fig.add_subplot(grid[1, 1])
+    for a, y, label, values in [(mem, t.rss_mb, "peak memory (MB)", [20, 50, 100, 200, 500, 1000]),
+                                (time, t.wall_ms / 1000, "wall time (s)", [.01, .02, .05, .1, .2, .5, 1, 2])]:
+        a.scatter(t.pkgs, y, **hollow)
+        a.set(xscale="log", yscale="log", ylabel=label)
+        ticks(a.yaxis, values, y.min(), y.max())
+        ticks(a.xaxis, [1, 3, 10, 30, 100, 300, 1000, 3000], t.pkgs.min(), t.pkgs.max())
+    mem.tick_params(labelbottom=False)
+    mem.set_title(f"test links ({len(t):,})", loc="left", fontsize=13)
+    time.set_xlabel("repository packages linked")
     fig.tight_layout()
-    save(fig, "05-process-cost.svg", f"Peak memory against wall time for every compile and link process of {repo}.")
+    save(fig, "05-process-cost.svg", f"Peak memory against wall time for every compile and link process of {repo}, "
+         f"and each test link's peak memory and wall time against the packages it links.")
 
 
 # ---- 3. The go build's critical path --------------------------------------------------------
@@ -548,7 +568,7 @@ def main():
     configs = load(d / "configs.jsonl", jsonl)
     pkgs = None if configs is None else configs.set_index("config").stats.get(config, {}).get("Pkgs")
     repo = f"the {pkgs:,}-package repository" if pkgs else f"the repository {config}"
-    fig_process_cost(w[w.config == config], repo)
+    fig_process_cost(w[w.config == config], links, repo)
     if config in paths:
         fig_build_shape(*paths[config], int(meta["ncpu"]), repo)
     chapter_numbers(res, w, links, paths, profiles, int(meta["ncpu"]))
