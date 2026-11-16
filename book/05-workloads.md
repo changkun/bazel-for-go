@@ -1,15 +1,17 @@
 # 5. The toolchain's workloads
 
-The go command and rules_go run the same programs: compiler, linker, assembler, cgo and test
-binaries. This chapter measures what each consumes and how that grows, so that Chapter 9 can
-place each on a suitable machine.
+The go command and rules_go run the same programs: compiler, linker, assembler, cgo (which lets
+Go code call C) and test binaries. This chapter measures what each consumes and how that grows,
+so that Chapter 9 can place each on a suitable machine.
 
 We ran a cold (empty-cache) build of the repository's binaries and `go test ./...` through a
 wrapper (`-toolexec` and `-exec`) that recorded each process's wall time, CPU time (user plus
 system) and peak RSS (resident set size: the most physical memory it held at once). The
 synthetic repository has 1,000 packages of about 690 lines each in 12 layers (Appendix A), built
 on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta] Figure 5.3 and the timings of whole
-actions come instead from the timed runs of Appendix A, without the wrapper.[^m-graph][^m-profile]
+actions (build steps, such as one compile) come instead from the timed runs of Appendix A,
+without the wrapper.[^m-graph][^m-profile] The wrapped build took 13.4 s, the timed one
+6.9 s.[^m-results]
 
 ## compile: one process per package
 
@@ -25,9 +27,9 @@ package's exported types and functions that the compiler writes for importers to
 direct import.[^go-importcfg]
 
 The go command runs up to `-p` actions at once, by default `GOMAXPROCS`, the number of threads
-that run Go code at once (one per CPU unless set). It gives each compile a `-c` from a shared
-pool of 2×`GOMAXPROCS` + 4×`-p` tokens, 108 here: half the tokens not held back for compiles yet
-to start, at least 4 and at most `GOMAXPROCS`.[^go-token-pool] rules_go passes no
+that run Go code at once (here one per CPU).[^go-gomaxprocs] It gives each compile a `-c` from
+a shared pool of 2×`GOMAXPROCS` + 4×`-p` tokens, 108 here: half the tokens not held back for
+compiles yet to start, at least 4 and at most `GOMAXPROCS`.[^go-token-pool] rules_go passes no
 `-c`,[^rules-go-compilego] so each compile starts one worker per CPU,[^go-lowerc] while Bazel's
 scheduler books each rules_go action, which declares no resources, as one CPU and
 250 MB.[^bazel-resources] So 18 compiles may start 324 back-end workers under Bazel, against at
@@ -37,7 +39,7 @@ A compile of one of our packages used a median of 61 ms of CPU and 45 MB, with `
 and 18.[^m-workload] Across them, CPU time about equalled wall time. In our reading, the serial
 front end dominates small packages, and on a busy machine extra workers find no free core.
 With cores free, the back end does help: the runtime, the costliest compile, ran early with
-`-c=18` and used 2,406 ms of CPU in 1,438 ms, and 302 MB.[^m-workload]
+`-c=18`: its action used 2.05 s of CPU in 0.67 s,[^m-graph] and 302 MB.[^m-workload]
 
 ## link: one process per binary
 
@@ -49,21 +51,21 @@ transitive archive and the standard library as the link action's inputs.[^rules-
 The linker loads them all, drops unreachable code and writes the binary; only a few phases, such
 as writing the output, use several goroutines.[^go-link-phases]
 
-The go build's 11 links, ten of them of about 730 repository packages each, took a median of
-0.71 s and 450 MB: ten times a compile's memory, with CPU time 1.1 times wall
+The go build's 11 links, ten of them of about 730 repository packages each,[^m-graph] peaked at
+a median of 450 MB: ten times a compile's memory, with CPU time 1.1 times wall
 time.[^m-workload] Test binaries, linked without debug information,[^go-test-strip] show how a
 link grows (Figure 5.2, right): a median of 96 MB and 59 ms at 10 or fewer of the repository's
-packages, 282 MB and 172 ms at more than 300.[^m-workload] A link reruns whenever any package in
-the binary changes:[^go-linkactionid] a body edit to `core`, the most widely imported package
-(Chapter 4), relinked all ten applications under both tools.[^m-results][^m-profile]
+packages, 282 MB and 172 ms at more than 300.[^m-workload][^m-graph] A link reruns whenever any
+package in the binary changes:[^go-linkactionid] a body edit to `core`, the most widely imported
+package (Chapter 4), relinked all ten applications under both tools.[^m-results][^m-profile]
 
 On macOS both tools build position-independent executables (PIE, binaries that can load at any
 address). Go's own linker writes them,[^go-internal-pie] but rules_go hands every PIE link to the
 C toolchain's linker unless cgo is off.[^rules-go-pie] Timed as whole actions amid other work in
 the cold builds, links took a median of 2.3 s under Bazel and 0.63 s under the go
-command.[^m-profile][^m-graph] The difference includes the C linker, Bazel's sandbox (a directory
-holding only an action's declared inputs) and rules_go's builder (the program that wraps each
-compile and link); we did not separate them.
+command.[^m-profile][^m-graph] The difference may include the C linker, Bazel's sandbox (a
+directory holding only an action's declared inputs) and rules_go's builder (the program that
+wraps each compile and link); we did not separate them.
 
 ## asm and cgo
 
@@ -71,22 +73,22 @@ The assembler runs once per assembly file, after one pass over all of them to co
 symbols.[^go-asm] Only the standard library has assembly here: 69 processes of 7 ms and 7 MB at
 the median.[^m-workload]
 
-For cgo (Go code that calls C), the go command runs the cgo tool, compiles each C file as a
-separate action, then compiles the Go code.[^go-cgo] rules_go does all of this inside one
-compile action.[^rules-go-cgo] Our repository has no cgo.
+For cgo, the go command runs the cgo tool, compiles each C file as a separate action, then
+compiles the Go code.[^go-cgo] rules_go does all of this inside one compile
+action.[^rules-go-cgo] Our repository has no cgo.
 
 ## Test binaries: a link plus a run
 
 Each package's tests are compiled, linked into a binary of their own and run. Our tests do
 little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload] The first
-18 runs to finish, as many as run at once, each took about 0.22 s longer than the one before,
-and `go test ./...` took 279 s for 1,000 binaries, 0.28 s each,[^m-workload][^m-results] as if
-the runs waited in one queue outside the processes. macOS checks an app for known malware on its
-first launch;[^apple-xprotect] we infer that this check, made on each new test binary in turn,
-is the queue, and expect Linux machines not to pay it. Bazel's first test run took 531 s,
-though its longest chain of dependent actions took 13.3 s.[^m-results] Timed as whole actions,
-its test links took a median of 1.4 s and its test runs 7.5 s, against 0.11 s and 5.1 s for the
-go command's processes.[^m-test-profile][^m-workload]
+18 runs to finish, as many as run at once, each took about 0.22 s longer than the one
+before,[^m-workload] and the timed `go test ./...` took 279 s for 1,000 binaries, 0.28 s
+each,[^m-results] as if the runs waited in one queue outside the processes. macOS checks an app
+for known malware on its first launch;[^apple-xprotect] we infer that this check, made on each
+new test binary in turn, is the queue, and expect Linux machines not to pay it. Bazel's first
+test run took 531 s, though its longest chain of dependent actions took 13.3 s.[^m-results]
+Timed as whole actions, its test links took a median of 1.4 s and its test runs 7.5 s, against
+0.11 s and 5.1 s for the go command's processes.[^m-test-profile][^m-workload]
 
 ## vet, nogo and code generators
 
@@ -94,12 +96,11 @@ go command's processes.[^m-test-profile][^m-workload]
 the facts (results that an analysis passes from a package to its importers) they wrote.[^go-vet]
 `go test` runs a subset of vet's checks by default;[^go-test-vet] our measurements turned them
 off. nogo, rules_go's counterpart, when configured, is a separate action per package that reads
-the sources and its direct imports' export data and facts.[^rules-go-nogo] Both type-check the
-package again, so we expect each to cost at least as much as a compile's front end.
+the sources and its direct imports' export data and facts.[^rules-go-nogo]
 
 `go generate` is never run by `go build`, and it has no cache;[^go-generate] rerunning the
-repository's 100 generators took 6.1 s.[^m-results] Under Bazel, a generator runs as an
-action,[^bazel-genrule] cached like any other.[^bazel-actions]
+repository's 100 `go:generate` directives took 6.1 s.[^m-results] Under Bazel, a generator runs
+as an action,[^bazel-genrule] cached like any other.[^bazel-actions]
 
 ## The shape of a build
 
@@ -118,27 +119,28 @@ standard library.[^m-profile]
 
 ## Four workload classes
 
-![Figure 5.4: Four workload classes: what each process does and what its cost grows with.](figures/05-classes.svg)
+![Figure 5.4: Four workload classes: what each process does, what its cost grows with and, in our view, what machine it wants.](figures/05-classes.svg)
 
 - **compile**: many short, CPU-bound processes with a serial front end.
 - **link**: one process per binary, mostly on one core, growing with the packages it links.
 - **test**: a link and a run whose length the test decides, plus, on macOS, a wait before
   launch.
-- **Bazel server**: one Java virtual machine (JVM) per workspace that holds the graph in memory.
-  Its heap grew from 84 MB after building the binaries to 130 MB after the tests.[^m-results]
+- **Bazel server**: one Java virtual machine (JVM) per workspace that holds the graph in
+  memory.[^bazel-server] Its heap grew from 84 MB after building the binaries to 130 MB after the
+  tests.[^m-results]
 
 ## What this means at scale
 
 - Size compile machines by cores and link machines by the largest binary: a link needed ten
-  times a compile's memory.
-- More cores speed a cold build only down to its critical path; beyond that, only a shorter chain
-  from the runtime through the deepest import to the link helps.
+  times a compile's memory at 1,000 packages, 22 times at 3,000.[^m-workload]
+- More cores speed a cold build only down to its critical path; beyond that, only a shorter path
+  helps, which under Bazel starts with rules_go's builder and standard library.
 - A binary that links most of the repository relinks after almost every change; keep binaries
   as small as their purpose allows.
 - Under Bazel the compiler may use every core while the scheduler books one CPU per compile;
   Chapter 9 shows how to make them agree.
-- On macOS, a test suite of many packages pays a launch cost per binary that more cores do not
-  reduce. We recommend running large suites on Linux.
+- On macOS, we infer, a test suite of many packages pays a launch cost per binary that more cores
+  do not reduce. We recommend running large suites on Linux.
 
 ## References
 
@@ -146,7 +148,8 @@ standard library.[^m-profile]
     [`examples/bench/results/2026-11-16/meta.json`](../examples/bench/results/2026-11-16/meta.json);
     the repository's shape:
     [`configs.jsonl`](../examples/bench/results/2026-11-16/configs.jsonl).
-[^m-workload]: Measurements, one record per process of `n1000`:
+[^m-workload]: Measurements, one record per process of the wrapped build and test of `n1000` and
+    `n3000`:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl),
     summarized by [`examples/bench/analyze.py`](../examples/bench/analyze.py).
 [^m-results]: Measurements, one record per command:
@@ -174,6 +177,10 @@ standard library.[^m-profile]
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/gc/main.go#L377-L381>
 [^go-importcfg]: Go, `cmd/go/internal/work/exec.go`, `Builder.build`, the import configuration.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L881-L887>
+[^go-gomaxprocs]: Go, `runtime/debug.go`, `GOMAXPROCS`: by default, from "the number of logical
+    CPUs on the machine", "the process's CPU affinity mask" and, on Linux, "the process's average
+    CPU throughput limit based on cgroup CPU quota".
+    <https://github.com/golang/go/blob/go1.27.3/src/runtime/debug.go#L12-L30>
 [^go-token-pool]: Go, `cmd/go/internal/work/gc.go`, `compilerConcurrency` and
     `initCompilerConcurrencyPool`; `cmd/go/internal/cfg/cfg.go`, `BuildP`, the `-p` default.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L182-L253>,
@@ -237,3 +244,10 @@ standard library.[^m-profile]
     <https://bazel.build/reference/be/general#genrule>
 [^bazel-actions]: Bazel, "Remote Caching", section "Overview".
     <https://bazel.build/remote/caching#overview>
+[^bazel-server]: Bazel, "Client/server implementation": "The Bazel system is implemented as a
+    long-lived server process", caching "BUILD files, dependency graphs, and other metadata from
+    one build to the next"; "if you build in multiple workspaces, you'll have multiple output
+    bases and thus multiple Bazel server processes". Bazel, `src/main/cpp/blaze.cc`,
+    `GetServerExeArgs`, which returns "the JVM command argument array" that starts the server.
+    <https://bazel.build/run/client-server>,
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/cpp/blaze.cc#L370-L371>

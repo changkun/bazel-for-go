@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 276" role="img" aria-labelledby="f54-title">
-  <title id="f54-title">Four workload classes. Compile: one process per package; wants many cores and modest memory per process. Link: one process per binary; wants memory, a fast core and the cache close by. Test: a link and a run, which takes the test's own time plus, on macOS, launch checks; wants isolation and a time limit. Bazel server: one Java process per workspace whose heap grows with the graph; wants memory sized to the graph and to stay warm.</title>
+  <title id="f54-title">Four workload classes and, in our view, what each wants. Compile: one process per package; wants many cores and modest memory per process. Link: one process per binary; wants memory, a fast core and its inputs on local disk. Test: a link and a run, which takes the test's own time plus, on macOS, what we infer are launch checks; wants isolation and a time limit. Bazel server: one Java process per workspace whose heap grows with the graph; wants memory sized to the graph and to stay warm.</title>
   <style>
     .f54 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; fill: currentColor; }
     .f54-sm { font-size: 13px; }
@@ -19,11 +19,11 @@
     <text class="f54-b" x="386" y="38">link</text>
     <text class="f54-sm f54-dim" x="694" y="38" text-anchor="end">one process per binary</text>
     <text class="f54-sm" x="386" y="70">memory and time grow with binary size</text>
-    <text class="f54-sm" x="386" y="102"><tspan class="f54-dim">wants:</tspan> memory, a fast core, the cache close by</text>
+    <text class="f54-sm" x="386" y="102"><tspan class="f54-dim">wants:</tspan> memory, a fast core, its inputs on local disk</text>
     <rect class="f54-card" x="10" y="148" width="340" height="118" rx="8"/>
     <text class="f54-b" x="26" y="176">test</text>
     <text class="f54-sm f54-dim" x="334" y="176" text-anchor="end">a link, then a run</text>
-    <text class="f54-sm" x="26" y="208">the test's own time, plus launch checks on macOS</text>
+    <text class="f54-sm" x="26" y="208">its own time, plus, we infer, macOS launch checks</text>
     <text class="f54-sm" x="26" y="240"><tspan class="f54-dim">wants:</tspan> isolation and a time limit</text>
     <rect class="f54-card f54-bz" x="370" y="148" width="340" height="118" rx="8"/>
     <text class="f54-b f54-bzt" x="386" y="176">Bazel server</text>
