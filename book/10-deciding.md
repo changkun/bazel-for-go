@@ -49,22 +49,24 @@ In our view, Bazel pays when one or more of these hold:
 - **Many machines build the same code, and time beyond compiling goes to links, tests or
   generators.** Bazel caches each, test runs included,[^bazel-test-spawn] as an action keyed by
   its declared inputs (Chapter 6), in a remote cache: a server shared by every machine.
-- **Other languages or code generators share the graph.** Bazel's BUILD files can declare
+- **Other languages or code generators share the graph.** Bazel's declared graph can hold
   actions in any language (Chapters 6 and 8).
 - **One build outgrows one machine.** Remote execution runs actions on a pool of
   machines,[^bazel-rbe] though no pool shortens the critical path, the longest chain of dependent
   actions (Chapter 5).
 - **Release builds must be hermetic**, giving the same output whatever else is
-  installed.[^bazel-hermetic] For Go without cgo, we expect `-trimpath`, a pinned Go version and
-  `CGO_ENABLED=0` to be enough; without the last, a native Linux build that imports `net` uses
-  cgo whenever a C compiler is on the `PATH`.[^go-cgo-default] Bazel can declare generators and
-  a registered C toolchain as inputs, but by default uses the host's C compiler, which it does
-  not track (Chapter 3).[^bazel-cache-issues]
+  installed.[^bazel-hermetic] For Go without cgo, we expect `-trimpath`,
+  `-buildvcs=true`,[^go-buildvcs] a pinned Go version and `CGO_ENABLED=0` to be enough; without
+  the last, a native Linux build that imports `net` uses cgo whenever a C compiler is on the
+  `PATH`.[^go-cgo-default] Bazel can declare generators and a registered C toolchain as inputs,
+  but by default uses the host's C compiler, which it does not track
+  (Chapter 3).[^bazel-cache-issues]
 
-Bazel's finer cutoff, where an edit stops spreading, also saves compiles: after a body edit to a
-widely imported package, Bazel recompiles that package alone, the go command every direct
-importer (Chapter 7). In our view that alone rarely repays Bazel's costs: a shared store runs
-those compiles once per fleet, and both tools relink every binary that contains the package.
+Bazel's finer cutoff, where an edit stops spreading, also saves compiles: after a body edit that
+changes nothing a widely imported package's importers read, Bazel recompiles that package
+alone, the go command every direct importer (Chapter 7). In our view that alone rarely repays
+Bazel's costs: a shared store runs those compiles once per fleet, and both tools relink every
+binary that contains the package.
 
 What it costs (Chapters 3 and 6): BUILD files, a second description of the graph, which Gazelle,
 the tool that writes them from Go source, must keep current; a server, the long-lived process
@@ -76,14 +78,14 @@ Table 10.1: Situations, the tool we recommend, and what to try before switching.
 
 | Situation | In our view | Why | Try first |
 |---|---|---|---|
-| One Go module, one team | go command | Incremental, with a cache keyed by content hashes (Chapter 4); Bazel adds a second graph and a server | `go build -o <dir>`; keep `<dir>` and GOCACHE between CI runs, with `-trimpath` |
+| One Go module, one team | go command | Incremental, with a cache keyed by content hashes (Chapter 4); Bazel adds a second graph and a server | `go build -o <dir>`; keep `<dir>` and GOCACHE between CI runs, with `-trimpath` and `-buildvcs=false`[^go-buildvcs] |
 | One Go repository, many services, CI time spent compiling | go command with a shared `GOCACHEPROG` store | Compiles are shared once action IDs match;[^go-actionid] Bazel's finer cutoff saves compiles that the store already runs once per fleet (Chapter 7) | `-trimpath` and one Go version everywhere |
-| One Go repository, CI time spent linking or testing, or loading on long-lived runners | Bazel with a remote cache | Links (Chapter 8) and test runs[^bazel-test-spawn] are cached actions; a warm server keeps the graph in memory, but a new one loads and analyzes everything (Chapter 6) | Split `go test` packages across parallel jobs |
+| One Go repository on many machines, CI time spent relinking or retesting unchanged code, or loading on long-lived runners | Bazel with a remote cache | Links (Chapter 8) and test runs[^bazel-test-spawn] are cached actions; those an edit reaches rerun under both tools, slower under Bazel in our measurements (Chapters 5 and 8); a warm server keeps the graph in memory, but a new one loads and analyzes everything (Chapter 6) | Split `go test` packages across parallel jobs |
 | Go with generated code | go command if generated files are checked in; Bazel if generation is slow or falls out of date | Bazel runs generators as cached actions (Chapter 3) | Check generated files in; regenerate and diff in CI |
 | Go with cgo | Either, with one C compiler on every machine; under Bazel, a pinned C toolchain (Chapter 3) | The C compiler's version enters the go command's action ID;[^go-actionid-cgo] Bazel does not track a compiler outside the workspace[^bazel-cache-issues] | One build image for every machine |
 | Go with other languages in one repository | Bazel | One declared graph across languages; the go command builds only Go packages[^go-about] | Gazelle on one service, to see what BUILD files cost to keep |
 | One build exceeds one machine | Bazel with remote execution | Parallelism is bounded by the pool, not one machine's cores;[^bazel-rbe] the critical path still bounds build time | Shorten the critical path; keep binaries small (Chapter 5) |
-| Hermetic release builds | Go without cgo: go command; with C or generators: Bazel, with a pinned C toolchain | Without `CGO_ENABLED=0`, a host C compiler can enter the build;[^go-cgo-default] Bazel declares generators and a registered C toolchain as inputs (Chapter 3) | `-trimpath`, `CGO_ENABLED=0` and a pinned Go version; build twice and compare |
+| Hermetic release builds | Go without cgo: go command; with C or generators: Bazel, with a pinned C toolchain | Without `CGO_ENABLED=0`, a host C compiler can enter the build;[^go-cgo-default] without `-buildvcs=true`, a missing `git` silently drops the commit stamp;[^go-buildvcs] Bazel declares generators and a registered C toolchain as inputs (Chapter 3) | `-trimpath`, `-buildvcs=true`, `CGO_ENABLED=0` and a pinned Go version; build twice and compare |
 
 ## A migration path
 
@@ -92,34 +94,34 @@ Table 10.1: Situations, the tool we recommend, and what to try before switching.
 Bazel's Maven migration guide advises running both build tools until the team, CI and other
 systems have moved.[^bazel-migrate] We recommend this order:
 
-1. **Generate BUILD files:** set up rules_go and Gazelle and run `bazel run //:gazelle`
-   (Chapter 2).[^rg-gazelle]
+1. **Generate BUILD files:** set up rules_go (Bazel's Go rules) and Gazelle and run
+   `bazel run //:gazelle` (Chapter 2).[^rg-gazelle]
 2. **Build both ways in CI:** `bazel test //...` beside `go vet` and `go test` on packages that
    need no Bazel-only input (Chapter 3). Require a clean Gazelle diff, which exits with status 1
    on a stale BUILD file,[^gz-diff] so each change carries its BUILD file updates.
 3. **Share a cache before CI depends on Bazel**, so its runs do not start cold. Bazel's
    documentation suggests that only CI write: every machine sets `--remote_cache`; the others
-   add `--remote_upload_local_results=false`.[^bazel-cache-rw] With cgo, or links on macOS, pin
-   the C toolchain first (Chapter 3).
+   add `--remote_upload_local_results=false`.[^bazel-cache-rw] With cgo, the race detector, or
+   links on macOS, pin the C toolchain first (Chapter 3).
 4. **Make Bazel CI's required check**, then move laptops once gopls, Go's language server, works
    through Bazel (Chapter 2).
 5. **Add remote execution last** (`--remote_executor`),[^bazel-remote-executor] and only when
    builds wait on cores rather than on the critical path (Chapters 1 and 5), or some actions
    need bigger machines (Chapter 9).
 
-In our view, until step 4 stopping costs only the BUILD files, the Gazelle check and the cache
-server.
+In our view, until step 4 stopping costs only the BUILD files, test changes, the Gazelle check
+and the cache server.
 
 ## What this means at scale
 
 - Find where CI time goes first: time loading, compiling, linking and tests as separate CI
   steps; under Bazel, read the profile's critical path (Chapter 9).
-- Try a `GOCACHEPROG` store first: reversible, and enough for compiles. Go ships only the
-  protocol, so budget for a program and a store.
+- Try a `GOCACHEPROG` store first: reversible, and enough for compiles. Budget for a program
+  and a store.
 - Choose Bazel for links and test results shared across fresh checkouts, other languages in the
   graph, or execution beyond one machine; not for one module on a laptop.
 - Keep CI runners and their Bazel servers long-lived: a new server loads and analyzes everything
-  before its first cache hit (Chapter 6).
+  again (Chapter 6).
 
 ## References
 
@@ -178,6 +180,17 @@ server.
 [^go-about]: Go, "About the go command", section "Configuration versus convention": the go
     command "does not attempt to build anything but Go packages".
     <https://go.dev/doc/articles/go_command>
+[^go-buildvcs]: Go, `cmd/go/internal/work/build.go`, the `-buildvcs` flag: `false` omits
+    version control information, and `true` errors out if it "cannot be included due to a
+    missing tool"; `load/pkg.go`, `setBuildInfo`: under the default `auto`, a missing tool
+    means "we should silently drop the VCS metadata", which names the commit
+    (`vcs.revision`); `work/exec.go`, `buildActionID`: the metadata enters the main package's
+    action ID. So `true` makes a missing `git` an error rather than a different binary, and
+    `false` drops the commit stamp, so a new commit no longer relinks every binary.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2577-L2582>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L359>
 [^go-cgo-default]: Go, `cmd/go/internal/cfg/cfg.go`, `defaultContext`: "starting in Go 1.20 …
     if CC is unset and the default C compiler we'd look for is not in the PATH, we automatically
     default cgo to off", so cgo is on when one is; `net/cgo_unix_cgo.go`, whose constraint

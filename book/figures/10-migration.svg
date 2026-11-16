@@ -51,7 +51,7 @@
     <text class="f102-label" x="70" y="122">Build both ways in CI</text>
     <text class="f102-sub" x="70" y="141">go and bazel must both pass</text>
     <text class="f102-mono" x="372" y="107">bazel test //...</text>
-    <text class="f102-mono f102-gotext" x="372" y="126">go vet ./... &amp;&amp; go test ./...</text>
+    <text class="f102-mono f102-gotext" x="372" y="126">go vet &lt;pkgs&gt; &amp;&amp; go test &lt;pkgs&gt;</text>
     <text class="f102-mono" x="372" y="145">bazel run //:gazelle -- -mode=diff</text>
   </g>
   <!-- 3 -->

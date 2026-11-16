@@ -492,19 +492,19 @@ export default {
     {
       section: "A migration path",
       lines: [
-        "We recommend this order: first, generate BUILD files with rules_go and Gazelle.",
-        "Second, build both ways in CI and require a clean Gazelle diff.",
+        { say: "We recommend this order: first, generate BUILD files with rules_go and Gazelle.", hold: 0.5 },
+        { say: "Second, build both ways in CI and require a clean Gazelle diff.", hold: 0.5 },
         "From then on, the go command keeps working beside Bazel on packages that need no Bazel-only input.",
-        "Third, share a cache before CI depends on Bazel; only CI writes to it.",
+        { say: "Third, share a cache before CI depends on Bazel; only CI writes to it.", hold: 0.5 },
         "Fourth, make Bazel CI's required check, then move laptops once gopls, Go's language server, works through Bazel.",
         "Fifth, add remote execution last, only when builds wait on cores rather than on the critical path, or some actions need bigger machines.",
-        { say: "In our view, until step 4, stopping costs only the BUILD files, the Gazelle check and the cache server.", hold: 0.6 },
+        { say: "In our view, until step 4, stopping costs only the BUILD files, test changes, the Gazelle check and the cache server.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 10.2's steps, with each step's commands under its name.
         const steps = [
           { kind: "bazel", name: "Generate BUILD files", cmds: ["bazel run //:gazelle"] },
-          { kind: "bazel", name: "Build both ways in CI", cmds: ["bazel test //...", "go vet ./... && go test ./...", "bazel run //:gazelle -- -mode=diff"] },
+          { kind: "bazel", name: "Build both ways in CI", cmds: ["bazel test //...", "go vet <pkgs> && go test <pkgs>", "bazel run //:gazelle -- -mode=diff"] },
           { kind: "remote", name: "Share a cache", sub: "CI writes; others only read", cmds: ["--remote_cache=…", "--remote_upload_local_results=false"] },
           { kind: "bazel", name: "Make Bazel CI's required check", sub: "then laptops, once gopls works" },
           { kind: "remote", name: "Add remote execution last", cmds: ["--remote_executor=…"] },
@@ -531,13 +531,20 @@ export default {
         // From step 2 on, the go command keeps working beside Bazel.
         const bracket = s.group();
         const span = stroke(bracket, `M22,${placed[1].top + 4} L10,${placed[1].top + 4} L10,${end} L22,${end}`, { kind: "go", width: 4 });
-        const passing = s.text(10, end + 44, "`go vet` and `go test` keep passing", { size: 26, tone: "go" });
+        const passing = s.text(10, end + 44, "`go vet` and `go test` keep passing on `<pkgs>`", { size: 26, tone: "go" });
         // Until step 4, stopping costs only what steps 1 to 3 added.
         const divider = s.line(36, placed[3].top - 15, 720, placed[3].top - 15, { width: 2, opacity: 0.5, dash: "8 8" });
-        const costs = ["BUILD files", "Gazelle check", "cache server"].map((name, i) => {
-          const x = 110 + measure(placed[i].name, { size: 32, weight: 600 }) + 32;
-          return s.pill(x + (measure(name, { size: 26 }) + 36) / 2, placed[i].top + 22, name);
-        });
+        // A pill whose left edge is at x: beside a step's name, or, for step 2, beside `bazel test`.
+        const pillAt = (x, cy, name) => s.pill(x + (measure(name, { size: 26 }) + 36) / 2, cy, name);
+        const afterName = (i) => 110 + measure(placed[i].name, { size: 32, weight: 600 }) + 32;
+        const afterTest = 110 + measure(placed[1].cmds[0], { size: 26, mono: true }) + 32;
+        const tests = pillAt(afterTest, placed[1].top + 59, "test changes");
+        const costs = [
+          pillAt(afterName(0), placed[0].top + 22, "BUILD files"),
+          tests,
+          pillAt(afterTest + tests.w + 12, placed[1].top + 59, "Gazelle check"),
+          pillAt(afterName(2), placed[2].top + 22, "cache server"),
+        ];
         return (t, cue) => {
           const [c0, c1, c2, c3, c4, c5, c6] = cue;
           // Each step lights up when its line comes.
@@ -547,7 +554,7 @@ export default {
           trace(span, during(t, c2 + 1.0, c2 + 3.0));
           appear(passing, t, c2 + 3.2);
           appear(divider, t, c6 + 1.8);
-          costs.forEach((p, i) => appear(p, t, c6 + [4.6, 5.8, 7.2][i]));
+          costs.forEach((p, i) => appear(p, t, c6 + [4.6, 5.4, 6.6, 8.0][i]));
         };
       },
     },
