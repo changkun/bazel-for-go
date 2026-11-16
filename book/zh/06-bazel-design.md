@@ -1,5 +1,5 @@
 # 6. Bazel 的设计
-<!-- 译自 b3daf42 -->
+<!-- 译自 5be0d60 -->
 
 Bazel 构建一个包含多种语言的仓库，在多台机器上构建并测试它，并力求给出与干净构建相同的结果。
 
@@ -165,8 +165,8 @@ Command 与目录树中的每个路径都相对于 execroot，因此除非某个
 使用远程缓存时，Bazel 在运行每个动作之前先查找它的哈希，并上传它所运行动作的结果。[^remote-caching]
 使用远程执行时，Bazel 改为把 Action 发送给执行服务：它上传 CAS 中缺少的输入，由服务的执行器池中的
 一个执行器运行命令，并把输出存入 CAS。[^rbe][^reapi-exec]执行器无法获得检出中位于输入根目录之外的任何文件，
-这正是每个输入都必须声明的原因。[^reapi]调高 `--jobs`（默认为本机的核心数）之后，并行度的上限便取决于
-执行器池。[^jobs]
+这正是每个输入都必须声明的原因。[^reapi]调高 `--jobs`（同时运行的动作数上限，默认为本机的核心数）之后，并行度的
+上限便取决于执行器池。[^jobs]
 
 自 7.0 起，Bazel 默认只下载顶层目标的输出以及本地动作需要的输出，对其余输出只掌握其哈希（即「Build
 without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某个后续动作需要的输出。自 9.3 起，回溯
@@ -357,11 +357,13 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L198-L200>
 
 [^jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`（默认值为 `auto`）与
-    `JobsConverter`，后者把 `auto` 换算为主机的 CPU 数；以及 `--experimental_async_execution`
+    `JobsConverter`，后者把 `auto` 换算为 `HOST_CPUS_SUPPLIER`，即主机的 CPU 数
+    （`lib/util/ResourceConverter.java`）；以及 `--experimental_async_execution`
     （默认值为 `false`），启用它时「同时执行的动作数仍受 `--jobs` 限制」。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 
 [^bwob]: Bazel 7.0.0 发布说明，其中也提到 `--remote_download_regex`；
     `lib/remote/options/RemoteOptions.java`，`--remote_download_outputs`，默认值为 `toplevel`。

@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 eba6ff5 -->
+<!-- 译自 5be0d60 -->
 
 本章比较 go 命令与 Bazel 对第 1 章六项决策的回答，并说明随着仓库增长，各自要付出什么
 代价。
@@ -84,7 +84,7 @@ go 命令在一台机器上以子进程的形式运行每个动作，同时运�
 
 ## 端到端
 
-表 8.1：墙钟时间（秒）：取三次重复的中位数（冷构建、测试与全新检出：一次；10000 个包时未运行测试）；范围跨越两次运行。[^bench]
+表 8.1：墙钟时间（秒）：取三次重复的中位数（冷构建、测试与全新检出：一次；10000 个包时未运行测试）；1000 与 10000 个包时，范围跨越两次运行。[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
@@ -298,12 +298,13 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/shell.go#L626>
 [^bazel-rbe]: Bazel，「Remote Execution Overview」。
     <https://bazel.build/remote/rbe>
-[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`：「the number of
-    concurrent jobs to run」，取值 1 至 5000，默认值为 `auto`；以及 `JobsConverter`，它把 `auto`
-    换算为 `HOST_CPUS_SUPPLIER`；`lib/util/ResourceConverter.java`，`HOST_CPUS_SUPPLIER`，即主机的
+[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`：「同时运行的作业数」，
+    取值 1 至 5000，默认值为 `auto`；`JobsConverter`，它把 `auto` 换算为 `HOST_CPUS_SUPPLIER`；
+    `--experimental_async_execution`，在该选项下「同时执行的动作数仍受 `--jobs` 限制」；`lib/util/ResourceConverter.java`，`HOST_CPUS_SUPPLIER`，即主机的
     CPU 数。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API，Bazel 中收录的 `remote_execution.proto`，服务
     `Execution`（`Execute`）与 `ContentAddressableStorage`（`FindMissingBlobs`）。
