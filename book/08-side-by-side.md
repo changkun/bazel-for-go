@@ -87,17 +87,17 @@ match.[^bazel-reapi][^bazel-cache-issues]
 The go command runs every action as a child process on one machine, `-p` at a time, by default
 one per core.[^go-do] One machine's cores then set the floor of T_exec, the time to run
 actions that missed the cache. Bazel runs actions locally by default; remote execution sends
-them to a pool of machines, uploading the inputs the remote cache lacks,[^bazel-reapi-exec] so,
-once `--jobs` (by default the local core count) is raised, the pool bounds
-parallelism.[^bazel-jobs] That adds T_transfer, the time to move
+them to a pool of machines, whose size bounds parallelism once `--jobs` (by default the local core
+count) is raised,[^bazel-rbe][^bazel-jobs] and uploads the inputs the remote cache
+lacks.[^bazel-reapi-exec] That adds T_transfer, the time to move
 bytes to and from remote machines and caches, which Build without the Bytes (default since
 Bazel 7.0) limits by downloading only the outputs asked for on the command line
 and those local actions need.[^bazel-bwob]
 
 ## End to end
 
-Table 8.1: Wall time in seconds: medians of three runs (cold build, test and fresh checkout:
-one); at 1,000 and 10,000, ranges where two runs differed.[^bench]
+Table 8.1: Wall time in seconds: medians of three repetitions (cold build, test and fresh
+checkout: one; no tests at 10,000); ranges span two runs.[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
@@ -326,14 +326,19 @@ checks every action against the action cache again.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L223-L229>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L87>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/shell.go#L626>
+[^bazel-rbe]: Bazel, "Remote Execution Overview".
+    <https://bazel.build/remote/rbe>
+[^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs`, "the number of
+    concurrent jobs to run", from 1 to 5,000, default `auto`, and `JobsConverter`, which turns
+    `auto` into `HOST_CPUS_SUPPLIER`; `lib/util/ResourceConverter.java`, `HOST_CPUS_SUPPLIER`, the
+    host's CPU count.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel,
     services `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
-[^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs` (default `auto`) and
-    `JobsConverter`, which turns `auto` into the host's CPU count.
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
 [^bazel-bwob]: Bazel 7.0.0 release notes; `lib/remote/options/RemoteOptions.java`,
     `--remote_download_outputs`, default `toplevel`.
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
@@ -355,11 +360,11 @@ checks every action against the action cache again.
     `go build -trimpath`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
-[^bench-links]: This book's measurements at 10,000 packages, in two runs: in the cold builds a
-    binary's link took a median of 32 s and 36 s under Bazel, 19 s and 12 s under the go command;
-    in Bazel's first body edit, 41 s and 34 s; the go command's edits record no link times. In
-    each run the two tools ran at this size an hour apart, on a machine shared with other work
-    (Appendix A).
+[^bench-links]: This book's measurements at 10,000 packages, in two runs (first, then second): in
+    the cold builds a binary's link took a median of 32 s and 36 s under Bazel, 19 s and 12 s under
+    the go command; in Bazel's first body edit, 41 s and 34 s; the go command's edits record no link
+    times. In each run the two tools ran at this size an hour apart, on a machine shared with other
+    work (Appendix A).
     [n10000-bazel-cold.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz),
     [n10000-bazel-core-body.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz),
     [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz);
