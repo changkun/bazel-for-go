@@ -346,7 +346,7 @@ export default {
       section: "link: one process per binary",
       lines: [
         { say: "Test binaries, linked without debug information, show how a link grows: the more packages it links, the more memory and time it takes.", hold: 1.2 },
-        { say: `The links of the go build's applications needed ${word(BENCH.linkMemory)} times a compile's memory.`, hold: 1.2 },
+        { say: `The go build's links needed ${word(BENCH.linkMemory)} times a compile's memory.`, hold: 1.2 },
       ],
       draw(s) {
         // Three test binaries, linking few, more and many packages: the link's memory and time grow with them.

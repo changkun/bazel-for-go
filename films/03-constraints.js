@@ -369,7 +369,7 @@ export default {
       lines: [
         { say: "With `go`, cgo runs whatever compiler `CC` names; rules_go uses the C toolchain registered in Bazel, or turns cgo off (pure mode) if none matches.", hold: 1 },
         { say: "By default rules_cc configures one from the host's compiler, but Bazel does not track tools outside the workspace.", hold: 1 },
-        "On macOS even code without cgo goes through it, and the race detector needs cgo too.",
+        "On macOS even code without cgo goes through it, and under rules_go the race detector needs cgo.",
         { say: "We recommend pinning the C toolchain as firmly as the Go SDK before sharing a cache.", hold: 1.2 },
       ],
       draw(s) {
@@ -494,7 +494,7 @@ export default {
       section: "Habits that change",
       lines: [
         { say: "`go test` runs a subset of `go vet` and fails on its findings; rules_go runs tests with its own actions, so that step is gone.", hold: 1 },
-        "Its counterpart, nogo, runs the analyzers you choose beside each compile; a second action fails the build on any finding.",
+        "nogo runs the analyzers you choose beside each compile in the main repository; a second action fails the build on any finding.",
         { say: "The default nogo analyzes nothing, and `vet = True` adds only five of the twelve that `go test` runs.", hold: 1.2 },
       ],
       draw(s) {

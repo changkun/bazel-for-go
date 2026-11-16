@@ -22,7 +22,7 @@ export default {
       // Loading: patterns become packages; each run lists and checks every file, and parses only what changed.
       section: "One build, step by step",
       lines: [
-        { say: "The go command turns patterns such as `./...` into packages, reading only each file's header: the package clause and the imports.", hold: 1 },
+        { say: "The go command turns patterns such as `./...` into packages, reading only each file's header (package clause, imports) unless it imports `embed`.", hold: 1 },
         { say: "Every run lists every directory and checks each file's size and modification time, but parses only the directories that changed.", hold: 1.2 },
       ],
       draw(s) {
@@ -224,9 +224,9 @@ export default {
         const file = archive.file(280, 0, 340, 400, "");
         archive.text(300, 40, "core.a", { size: 30, mono: true });
         const toArchive = s.edge(core, file);
-        const build = s.box(300, 60, 300, 96, "build ID", { sub: "`3f2a…/9c41…`" });
+        const build = s.box(300, 60, 300, 96, "build ID", { sub: "`3f2a…/6e8b…`" });
         const parts = [s.box(300, 174, 300, 92, "export data"), s.box(300, 286, 300, 92, "object code")];
-        const content = s.box(720, 104, 230, 100, "content ID", { sub: "`9c41…`" });
+        const content = s.box(720, 104, 230, 100, "content ID", { sub: "`6e8b…`" });
         const hash = s.text(668, 240, "hash", { size: 26, anchor: "middle", tone: "muted" });
         const toContent = s.edge(file, content);
         const action = s.box(720, 296, 230, 100, "action ID", { sub: "compile `auth`", kind: "go" });
@@ -257,7 +257,7 @@ export default {
         { say: "The content ID gives an early cutoff: a step that reruns with the same output does not rerun its dependents.", hold: 0.8 },
         { say: "Edit the body of a function in `core` that is not inlined, moving no declaration and changing no escapes: the object code changes, the export data does not.", hold: 0.8 },
         { say: "So `core`'s content ID changes, and every direct importer recompiles.", hold: 1 },
-        { say: "Their archives came out identical: object code records only a fingerprint, a hash, of each import's export data.", hold: 0.8 },
+        { say: "We found their archives identical: object code records only a fingerprint, a hash, of each import's export data.", hold: 0.8 },
         { say: "So the packages above them hit the cache.", hold: 1 },
         { say: "Every binary that contains `core` relinks: its link's action ID includes every package's content ID.", hold: 0.8 },
         { say: "Adding an exported function changes the fingerprint, so the direct importers' archives change too, and their importers recompile.", hold: 1.2 },
@@ -348,7 +348,7 @@ export default {
       section: "The cache",
       lines: [
         { say: "An entry, `<actionID>-a`, maps an action ID to its output's hash and size; the output, `<outputID>-d`, is named by its hash.", hold: 0.8 },
-        { say: "A link has no entry: GOCACHE does not store binaries, because they are large and seldom reused.", hold: 0.8 },
+        { say: "A link has no entry: GOCACHE stores no `go build` binaries, which are large and seldom reused.", hold: 0.8 },
         { say: "`go build -o bin/` skips a link only if the binary in `bin/` has a build ID starting with the link's action ID.", hold: 1 },
         { say: "Without `-o`, `go build ./...` links every main package into a temporary directory and discards the result.", hold: 1 },
         { say: "Entries unused for five days are deleted, at most once a day.", hold: 1 },

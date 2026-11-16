@@ -147,7 +147,7 @@ export default {
       lines: [
         { say: "When a source changes, the action that reads it reruns, and its new output changes the keys of the actions that use it.", hold: 1 },
         { say: "The change spreads along the graph until early cutoff stops it: an action reruns, but its output is identical to last time.", hold: 1 },
-        { say: "The actions after it need not run: the edit reruns only `a` and `d`.", hold: 1 },
+        { say: "The actions after it need not run: only `a` and `d` rerun.", hold: 1 },
         { say: "The critical path is the chain of actions, each needing the output of the one before, that takes longest to run.", hold: 1 },
         { say: "No number of cores or machines finishes a build sooner than its critical path.", hold: 3 },
       ],
@@ -247,8 +247,8 @@ export default {
         { say: "A derived graph needs no upkeep but describes only what the language can; a declared one can describe anything, but must be kept in step with the code." },
         { say: "Change: hash every input again, compare each file's saved metadata, or be told by the operating system." },
         { say: "Key: which part of a dependency enters its dependents' keys: its sources, its whole output, or only the part they read." },
-        { say: "Sharing: one process, one machine, or a team and its continuous integration (CI) jobs, if keys match across machines." },
-        { say: "Execution: local, or on a remote pool that raises parallelism and adds time to move bytes.", hold: 1.2 },
+        { say: "Sharing: one process, one machine, or a team and its CI jobs, if builds are hermetic and keys match across machines." },
+        { say: "Execution: local, or on a remote pool that raises the limit on parallelism and adds time to move bytes.", hold: 1.2 },
       ],
       draw(s) {
         s.fit(88, 100, 1160, 905, 0.84);
@@ -319,12 +319,12 @@ export default {
     {
       section: "A cost model",
       lines: [
-        { say: "We model one build's time with four terms: obtaining the graph, finding what changed, running the cache misses, and moving bytes.", hold: 1 },
+        { say: "We model one build's time with four terms: obtaining the graph, finding what changed, running cache misses, and moving bytes.", hold: 1 },
         { say: "The terms can overlap, so the wait can be shorter than their sum.", hold: 1 },
-        { say: "After one edit on a laptop, few actions rerun, so finding the change takes a large share.", hold: 1 },
-        { say: "A fresh CI runner without a shared cache obtains the graph from scratch and runs every action, so `T_exec` dominates; across a fleet, sharing results reduces it.", hold: 1 },
+        { say: "On a laptop whose caches hold the last build, one edit reruns few actions, so finding the change should take a large share.", hold: 1 },
+        { say: "A fresh CI runner without a shared cache obtains the graph from scratch and runs every action, so `T_exec` dominates; across a fleet, sharing reduces it.", hold: 1 },
         { say: "In our view, the go command is designed for one engineer on one machine, with a repository small enough to rescan on every run." },
-        { say: "Bazel is designed for a large repository built on many machines.", hold: 1.2 },
+        { say: "And Bazel for a large repository built on many machines.", hold: 1.2 },
       ],
       draw(s) {
         const SIZE = 40;
