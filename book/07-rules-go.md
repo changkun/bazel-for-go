@@ -62,7 +62,7 @@ each direct dependency.[^compile-inputs] A package's `.a` goes only to links.[^l
 Bazel's action cache compares the contents of an action's inputs (Chapter 6), so an edit that
 leaves `core.x` unchanged does not reach `core`'s importers.
 
-![Figure 7.3: How far two edits to `core` travel in the go command and in Bazel, in a repository whose importers use `core` only inside function bodies.](figures/07-cutoff.svg)
+![Figure 7.3: How far two edits to `core` travel in the go command and in Bazel, in a repository whose importers use `core` only inside functions too large to inline.](figures/07-cutoff.svg)
 
 The top half of Figure 7.3 is the edit from Figure 4.3: a change to the body of a function that the
 compiler does not inline (copy into its callers). `core.a` changes and `core.x` does not, so Bazel
