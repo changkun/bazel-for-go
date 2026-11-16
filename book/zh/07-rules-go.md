@@ -1,5 +1,5 @@
 # 7. rules_go：两种设计的交汇处
-<!-- 译自 d9d1c21 -->
+<!-- 译自 310b524 -->
 
 rules_go 是 Bazel 中用于 Go 的一组规则。它取代了 go 命令中决定构建什么的那一半，保留了执行构建的
 那一半。
@@ -19,7 +19,7 @@ go 命令读取导入来获取图，在内存中规划动作图，在构建缓�
 **标准库**自 Go 1.20 起不再附带编译好的归档。[^go120]对每个需要标准库的配置（configuration，一组
 构建设置，例如目标平台或竞态检测器），一个 `GoStdlib` 动作从源码编译整个标准库。[^stdlib]这个动作
 内部运行的正是 go 命令本身，即 `go install std`，所用的缓存随后删除。[^stdlib-go]rules_go
-事先把所有不可能改变标准库的设置重置，使大多数目标共用同一份标准库。[^stdlib-reset]
+事先把所有不可能改变标准库的 Go 设置重置，使大多数目标共用同一份标准库。[^stdlib-reset]
 
 **构建器**（builder）是 rules_go 中的一个 Go 程序，大多数 Go 动作运行的都是它，每种工作对应一个
 子命令：`compilepkg`、`link`、`stdlib`、`nogo` 以及其他几个。一次编译在编译器之外还需要一些
@@ -27,7 +27,7 @@ go 命令读取导入来获取图，在内存中规划动作图，在构建缓�
 （否则报「missing strict dependencies」），[^builder-strict]写出编译器读取的配置文件，运行 cgo 和
 汇编器，并把它们产生的目标文件加入编译出的包。[^builder-compile]go 命令在自己的进程中完成这些工作
 （第 4 章）。
-在 Bazel 下，这些工作必须在动作内部完成，而用一个程序承担所有工作「reduces the number of inputs
+在 Bazel 下，这些工作必须在动作内部完成，而用一个程序承担大多数工作「reduces the number of inputs
 needed for each action」。[^builder]Bazel 用 `go build` 从源码构建构建器，面向的是运行动作的机器，即执行平台（execution
 platform），而不是目标平台。[^builder-exec]
 
@@ -46,9 +46,9 @@ $ ar t bazel-bin/internal/greet/greet.a
 _go_.o
 $ ar t bazel-bin/internal/greet/greet.x
 __.PKGDEF
-$ bazel aquery 'mnemonic("GoCompilePkg", //cmd/hello:hello_lib)' --output=text
+$ bazel aquery 'mnemonic("GoCompilePkg", //cmd/hello:hello)' --output=text
   Inputs: [.../stdlib_/pkg, .../internal/greet/greet.x, .../builder, ...]
-  Outputs: [.../cmd/hello/hello_lib.a, .../cmd/hello/hello_lib.imports, .../cmd/hello/hello_lib.x]
+  Outputs: [.../cmd/hello/hello.a, ..., .../cmd/hello/hello.x]
 ```
 
 一次编译读取自己的源文件、标准库（以完整归档的形式构建）以及每个直接依赖的 `.x`。[^compile-inputs]
@@ -71,7 +71,7 @@ $ bazel aquery 'mnemonic("GoCompilePkg", //cmd/hello:hello_lib)' --output=text
 
 go 命令还会把这些修改再向上传一层。包的目标代码记录了它导入的每个包的指纹（fingerprint，即导出
 数据的哈希），[^go-fingerprint]因此直接导入者的归档会改变，它们自己的导入者也要重新编译。在 Bazel
-下，导入者的 `.a` 文件同样会改变，但它们的 `.x` 文件只有在复制了被移动的声明时才会改变。在笔者的
+下，导入者的 `.a` 文件同样会改变，但它们的 `.x` 文件只有在复制了发生变化的内容时才会改变。在笔者的
 测量中，没有一个导入者如此：合成仓库中的包只在一个大到无法内联的函数里使用 `core`。[^bench]
 
 在包含 1000 个包的合成仓库（附录 A）上：
@@ -92,7 +92,7 @@ go 命令还会把这些修改再向上传一层。包的目标代码记录了�
 阶段由依赖它的目标的规则读取。对于自身的包，`go_library` 提供 `.a`、`.x` 和 nogo 的事实文件（见
 下文）；它还从依赖中收集其下所有的 `.a`，供链接使用。[^providers]
 
-`go_test` 与 `go test` 一样构建三个包。[^go-test]第一个是连同包内测试文件一起编译的库。第二个是外部
+`go_test` 构建三个包，`go test` 处理带外部测试的包时也是如此。[^go-test]第一个是连同包内测试文件一起编译的库。第二个是外部
 测试包（external test package），即声明 `package greet_test` 的那些文件，它们导入的是连同包内测试文件一起编译的库。第三个是
 构建器生成的 main 包，它导入前两者并运行测试。一次链接把它们合成测试二进制。
 
@@ -115,11 +115,11 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
 
 ## 规模变大时意味着什么
 
-- 如果一次函数体修改后函数仍然大到无法内联，且逃逸结果不变，那么无论这个包被导入得多广，都只
-  重新编译这一个包：在笔者的测量中是 1 次编译，而 go 命令是 299 次。
-- 在被广泛导入的包中，移动了导出声明的注释与 API 修改的代价相同，对可内联小函数的修改也是如此：
-  每个直接导入者都要重新编译（在笔者的测量中为 299 次编译），API 中提到被移动声明的每个包，其
-  导入者也要重新编译。
+- 如果一次函数体修改后函数仍然大到无法内联，没有移动任何声明，且逃逸结果不变，那么无论这个包被
+  导入得多广，都只重新编译这一个包：在笔者的测量中是 1 次编译，而 go 命令是 299 次。
+- 在 Bazel 下，在被广泛导入的包中，移动了导出声明的注释与 API 修改的代价相同，对 `.x` 所含的
+  可内联函数体的修改也是如此：每个直接导入者都要重新编译（在笔者的测量中为 299 次编译），`.x`
+  复制了所改内容的每个包，其导入者也要重新编译。
 - 包含已修改包的每个二进制仍要重新链接：上表每一行都是 10 次链接。笔者建议通过 `go_link` 把链接
   发往规格与之相称的机器。
 - `goos`、`goarch`、`race` 和 `pure` 的每一种新组合，都会增加一次标准库构建，并让其下的每个库再
@@ -175,8 +175,10 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L488-L494>
 
 [^builder-exec]: rules_go，`go/private/go_toolchain.bzl`，带 `cfg = "exec"` 的 `builder` 属性；
-    `go/private/rules/binary_wrapper.sh`，它运行 `go build -trimpath`。
+    `go/private/sdk_build_defs.bzl`，它把构建器声明为一个 `go_tool_binary`；
+    `go/private/rules/binary_wrapper.sh`，该规则运行它：`go build -trimpath`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/sdk_build_defs.bzl#L65-L67>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
 
 [^gc-linkobj]: Go，`cmd/compile/internal/gc/obj.go`，`modeCompilerObj` 上方的注释以及
@@ -200,14 +202,14 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
 
 [^export-pos]: Go，`cmd/compile/internal/noder/writer.go`，`pos`，`doObj` 对每个对象都调用它。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L391-L404>
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L859>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L958>
 
 [^export-inline]: Go，`cmd/compile/internal/noder/linker.go`，`exportBody`：若函数可内联，且声明于
     该包或被内联进该包，则导出其函数体。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L214-L251>
 
 [^export-ext]: Go，`cmd/compile/internal/noder/linker.go`，`relocFuncExt`：每个参数的逃逸分析标签
-    与每个函数的内联成本。
+    与每个可内联函数的内联成本。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
 
 [^export-reloc]: Go，`cmd/compile/internal/noder/linker.go`，`linker` 的注释（「a single,
@@ -249,11 +251,14 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
 
 [^go-test]: rules_go，`go/private/rules/test.bzl`，`_go_test_impl`：内部与外部归档、
     `GoTestGenTest`，以及测试 main 包的编译与链接；`_recompile_external_deps` 的文档字符串：
-    「go_test, like 'go test', splits tests into two separate archives」。
+    「go_test, like 'go test', splits tests into two separate archives」。Go，
+    `cmd/go/internal/load/test.go`，`TestPackagesAndErrors`，它只在存在声明外部测试包的文件
+    （`XTestGoFiles`）时才构建外部测试包。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L548-L550>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L77-L105>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L143-L152>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L171-L198>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/test.go#L264-L265>
 
 [^transition]: rules_go，`go/private/rules/transition.bzl`，`_go_transition_impl`，作为 `cfg` 挂在
     `go_binary` 和 `go_test` 上；`go/private/rules/library.bzl`，`go_library`，它没有设置 `cfg`。
