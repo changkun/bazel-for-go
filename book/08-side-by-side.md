@@ -1,7 +1,7 @@
 # 8. The designs side by side
 
-This chapter sets the answers of the go command and of Bazel with rules_go (Bazel's rules for
-Go) to Chapter 1's six decisions side by side, with what each costs as the repository grows.
+This chapter sets the answers of the go command and of Bazel with rules_go to Chapter 1's six
+decisions side by side, with what each costs as the repository grows.
 
 ## Six decisions, two answers
 
@@ -67,9 +67,8 @@ any of these reaches every direct importer, and the next level where an importer
 the changed declaration.[^go-export-reloc]
 
 Both relink every binary that contains a changed
-package,[^go-linkactionid][^rules-go-link-inputs] but GOCACHE keeps no binary from `go build`
-(since Go 1.24, only those of `go run` and `go tool`),[^go-noexe][^go124] while Bazel caches a
-link like any other action.[^rules-go-actions][^bazel-remote-caching]
+package,[^go-linkactionid][^rules-go-link-inputs] but GOCACHE keeps no binary from `go
+build`,[^go-noexe] while Bazel caches a link like any other action.[^rules-go-actions][^bazel-remote-caching]
 
 ### 5. Sharing
 
@@ -113,12 +112,12 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 
 | Scenario | go, 1,000 | Bazel, 1,000 | go, 3,000 | Bazel, 3,000 |
 |---|---|---|---|---|
-| Cold build | TBD | TBD | TBD | TBD |
-| No-op build | TBD | TBD | TBD | TBD |
-| Body edit to `core` | TBD | TBD | TBD | TBD |
-| API edit to `core` | TBD | TBD | TBD | TBD |
-| Test after the body edit | TBD | TBD | TBD | TBD |
-| Fresh checkout, warm cache | TBD | TBD | TBD | TBD |
+| Cold build | 6.9 | 37 | 28 | 84 |
+| No-op build | 0.86 | 0.16 | 2.5 | 0.20 |
+| Body edit to `core` | 3.0 | 1.7 | 14 | 12 |
+| API edit to `core` | 5.3 | 5.1 | 24 | 21 |
+| Test after the body edit | 260 | 460 | 1,200 | TBD |
+| Fresh checkout, warm cache | 5.0 | 9.4 | 22 | TBD |
 
 The repository is the 1,000-package synthetic repository (Appendix A), also generated at 3,000
 packages, `core` its most widely imported package. The builds are `go build -o <dir> ./...` and
@@ -134,7 +133,8 @@ packages, `core` its most widely imported package. The builds are `go build -o <
   importers more than Bazel; both relink.
 - **Test after the body edit:** both rerun every test whose binary contains `core`, since each
   keys a test result by its binary.[^go-testcache][^bazel-cache-tests] In our view, the `.x`
-  saves compiles here, not links or test runs.
+  saves compiles here, not links or test runs. Bazel took longer, in links and test runs alike
+  (Chapter 5).
 - **Fresh checkout:** a copy at another path, given the first build's cache (for Bazel, its disk
   cache). Without `-trimpath`, the action ID of every package in the checkout changes with its
   directory. Bazel's disk-cache keys match, but its new server must load and analyze first.
