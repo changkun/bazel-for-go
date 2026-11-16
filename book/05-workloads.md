@@ -35,7 +35,7 @@ scheduler books each rules_go action, which declares no resources, as one CPU an
 most 108 under the go command; we did not measure the effect.
 
 A compile of one of our packages used a median of 61 ms of CPU and 45 MB, with `-c` between 4
-and 18.[^m-workload] Across them, CPU time was at most 1.3 times wall time.[^m-check] In our reading, the serial
+and 18.[^m-workload] Across them, CPU time was 1.0 to 1.3 times wall time.[^m-workload][^m-check] In our reading, the serial
 front end dominates small packages, and on a busy machine extra workers find no free core.
 With cores free, the back end does help: the runtime, the costliest compile, ran early with
 `-c=18`: its action used 2.05 s of CPU in 0.67 s,[^m-graph] and 302 MB.[^m-workload]
@@ -54,7 +54,7 @@ The go build's 11 links, ten of them of about 730 repository packages each,[^m-g
 a median of 450 MB: ten times a compile's memory, with CPU time 1.1 to 1.2 times wall
 time.[^m-workload][^m-check] Test binaries, linked without debug information,[^go-test-strip] show how a
 link grows (Figure 5.2, right): a median of 96 MB and 59 ms at 10 or fewer of the repository's
-packages, 282 MB and 172 ms at more than 300.[^m-workload][^m-graph] A link reruns whenever any
+packages, 282 MB and 172 ms at more than 300.[^m-workload][^m-graph][^m-check] A link reruns whenever any
 package in the binary changes:[^go-linkactionid] a body edit to `core`, the most widely imported
 package (Chapter 4), relinked all ten applications under both tools.[^m-results][^m-profile]
 
@@ -62,7 +62,7 @@ On macOS both tools build position-independent executables (PIE, binaries that c
 address). Go's own linker writes them,[^go-internal-pie] but rules_go hands every PIE link to the
 C toolchain's linker unless cgo is off.[^rules-go-pie] Timed as whole actions amid other work in
 the cold builds, links took a median of 2.3 s under Bazel and 0.63 s under the go
-command.[^m-profile][^m-graph] The difference may include the C linker, Bazel's sandbox (a
+command.[^m-profile][^m-graph][^m-check] The difference may include the C linker, Bazel's sandbox (a
 directory holding only an action's declared inputs) and rules_go's builder (the program that
 wraps each compile and link); we did not separate them.
 
@@ -70,7 +70,7 @@ wraps each compile and link); we did not separate them.
 
 The assembler runs once per assembly file, after one pass over all of them to collect
 symbols.[^go-asm] Only the standard library has assembly here: 69 processes of 7 ms and 7 MB at
-the median.[^m-workload]
+the median.[^m-workload][^m-check]
 
 For cgo, the go command runs the cgo tool, compiles each C file as a separate action, then
 compiles the Go code.[^go-cgo] rules_go does all of this inside one compile
@@ -82,12 +82,12 @@ Each package's tests are compiled, linked into a binary of their own and run. Ou
 little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload] The first
 18 runs to finish, as many as run at once, each took about 0.22 s longer than the one
 before,[^m-workload][^m-check] and the timed `go test ./...` took 279 s for 1,000 binaries, 0.28 s
-each,[^m-results] as if the runs waited in one queue outside the processes. macOS checks an app
+each,[^m-results][^m-check] as if the runs waited in one queue outside the processes. macOS checks an app
 for known malware on its first launch;[^apple-xprotect] we infer that this check, made on each
 new test binary in turn, is the queue, and expect Linux machines not to pay it. Bazel's first
-test run took 531 s, though its longest chain of dependent actions took 13.3 s.[^m-results]
+test run took 531 s, though its longest chain of dependent actions took 13.3 s.[^m-results][^m-check]
 Timed as whole actions, its test links took a median of 1.4 s and its test runs 7.5 s, against
-0.11 s and 5.1 s for the go command's processes.[^m-test-profile][^m-workload]
+0.11 s and 5.1 s for the go command's processes.[^m-test-profile][^m-workload][^m-check]
 
 ## vet, nogo and code generators
 
@@ -108,13 +108,13 @@ as an action,[^bazel-genrule] cached like any other.[^bazel-actions]
 A build can finish no faster than its critical path, the longest chain of actions that each
 wait for the one before, nor than its total CPU work divided by the cores. In the cold go build
 (Figure 5.3), the actions used 59 s of CPU, 3.3 s on 18 cores, and the critical path was 3.6 s,
-yet they spanned 5.7 s.[^m-graph] The path starts in the standard library, where the runtime's
+yet they spanned 5.7 s.[^m-graph][^m-check] The path starts in the standard library, where the runtime's
 compile action alone took 0.67 s, passes through `core`, one package in each of the 12 layers
 and a main package, and ends in a 0.91 s link. We read the gaps in the bar as waits while work
 off the path held all 18 of the go command's action slots.
 
 Bazel's cold build had a longer path, 29.9 s, of which 24.2 s built rules_go's builder and the
-standard library.[^m-profile]
+standard library.[^m-profile][^m-check]
 
 ## Four workload classes
 
@@ -126,7 +126,7 @@ standard library.[^m-profile]
   launch.
 - **Bazel server**: one Java virtual machine (JVM) per workspace that holds the graph in
   memory.[^bazel-server] Its heap grew from 84 MB after building the binaries to 130 MB after the
-  tests.[^m-results]
+  tests.[^m-results][^m-check]
 
 ## What this means at scale
 
@@ -167,10 +167,14 @@ standard library.[^m-profile]
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/gc/main.go#L377-L381>
 [^go-importcfg]: Go, `cmd/go/internal/work/exec.go`, `Builder.build`, the import configuration.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L881-L887>
-[^go-gomaxprocs]: Go, `runtime/debug.go`, `GOMAXPROCS`: by default, from "the number of logical
-    CPUs on the machine", "the process's CPU affinity mask" and, on Linux, "the process's average
-    CPU throughput limit based on cgroup CPU quota".
+[^go-gomaxprocs]: Go, `runtime/extern.go`: GOMAXPROCS "limits the number of operating system
+    threads that can execute user-level Go code simultaneously"; `runtime/debug.go`, `GOMAXPROCS`:
+    by default, from "the number of logical CPUs on the machine", "the process's CPU affinity
+    mask" and, on Linux, "the process's average CPU throughput limit based on cgroup CPU quota";
+    `cmd/go/internal/cfg/cfg.go`, `BuildP`, the `-p` default.
+    <https://github.com/golang/go/blob/go1.27.3/src/runtime/extern.go#L237-L238>
     <https://github.com/golang/go/blob/go1.27.3/src/runtime/debug.go#L12-L30>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L87>
 [^go-token-pool]: Go, `cmd/go/internal/work/gc.go`, `compilerConcurrency` and
     `initCompilerConcurrencyPool`; `cmd/go/internal/cfg/cfg.go`, `BuildP`, the `-p` default.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L182-L253>,
@@ -193,13 +197,15 @@ standard library.[^m-profile]
     [`examples/bench/results/2026-11-16-n1000-check/`](../examples/bench/results/2026-11-16-n1000-check/). Per process: a
     repository compile used a median of 55 ms of CPU and 45 MB, its CPU 1.3 times its wall time
     over all of them; the runtime's compile 293 MB; the build's links 446 MB, CPU 1.2 times wall;
-    a test run 5.7 ms of CPU and 4.9 s, the first 18 to finish 0.22 s apart. As whole actions:
-    59 s of CPU, a 3.8 s critical path and a 5.9 s span in the cold go build; the runtime's
-    action 2.09 s of CPU in 0.68 s; links 0.59 s under the go command and 2.24 s under Bazel.
-    Commands: `go generate` 9.9 s; `go test ./...` 305 s; Bazel's first test run 615 s, its
-    critical path 22.2 s, its test links 0.93 s and test runs 8.25 s; Bazel's cold build a
-    critical path of 38.2 s, 32.1 s of it the builder and the standard library. Appendix A
-    compares the two runs' commands.
+    test links a median of 0.10 s, 50 ms at 10 or fewer packages, 162 ms and 281 MB at more than
+    300; the assembler 5 ms; a test run 5.7 ms of CPU and 4.9 s, the first 18 to finish 0.22 s
+    apart. As whole actions: 59 s of CPU, a 3.8 s critical path ending in a 0.75 s link and a
+    5.9 s span in the cold go build; the runtime's action 2.09 s of CPU in 0.68 s; links 0.59 s
+    under the go command and 2.24 s under Bazel. Commands: `go generate` 9.9 s; `go test ./...`
+    305 s, 0.31 s per binary; Bazel's first test run 615 s, its critical path 22.2 s, its test
+    links 0.93 s and test runs 8.25 s; Bazel's cold build a critical path of 38.2 s, 32.1 s of it
+    the builder and the standard library; Bazel's heap 85 MB after the builds and 132 MB after
+    the tests. Appendix A compares the two runs' commands.
 [^go-link-deps]: Go, `cmd/go/internal/work/action.go`, `addTransitiveLinkDeps`, and
     `exec.go`, `writeLinkImportcfg`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>,
