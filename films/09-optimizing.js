@@ -7,12 +7,12 @@
 
 import { during, measure, mix, place, ramp, show } from "./stage.js";
 
-// bench: examples/bench/results/2026-11-15/, configuration n1000: the critical paths of
+// bench: examples/bench/results/2026-11-16/, configuration n1000: the critical paths of
 // n1000-bazel-cold.profile.gz and n1000-bazel-core-body.profile.gz, in seconds, and the
 // number of compiles on the cold one. Only the blocks' widths use them; no number is drawn.
 const BENCH = {
-  cold: { builder: 14.1, stdlib: 9.5, generator: 2.0, compiles: 2.4, link: 2.3, count: 13 },
-  edit: { compile: 0.1, link: 3.2 },
+  cold: { builder: 12.6, stdlib: 11.6, generator: 1.3, compiles: 2.0, link: 2.4, count: 13 },
+  edit: { compile: 0.06, link: 2.26 },
 };
 
 // Fade something in from second a, over d seconds.

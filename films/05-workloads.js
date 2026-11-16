@@ -8,7 +8,7 @@
 
 import { SHAPE, clamp, during, measure, mix, place, ramp, show, svg } from "./stage.js";
 
-// bench: n1000 on the 18-core Apple M5 Pro, results/2026-11-15 (Appendix A).
+// bench: n1000 on the 18-core Apple M5 Pro, results/2026-11-16 (Appendix A).
 // The machine and the repository set the counts drawn; the rest sets
 // proportions only, and no measured value is written on the plate.
 const BENCH = {
@@ -16,7 +16,7 @@ const BENCH = {
   layers: 12,
   binaries: 10, // the applications
   linkMemory: 10, // a go build link's peak memory, in compiles' (medians)
-  build: { work: 3.6, path: 4.5, span: 7.3, std: 1.52, link: 1.05 }, // cold go build, seconds: CPU ÷ cores, critical path, span; the path's first and last parts
+  build: { work: 3.3, path: 3.6, span: 5.7, std: 1.36, link: 0.91 }, // cold go build, seconds: CPU ÷ cores, critical path, span; the path's first and last parts
 };
 
 // Fade something in from second a, over d seconds.
@@ -491,7 +491,7 @@ export default {
       section: "The shape of a build",
       lines: [
         { say: "The critical path is the longest chain of actions that each wait for the one before.", hold: 2.6 },
-        { say: `In the cold go build, it runs from the standard library through one package in each of the ${BENCH.layers} layers and a main package to a link.`, hold: 1.4 },
+        { say: `In the cold go build, it runs from the standard library through \`core\`, one package in each of the ${BENCH.layers} layers and a main package to a link.`, hold: 1.4 },
         { say: "We read the gaps in the bar as waits while work off the path held all the go command's action slots.", hold: 1.6 },
         { say: "A build can finish no faster than this chain, nor than its total CPU work divided by the cores.", hold: 1.2 },
       ],
