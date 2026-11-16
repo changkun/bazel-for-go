@@ -1,7 +1,7 @@
 # 8. 两种设计并排比较
-<!-- 译自 1417184 -->
+<!-- 译自 8038a91 -->
 
-本章把 go 命令与 Bazel 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，各自要付出什么
+本章比较 go 命令与 Bazel 对第 1 章六项决策的回答，并说明随着仓库增长，各自要付出什么
 代价。
 
 ## 六项决策，两种回答
@@ -77,7 +77,7 @@ execroot（动作运行的根目录）中运行每个动作，其中每个输入
 go 命令在一台机器上以子进程的形式运行每个动作，同时运行 `-p` 个，默认每个核心一个。[^go-do]
 于是，一台机器的核心数决定了 T_exec 的下限；T_exec 是运行未命中缓存的动作所需的时间。Bazel 默认在
 本地运行动作；启用远程执行时，它把动作发往一个机器池，并上传远程缓存中缺少的
-输入，[^bazel-reapi-exec]因此并行度的上限由机器池决定。这会增加 T_transfer，即与远程机器和缓存之间
+输入，[^bazel-reapi-exec]因此调高 `--jobs`（默认为本机的核心数）之后，并行度的上限由机器池决定。[^bazel-jobs]这会增加 T_transfer，即与远程机器和缓存之间
 传输字节的时间；Build without the Bytes（自 Bazel 7.0 起默认启用）只下载命令行上请求的输出和本地
 动作需要的输出，以此限制这部分时间。[^bazel-bwob]
 
@@ -194,13 +194,13 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     `createRegularFileStateValueFromPath`，以及 `lib/actions/FileContentsProxy.java`：除非文件系统
     提供快速摘要，否则以文件元数据代替内容。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L147>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L21-L38>
 [^bazel-watchfs]: Bazel，`lib/skyframe/LocalDiffAwareness.java`，`--watchfs` 选项（默认值为
     `false`）以及该选项关闭时使用的 `EVERYTHING_MODIFIED`；`lib/skyframe/SkyframeExecutor.java`，
     `handleDiffsWithMissingDiffInformation`，此时它检查每个已知的文件。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3941-L3958>
 [^bazel-output-check]: Bazel，`lib/pkgcache/PackageOptions.java`，
     `--experimental_check_output_files`，默认值为 `true`；`lib/buildtool/ExecutionTool.java`，它仅在该
     选项为 false 时跳过检查；`lib/vfs/LocalOutputService.java`，`startBuild`，它把每个输出都报告为
@@ -239,11 +239,11 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 [^go-export-pos]: Go，`cmd/compile/internal/noder/writer.go`，`pos`，`doObj` 对每个对象都调用它。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L391-L404>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L859>
-[^go-export-inline]: Go，`cmd/compile/internal/noder/linker.go`，`exportBody`：若函数可内联，则
-    导出其函数体。
+[^go-export-inline]: Go，`cmd/compile/internal/noder/linker.go`，`exportBody`：若函数可内联，且声明于
+    该包或被内联进该包，则导出其函数体。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L214-L251>
 [^go-export-ext]: Go，`cmd/compile/internal/noder/linker.go`，`relocFuncExt`：每个参数的逃逸分析
-    标签与每个函数的内联成本。
+    标签与每个可内联函数的内联成本。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
 [^go-export-reloc]: Go，`cmd/compile/internal/noder/linker.go`，`linker` 的注释（「a single,
     self-contained export data file」）与 `relocObj`，后者复制被导入对象的定义。
@@ -297,6 +297,10 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     `Execution`（`Execute`）与 `ContentAddressableStorage`（`FindMissingBlobs`）。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
+[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`（默认值为 `auto`）与
+    `JobsConverter`，后者把 `auto` 换算为主机的 CPU 数。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
 [^bazel-bwob]: Bazel 7.0.0 发布说明；`lib/remote/options/RemoteOptions.java`，
     `--remote_download_outputs`，默认值为 `toplevel`。
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
