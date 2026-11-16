@@ -120,9 +120,9 @@ Together they give Chapter 1's early cutoff.
 
 The graph is what makes a repeated build cheap. In our measurements on the 1,000-package synthetic
 repository (Appendix A), a build
-with nothing to do took 0.2–0.4 s with a warm server. A new server must load and analyze
-everything again before it can tell that nothing changed: the same build took 3.6 s, and one
-that stopped after analysis (`--nobuild`) took 3.1 s.[^bench]
+with nothing to do took 0.15–0.3 s with a warm server. A new server must load and analyze
+everything again before it can tell that nothing changed: the same build took 3.3 s, and one
+that stopped after analysis (`--nobuild`) took 2.8 s.[^bench]
 
 ## Action keys and two caches
 
@@ -165,8 +165,8 @@ does not enter the key unless a rule writes an absolute path into a command.[^pa
 output base is named by a hash of the checkout's path, so each checkout has its own local action
 cache,[^output-dirs] but checkouts and machines can share a disk or remote cache. In our
 measurements (one run each), a second checkout of 1,000 packages at another path, with a new
-output base and the first checkout's disk cache, ran none of the 1,127 actions that a cold build
-runs in a sandbox: all were cache hits. It took 5.6 s, against 39.5 s for a cold build.[^bench]
+output base and the first checkout's disk cache, ran none of the 999 actions that a cold build
+runs in a sandbox: all were cache hits. It took 9.4 s, against 37.4 s for a cold build.[^bench]
 
 ## Sandboxes and persistent workers
 
@@ -217,7 +217,7 @@ incremental builds slower.[^memory]
 ## What this means at scale
 
 - Keep servers warm. A CI job that starts a new server pays again for starting it, loading and
-  analysis: 3.1 s on 1,000 packages in our measurements.[^bench]
+  analysis: 2.8 s on 1,000 packages in our measurements.[^bench]
 - Track server memory with `bazel info used-heap-size-after-gc` as the repository grows
   (Chapter 9 sets the limit).
 - Share a disk or remote cache across checkouts and machines. The checkout path does not enter
@@ -317,11 +317,11 @@ incremental builds slower.[^memory]
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionExecutionFunction.java#L717-L724>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L254-L264>
 
-[^bench]: This book's measurements, `examples/bench/results/2026-11-15/results.jsonl`:
+[^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`:
     configuration `n1000` (1,000 packages), tool `bazel`, scenarios `noop` (reps 0 to 2),
     `noop-cold-server`, `analysis-cold-server` (`bazel build --nobuild` on a new server),
-    `cold` and `clone-diskcache` (1,127 disk cache hits, no sandboxed processes).
-    [results.jsonl](../examples/bench/results/2026-11-15/results.jsonl)
+    `cold` and `clone-diskcache` (999 disk cache hits, no sandboxed processes).
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
 
 [^output-dirs]: Bazel, "Output Directory Layout", sections "Current layout" and "Layout
     diagram". <https://bazel.build/remote/output-directories#layout-diagram>

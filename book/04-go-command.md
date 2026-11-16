@@ -156,7 +156,7 @@ module, or depends on the time is cached anyway.
 ## What this means at scale
 
 - A build with nothing to do still lists every directory, checks every file and hashes every
-  source file; in our measurements `go build -o` took about a second on 1,000 packages.[^bench]
+  source file; in our measurements `go build -o` took 0.86 s on 1,000 packages.[^bench]
   Its cost grows with the tree, not with the change.
 - We recommend `-trimpath` in continuous integration. Without it, a cache restored at a
   different path misses on every package in the repository.
@@ -270,14 +270,14 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L553-L556>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L955>
 
-[^bench]: This book's measurements, `examples/bench/results/2026-11-15/results.jsonl`,
+[^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
     configuration `n1000` (1,000 packages, 11 binaries): scenarios `noop`, `noop-discard`
     (repetitions 1 and 2), `core-body`, `core-api`, `test-core-body`, `clone-warmcache` and
     `clone-warmcache-trimpath`. With `-o` naming a directory, `go build` builds only the main
     packages and their dependencies, 891 packages here; 298 of `core`'s 332 direct importers
     are among them, counted from the generated repository's imports. `configs.jsonl` lists 926
     packages that depend on `core`, directly or not.
-    [results.jsonl](../examples/bench/results/2026-11-15/results.jsonl)
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
 
 [^go-archive]: Go, `cmd/compile/internal/gc/obj.go`, `dumpobj1`: the archive holds the export

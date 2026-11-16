@@ -92,11 +92,11 @@ On the 1,000-package synthetic repository (Appendix A):
 | Edit to `core` | go command | Bazel |
 |---|---|---|
 | Body of a function that is not inlined | 299 compiles, 10 links | 1 compile, 10 links |
-| A new exported function | 712 compiles, 10 links | 333 compiles, 10 links |
-| A comment line above its exported types | 712 compiles, 10 links | 333 compiles, 10 links |
+| A new exported function | 712 compiles, 10 links | 299 compiles, 10 links |
+| A comment line above its exported types | 712 compiles, 10 links | 299 compiles, 10 links |
 
-The go command builds only the packages its binaries need, which include 298 of `core`'s 332
-direct importers. Bazel builds all 332.
+Both build only the packages the binaries need, which include 298 of `core`'s 332 direct
+importers.
 
 ## From library to binary and test
 
@@ -141,7 +141,7 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
   in our measurements.
 - In a widely imported package, a comment that moves exported declarations costs as much as an
   API change, and so does an edit to a small inlinable function: every direct importer
-  recompiles (333 compiles in our measurements), and so do the importers of every package whose
+  recompiles (299 compiles in our measurements), and so do the importers of every package whose
   API mentions a moved declaration.
 - Every binary that contains a changed package still relinks: 10 links in every row above. We
   recommend routing links through `go_link` to machines sized for them.
@@ -252,18 +252,21 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/import.go#L285-L297>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/internal/goobj/objfile.go#L42-L45>
 
-[^bench]: This book's measurements, `examples/bench/results/2026-11-15/results.jsonl`:
+[^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`:
     configuration `n1000`, scenarios `core-body`, `core-api` and `core-comment`, three runs
     each with identical counts. For the go command, its `compile` and `link` processes. For
     Bazel, its sandboxed processes: 11 for the body edit (one `GoCompilePkg` and ten `GoLink` in
-    `n1000-bazel-core-body.profile.gz`), and 343 for the other two, which is `core`, its 332
-    direct importers and the ten links. Bazel's `action cache hit` counts match the grey
-    boxes in Figure 7.3: 332 for the body edit, the number of `core`'s direct importers, and
-    484 for the comment, the number of packages two levels above `core`. `go build -o <dir>`
-    builds only main packages and their dependencies (`cmd/go/internal/work/build.go`). The
+    `n1000-bazel-core-body.profile.gz`), and 309 for the other two, which is `core`, the 298
+    direct importers built and the ten links. Bazel's `action cache hit` counts match the grey
+    boxes in Figure 7.3: 298 for the body edit, the number of `core`'s direct importers built,
+    and 413 for the comment, the number of packages built two levels above `core`, counted from
+    `n1000-go-cold-actiongraph.json.gz`. `go build -o <dir>` builds only main packages and their
+    dependencies (`cmd/go/internal/work/build.go`), and Bazel builds the same main packages
+    (`build_targets.txt`, written by `examples/bench/gen.go`, `Repo.write`). The
     generated packages call their imports only inside `Compute`, which is too large to inline,
     and declare their own types (`examples/bench/gen.go`, `writePkg`).
-    [results.jsonl](../examples/bench/results/2026-11-15/results.jsonl)
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
+    [n1000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n1000-go-cold-actiongraph.json.gz)
     [gen.go](../examples/bench/gen.go)
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
 

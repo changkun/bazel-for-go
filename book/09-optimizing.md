@@ -17,13 +17,13 @@ Bazel merges short events unless `--noslim_profile` is set,[^profile-format] so 
 in the execution log (next section), not in the profile.
 
 In two profiles of the 1,000-package synthetic repository (Appendix A), drawn in Figure
-9.1,[^bench] 23.6 s of the cold build's 30.4 s critical path went to rules_go's own setup. One
+9.1,[^bench] 24.2 s of the cold build's 29.9 s critical path went to rules_go's own setup. One
 action built the builder, the Go program that runs most of rules_go's actions (Chapter 7), with
 `GOMAXPROCS=1`, so its `go build` commands compiled one package at a time.[^builder-env] Another
 built the standard library for tools, programs that run during the build, here the repository's
 code generator. Neither depends on the repository's code, so, in our reading, a shared cache can
 serve both to every machine of the same platform after the first. After an edit to a function
-body in `core`, 3.2 s of the 3.3 s was one link.
+body in `core`, 2.26 s of the 2.32 s was one link.
 
 Bazel's documentation suggests splitting a slow action that sits on the critical
 path.[^profile-issues] For Go the smallest unit is a package: the compiler compiles one per run,
@@ -189,12 +189,12 @@ tested this.
     <https://bazel.build/advanced/performance/json-trace-profile#profile-file-format>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/runtime/CommonCommandOptions.java#L315-L318>
 
-[^bench]: This book's measurements, `examples/bench/results/2026-11-15/`, configuration `n1000`.
-    `n1000-bazel-cold.profile.gz`: critical path 30.4 s, of which `GoToolchainBinaryBuild` 14.1 s
-    and `GoStdlib ... [for tool]` 9.5 s; wall time 39.5 s (`results.jsonl`, scenario `cold`).
-    `n1000-bazel-core-body.profile.gz`: critical path 3.3 s, of which `GoLink` 3.2 s. Bazel marks
+[^bench]: This book's measurements, `examples/bench/results/2026-11-16/`, configuration `n1000`.
+    `n1000-bazel-cold.profile.gz`: critical path 29.9 s, of which `GoToolchainBinaryBuild` 12.6 s
+    and `GoStdlib ... [for tool]` 11.6 s; wall time 37.4 s (`results.jsonl`, scenario `cold`).
+    `n1000-bazel-core-body.profile.gz`: critical path 2.32 s, of which `GoLink` 2.26 s. Bazel marks
     actions in the tool configuration with `[for tool]` (`lib/actions/AbstractAction.java`).
-    [results.jsonl](../examples/bench/results/2026-11-15/results.jsonl)
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L381>
 
 [^builder-env]: rules_go, `go/private/rules/binary.bzl`, the `GoToolchainBinaryBuild` action and
