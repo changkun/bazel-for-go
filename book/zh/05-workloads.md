@@ -171,11 +171,11 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     [`examples/bench/results/2026-11-16-n1000-check/`](../../examples/bench/results/2026-11-16-n1000-check/)。按进程计：一次仓库包编译的 CPU
     时间与内存中位数为 55 ms 和 45 MB，所有这些编译的 CPU 时间合计是墙钟时间的 1.3 倍；运行时包的编译
     为 293 MB；构建中的链接为 446 MB，CPU 时间是墙钟时间的 1.2 倍；一次测试运行用 5.7 ms 的 CPU、
-    耗时 4.9 s，最先结束的 18 个依次相隔 0.22 s。按完整动作计：冷 go 构建用了 59 s 的 CPU，关键路径
+    耗时 4.9 s，最先结束的 18 个依次相隔 0.22 s。以整个动作计：go 命令的冷构建用了 59 s 的 CPU，关键路径
     3.8 s，跨度 5.9 s；运行时包的动作在 0.68 s 内用了 2.09 s 的 CPU；链接在 go 命令下为 0.59 s，在
     Bazel 下为 2.24 s。按命令计：`go generate` 9.9 s；`go test ./...` 305 s；Bazel 的首次测试运行
     615 s，关键路径 22.2 s，测试链接 0.93 s，测试运行 8.25 s；Bazel 冷构建的关键路径为 38.2 s，其中
-    32.1 s 用于构建 builder 与标准库。附录 A 比较了两次运行中的各条命令。
+    32.1 s 用于构建 rules_go 的构建器和标准库。附录 A 比较了两次运行中的各条命令。
 [^go-link-deps]: Go，`cmd/go/internal/work/action.go`，`addTransitiveLinkDeps`；以及
     `exec.go`，`writeLinkImportcfg`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>，
