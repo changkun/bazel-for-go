@@ -165,7 +165,7 @@ Every path in the Command and the tree is relative to the execroot, so the check
 does not enter the key unless a rule writes an absolute path into a command.[^path-resolver] The
 output base is named by a hash of the checkout's path, so each checkout has its own local action
 cache,[^output-dirs] but checkouts and machines can share a disk or remote cache. In our
-measurements (one run each), a second checkout of 1,000 packages at another path, with a new
+measurements (once in each of two runs), a second checkout of 1,000 packages at another path, with a new
 output base and the first checkout's disk cache, ran none of the 999 actions that a cold build
 runs in a sandbox: all were cache hits. It took 9.4 s, against 37.4 s for a cold build.[^bench]
 

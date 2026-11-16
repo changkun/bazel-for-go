@@ -197,7 +197,7 @@ server's memory and a second build; we have not tested this.
     `n1000-bazel-cold.profile.gz`: critical path 29.9 s, of which `GoToolchainBinaryBuild` 12.6 s
     and `GoStdlib ... [for tool]` 11.6 s; wall time 37.4 s (`results.jsonl`, scenario `cold`).
     `n1000-bazel-core-body.profile.gz`: critical path 2.32 s, of which `GoLink` 2.26 s. A second
-    run's profiles (Appendix A, Table A.7): 38.2 s, of which 16.0 s and 16.1 s; 2.22 s, of which
+    run (Appendix A, Table A.7); its profiles: 38.2 s, of which 16.0 s and 16.1 s; 2.22 s, of which
     2.17 s. Bazel marks actions in the tool configuration with `[for tool]`
     (`lib/actions/AbstractAction.java`).
     [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl),
