@@ -1,8 +1,8 @@
 # 8. 两种设计并排比较
 <!-- 译自 b9f0c39 -->
 
-本章把 go 命令与 Bazel 配合 rules_go 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，
-各自要付出什么代价。
+本章把 go 命令与 Bazel 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，各自要付出什么
+代价。
 
 ## 六项决策，两种回答
 
@@ -64,8 +64,8 @@ rules_go 按照编译器源码针对「a distributed build setting」的建议�
 ### 5. 共享
 
 go 命令的构建缓存 GOCACHE 属于一台机器上的一个用户。[^go-defaultdir]自 Go 1.24 起，[^go124]
-`GOCACHEPROG` 可以把缓存交给一个程序，由它把条目存放在任何地方；键保持不变，因此在没有 `-trimpath`
-时，位于另一路径的检出会未命中，而且二进制不会被存储。[^go-cacheprog][^go-noexe-prog]Bazel 在
+`GOCACHEPROG` 可以把缓存交给一个程序，由它把条目存放在任何地方；键保持不变，因此没有 `-trimpath` 时，
+位于另一路径的检出会未命中；二进制也不会被存储。[^go-cacheprog][^go-noexe-prog]Bazel 在
 execroot（动作运行的根目录）中运行每个动作，其中每个输入和输出都有固定的相对路径，因此它的键与
 检出所在的位置无关，除非某条规则把绝对路径写进了命令。[^bazel-path-resolver]它的本地动作缓存服务于
 单个检出，[^bazel-output-dirs]但磁盘缓存（disk cache，一个本地目录）服务于一台机器上的所有检出，远程缓存则服务
@@ -127,8 +127,8 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 ![图 8.2：一次不改变导出数据的本地函数体修改，按第 1 章成本模型的各项分解。获取图和找出变化的时间随仓库增长。](../figures/08-scaling.svg)
 
 按笔者的分析，go 命令在一次运行的工作量随仓库而非变化增长之处不再随规模扩展：每次调用都要在整棵
-源码树上付出 T_graph 和 T_detect（图 8.2）。除非用 `GOCACHEPROG` 和 `-trimpath` 加以扩展，它的缓存
-止于一台机器，而且二进制在每台机器上都要重新链接。生成的代码和其他语言留在图之外，也不被
+源码树上付出 T_graph 和 T_detect（图 8.2）。它的缓存止于一台机器，除非用 `GOCACHEPROG` 和
+`-trimpath` 加以扩展；而二进制在每台机器上都要重新链接。生成的代码和其他语言留在图之外，也不被
 缓存：go 命令只构建 Go，从不自行运行 `go generate`。[^go-about][^go-generate]
 
 按笔者的分析，Bazel 在其开销随图增长之处不再随规模扩展。服务进程的内存随图增长；堆太小会
@@ -139,7 +139,7 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 ## 规模变大时意味着什么
 
 - 随着仓库增长，测量空构建的耗时。如果它随源码树增长，限制就在于 T_graph 和 T_detect。
-- 在跨机器共享缓存之前，先让各机器上的键一致：`-trimpath` 配合 `GOCACHEPROG`；在 Bazel 下，环境和
+- 在跨机器共享缓存之前，先让键一致：`-trimpath` 配合 `GOCACHEPROG`；在 Bazel 下，环境和
   平台一致。只有 Bazel 的共享缓存保存链接的结果。
 - 在 go 命令下，对被广泛导入的包的任何修改都会使每个直接导入者重新编译，改变其导出数据的修改还会
   使这些导入者的导入者重新编译。在 Bazel 下，只有改变其 `.x`（API、声明位置、可内联的函数体、逃逸

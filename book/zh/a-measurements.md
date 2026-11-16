@@ -62,7 +62,7 @@
 | `codegen-generate` | 在一个 `table.txt` 末尾追加一行，然后运行 `go generate ./...` | — |
 | `codegen-build` | 接着构建 | 做同样的修改，然后构建 |
 | `clone-warmcache` | 把源码树复制到新路径；用同一个 GOCACHE 构建副本 | — |
-| `clone-warmcache-trimpath` | 用 `-trimpath`（它从输出中去除文件系统路径）构建原树，不计时；然后构建副本 | — |
+| `clone-warmcache-trimpath` | 用 `-trimpath`（它从输出中去除文件系统路径）构建原树，不计时；然后用同样的标志构建副本 | — |
 | `clone-diskcache` | — | 在 `bazel clean` 之后，用新的磁盘缓存（`--disk_cache`，存放动作结果的本地目录）构建原树，不计时；然后用新的输出根目录和这个缓存构建副本 |
 | `server-heap-after-build`、`-test` | — | 在构建场景之后和测试之后运行 `bazel info used-heap-size-after-gc` |
 
@@ -195,7 +195,7 @@
 - **一台机器，且并不空闲**：一台 18 核、64 GB 内存的 Apple M5 Pro，运行 macOS 26.6，[^a-meta]在测量的
   部分时段与其他工作共用，例如一次 `go test -race`。
 - **合成仓库**：包的结构都相同，没有 cgo，没有外部模块，测试几乎什么都不做，代码生成器只有一个。笔者
-  预计，能推广到真实仓库的更多是结果的形态，而不是具体的数字。
+  预计，与具体的数字相比，结果的形态更能推广到真实仓库。
 - **只有本地 Bazel**：没有远程缓存或远程执行。本地磁盘缓存代替了共享缓存，不含网络时间。
 - **macOS**：第 5 章推断，macOS 对新启动应用的检查[^apple-xprotect]拖慢了每个新测试二进制的首次运行。
 - **整毫秒**：本次运行的探针把每个进程的时间向下取整到整毫秒，因此最短的进程读数偏低；探针现在保留到
