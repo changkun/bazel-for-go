@@ -333,9 +333,10 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L756>
 
 [^go-testlog]: Go, `testing/internal/testdeps/deps.go`, `testLog`; the `testlog` calls in
-    `os.Getenv`, `os.OpenFile` and `os.Stat`.
+    `os.Getenv`, `os.Chdir`, `os.OpenFile` and `os.Stat`.
     <https://github.com/golang/go/blob/go1.27.3/src/testing/internal/testdeps/deps.go#L82-L96>
     <https://github.com/golang/go/blob/go1.27.3/src/os/env.go#L102>
+    <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L376-L381>
     <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L411>
     <https://github.com/golang/go/blob/go1.27.3/src/os/stat.go#L12>
 
