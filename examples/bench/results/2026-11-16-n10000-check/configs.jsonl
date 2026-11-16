@@ -1,0 +1,1 @@
+{"config":"n10000","core":"lib/l00/p0000","leaf":"lib/l15/p9651","shape":{"Pkgs":10000,"Layers":16,"Fanin":4,"FuncFile":3,"Funcs":10,"CoreFrac":0.3,"GenEvery":10,"Bins":100,"Seed":1},"stats":{"Pkgs":10000,"Bins":100,"Files":83208,"Lines":6857772,"CoreDirectRdeps":2977,"CoreTransitiveRdeps":9459,"MaxDepth":16}}
