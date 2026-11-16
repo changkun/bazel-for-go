@@ -1,5 +1,5 @@
 # 9. 优化 Bazel Go 构建
-<!-- 译自 d9d1c21 -->
+<!-- 译自 9726daa -->
 
 第 1 章把一次构建的时间分为四部分：获取图、找出变化、运行动作和传输字节。
 本章在 Bazel 的 Go 构建中逐一降低这四部分。
@@ -101,7 +101,6 @@ Bazel 也可以按助记符（mnemonic，即动作种类的名字）选择：`--
 `-c`（编译器后端并行编译函数所用的工作 goroutine 数），因此一次编译可能为每个核心启动一个工作 goroutine（第 5 章）。
 笔者建议让两者一致。`--@rules_go//go/config:gc_goopts=-c=<n>` 把 `-c` 传给每次编译，[^gc-goopts]
 而 `-c=1` 与 Bazel 预留的那一个 CPU 相符。
-<!-- rerun: bazel aquery ... to confirm -c reaches GoCompilePkg -->
 反过来，自 9.2 起，`exec_properties` 中的 `resources:cpu` 条目（`{"resources:cpu": "4"}`）
 或标记（tags）中的同类条目（`resources:cpu:4`）会改变 Bazel 在本地预留的资源；写在 `exec_properties`
 中时，它还会发送给远程执行器（执行器可能拒绝它不接受的名字），并进入远程键。[^resources]在 Linux 上，

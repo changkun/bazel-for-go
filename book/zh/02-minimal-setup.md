@@ -1,5 +1,5 @@
 # 2. 一个最小的 Bazel Go 仓库
-<!-- 译自 d9d1c21 -->
+<!-- 译自 9726daa -->
 
 `examples/minimal` 是一个 Go 模块，包含一个命令行程序、一个库和一个测试，用 Bazel
 9.3.2、rules_go 0.65.0（Bazel 的 Go 规则）与 Gazelle 0.54.0（根据 Go 源码写出 Bazel 构建文件的工具）构建。
@@ -127,82 +127,64 @@ test --test_output=errors
 
 BUILD 文件已是最新时，Gazelle 不做任何改动：
 
-<!-- rerun: bazel run //:gazelle (confirm it still changes nothing without the gazelle:prefix
-directive; refresh the package and target counts) -->
-
 ```console
 $ bazel run //:gazelle
-INFO: Analyzed target //:gazelle (52 packages loaded, 257 targets configured).
+INFO: Analyzed target //:gazelle (161 packages loaded, 8706 targets configured).
 INFO: Running command line: bazel-bin/gazelle
 ```
 
 对这个命令行程序做一次干净构建，会运行图 2.2 中的五个进程：
 
-<!-- rerun: bazel clean; bazel build //cmd/hello --execution_log_json_file=/tmp/exec.json;
-jq -r '[.mnemonic, .targetLabel, .metrics.totalTime] | @tsv' /tmp/exec.json
-(Elapsed 55.112s, Critical Path 52.52s, every per-process time) -->
-
 ```console
 $ bazel clean
 $ bazel build //cmd/hello --execution_log_json_file=/tmp/exec.json
 INFO: Analyzed target //cmd/hello:hello (105 packages loaded, 8446 targets configured).
-INFO: Elapsed time: 55.112s, Critical Path: 52.52s
+INFO: Elapsed time: 17.814s, Critical Path: 16.85s
 INFO: 13 processes: 8 internal, 5 darwin-sandbox.
 $ jq -r '[.mnemonic, .targetLabel, .metrics.totalTime] | @tsv' /tmp/exec.json
-GoStdlib                @@rules_go+//:stdlib                                         36.688s
-GoCompilePkg            //internal/greet:greet                                        0.113s
-GoCompilePkg            //cmd/hello:hello                                             0.033s
-GoLink                  //cmd/hello:hello                                             0.304s
-GoToolchainBinaryBuild  @@rules_go++go_sdk+main___download_0_darwin_arm64//:builder  14.213s
+GoStdlib                @@rules_go+//:stdlib                                          5.487s
+GoCompilePkg            //internal/greet:greet                                        0.026s
+GoCompilePkg            //cmd/hello:hello                                             0.023s
+GoLink                  //cmd/hello:hello                                             0.228s
+GoToolchainBinaryBuild  @@rules_go++go_sdk+main___download_0_darwin_arm64//:builder  10.235s
 ```
 
-编译并链接示例代码用了不到半秒。<!-- rerun: sum of the
-GoCompilePkg and GoLink times in the jq output above -->编译标准库以及 rules_go 的构建器（builder，
-一个包装 Go 各工具的程序）占了 55 秒中的 51 秒；<!-- rerun:
-GoStdlib + GoToolchainBinaryBuild in the jq output vs Elapsed time -->第 7 章解释这两者。
+编译并链接示例代码用了 0.28 秒。编译标准库以及 rules_go 的构建器（builder，
+一个包装 Go 各工具的程序）占了 18 秒中的 16 秒；第 7 章解释这两者。
 `hello_lib` 没有被单独编译，因为二进制会一并编译它所嵌入的源码。
 
 即使每个动作都已缓存，新启动的服务进程也要重新加载和分析；已在运行的服务进程则两者都不需要做：
-
-<!-- rerun: bazel shutdown && bazel build //cmd/hello (9.320s, 0.07s); bazel build //cmd/hello
-(0.170s, 0.00s) -->
 
 ```console
 $ bazel shutdown && bazel build //cmd/hello
 Starting local Bazel server (9.3.2) and connecting to it...
 INFO: Analyzed target //cmd/hello:hello (105 packages loaded, 8446 targets configured).
-INFO: Elapsed time: 9.320s, Critical Path: 0.07s
+INFO: Elapsed time: 2.919s, Critical Path: 0.06s
 INFO: 1 process: 12 action cache hit, 1 internal.
 $ bazel build //cmd/hello
 INFO: Analyzed target //cmd/hello:hello (0 packages loaded, 0 targets configured).
-INFO: Elapsed time: 0.170s, Critical Path: 0.00s
+INFO: Elapsed time: 0.133s, Critical Path: 0.00s
 ```
 
 `//...` 指所有未带 `manual` 标记的目标，其中包括 `//:gazelle` 背后那个未带标记的运行器，
 因此第一次完整构建也会编译 Gazelle。[^bazel-target-patterns][^gz-macro]
 默认情况下，Bazel 只在以下情况重新运行测试：测试本身或其依赖发生了变化，上次运行失败，
 测试被标记为 `external`，或者 `--runs_per_test` 要求运行多次。[^bazel-cache-tests]
-在这台 Mac 上，新测试二进制的首次运行用了 8.4 s，强制重新运行用了 0.1 s；<!-- rerun: first
-bazel test //... and bazel test //... --nocache_test_results; isolate the first-launch cost by
-copying bazel-bin/internal/greet/greet_test_/greet_test to a new path and timing two launches -->
+在这台 Mac 上，新测试二进制的首次运行用了 0.3 s，强制重新运行不到 0.1 s；
 笔者将这一差异归因于 macOS 在新可执行文件首次启动时对其进行的扫描。第 5 章会再讨论这项首次启动的开销。
-
-<!-- rerun: bazel build //... (47.101s, 46.63s, process counts); bazel test //... (8.4s);
-bazel test //... (cached); bazel test //... --nocache_test_results (0.1s);
-bazel run //cmd/hello -- Ada -->
 
 ```console
 $ bazel build //...
-INFO: Analyzed 5 targets (64 packages loaded, 311 targets configured).
-INFO: Elapsed time: 47.101s, Critical Path: 46.63s
-INFO: 109 processes: 6 action cache hit, 32 internal, 77 darwin-sandbox.
+INFO: Analyzed 5 targets (63 packages loaded, 306 targets configured).
+INFO: Elapsed time: 10.196s, Critical Path: 9.79s
+INFO: 108 processes: 32 internal, 76 darwin-sandbox.
 $ bazel test //...
-//internal/greet:greet_test                                              PASSED in 8.4s
+//internal/greet:greet_test                                              PASSED in 0.3s
 $ bazel test //...
-//internal/greet:greet_test                                     (cached) PASSED in 8.4s
+//internal/greet:greet_test                                     (cached) PASSED in 0.3s
 Executed 0 out of 1 test: 1 test passes.
 $ bazel test //... --nocache_test_results
-//internal/greet:greet_test                                              PASSED in 0.1s
+//internal/greet:greet_test                                              PASSED in 0.0s
 $ bazel run //cmd/hello -- Ada
 INFO: Running command line: bazel-bin/cmd/hello/hello_/hello <args omitted>
 Hello, Ada!
@@ -246,8 +228,8 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
   笔者建议设置 `go_deps.config(check_direct_dependencies = "error")`，
   使其他 Bazel 模块抬高某个版本时构建直接失败，而不只是发出警告。[^gz-mvs]
   有了 `.bazelversion` 和纳入版本控制的 `MODULE.bazel.lock`，每台机器解析出的构建都相同。
-- 这里的一次干净构建在 55 秒中有 51 秒花在工具链上，而不是代码上。<!-- rerun: bazel
-  clean; bazel build //cmd/hello, as above -->除非有共享缓存提供这些结果，否则每台新机器都要再付出一次这项开销，
+- 这里的一次干净构建在 18 秒中有 16 秒花在编译标准库和 rules_go 的构建器上，而不是代码上。
+  除非有共享缓存提供这些结果，否则每台新机器都要再付出一次这项开销，
   因此笔者建议从一开始就使用共享缓存（第 9 章）。
 - 即使每个动作都已缓存，服务进程重启后仍要重新加载和分析。笔者建议不仅在笔记本电脑上，
   也在持续集成（CI）运行器上让服务进程保持热状态。
