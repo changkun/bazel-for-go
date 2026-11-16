@@ -185,8 +185,8 @@ $ bazel test //golden:golden_test
 applies the root `go.mod`'s `replace` directives, whether they point at another module version
 or at a local directory, ignores `exclude` directives, and cannot pin a dependency to a Git
 commit.[^gz-replace] It downloads each module with `go mod download`, passing through
-`GOPRIVATE`, `GOPROXY`, `GOAUTH` and the caller's Git and SSH settings, which it uses to clone
-private modules; the caller's values win over `go_deps.config(go_env = ...)` in
+`GOPRIVATE`, `GOPROXY`, `GOAUTH` and the caller's Git and SSH settings for cloning private
+modules; the caller's values win over `go_deps.config(go_env = ...)` in
 `MODULE.bazel`.[^gz-fetch-env] `go_env` does not affect build actions.[^rg-go-env] `go_deps`
 ignores `vendor/` and fetches every module; Gazelle can instead write BUILD files inside
 `vendor/` and resolve imports to them.[^gz-vendor] When a dependency does not build with the

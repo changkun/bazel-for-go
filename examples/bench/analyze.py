@@ -490,11 +490,10 @@ def appendix(d, meta, res):
            "Depend on `core`", "Depth"], rows)
 
     for tool, caption in [
-        ("go", "Table A.2: The go command. Median wall time in seconds; in parentheses, the compile, "
-               "link, asm and test processes it ran, as a range where runs differed.[^a-results]"),
-        ("bazel", "Table A.3: Bazel. Median wall time in seconds; in parentheses, the processes it ran, "
-                  "and the actions it found in its action cache or, for `clone-diskcache`, its disk "
-                  "cache (hits).[^a-results]"),
+        ("go", "Table A.2: The go command, median seconds (compile, link, asm and test processes; a "
+               "range where runs differed).[^a-results]"),
+        ("bazel", "Table A.3: Bazel, median seconds (processes run; hits in the action cache, or for "
+                  "`clone-diskcache` the disk cache).[^a-results]"),
     ]:
         rows = [[f"`{s}`"] + [cell(res, plan, reps, c, tool, s) for c in SIZES]
                 + [str(1 if s in ONCE else 2 if s in TWICE else reps)] for s in ROWS[tool]]
@@ -508,8 +507,8 @@ def appendix(d, meta, res):
     cols = ["cold", "noop", "leaf-body", "core-body", "core-api"]
     rows = [[f"`{c}`, {NAME[t]}"] + [cell(res, plan, reps, c, t, s) for s in cols]
             for c in SHAPES for t in ["go", "bazel"] if t in plan.get(c, {"tools": []})["tools"]]
-    table("Table A.5: Graph shape and the sandbox at 1,000 packages. Median wall time in seconds "
-          "(processes run; hits).[^a-results]", ["Config, tool", *(f"`{s}`" for s in cols)], rows)
+    table("Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (processes run; "
+          "hits).[^a-results]", ["Config, tool", *(f"`{s}`" for s in cols)], rows)
 
     w = load(d / "workload.jsonl", lambda f: pd.read_json(f, lines=True))
     done = set(res[res.scenario == "workload-test"].config)

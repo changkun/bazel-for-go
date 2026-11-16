@@ -1,7 +1,7 @@
 # 8. The designs side by side
 
-This chapter sets the answers of the go command and of Bazel with rules_go to Chapter 1's six
-decisions side by side, with what each costs as the repository grows.
+This chapter sets the go command's and Bazel's answers to Chapter 1's six decisions side by
+side, with what each costs as the repository grows.
 
 ## Six decisions, two answers
 
@@ -37,7 +37,7 @@ continuous integration (CI) check that it did.[^gazelle][^gazelle-diff]
 ### 3. Change
 
 Keeping no process between runs, the go command hashes every source file in the build
-again.[^go-filehash] That needs no saved state but reads every byte. Bazel's server compares
+again,[^go-filehash] reading every byte but needing no saved state. Bazel's server compares
 each known file's timestamps and inode number (the file's identifier on disk) with the last
 build's, without reading it, or, with `--watchfs`, asks the operating system what
 changed.[^bazel-filestate][^bazel-watchfs] T_detect, the time to find what changed, thus grows
@@ -86,7 +86,7 @@ match.[^bazel-reapi][^bazel-cache-issues]
 ### 6. Execution
 
 The go command runs every action as a child process on one machine, `-p` at a time, by default
-one per CPU core.[^go-do] One machine's cores then set the floor of T_exec, the time to run the
+one per core.[^go-do] One machine's cores then set the floor of T_exec, the time to run the
 actions that missed the cache. Bazel runs actions locally by default; with remote execution it
 sends them to a pool of machines, uploading the inputs the remote cache
 lacks,[^bazel-reapi-exec] so the pool bounds parallelism. That adds T_transfer, the time to move
@@ -96,10 +96,11 @@ and those local actions need.[^bazel-bwob]
 
 ## End to end
 
-Table 8.1: Wall time in seconds, at 1,000 and 3,000 packages.[^bench]
+Table 8.1: Wall time in seconds, at 1,000, 3,000 and 10,000 packages: medians of three runs; the
+cold build, test and fresh checkout ran once.[^bench]
 
 <!--
-Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000 and n3000.
+Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
 Row                         go scenario       bazel scenario
 Cold build                  cold              cold
 No-op build                 noop (reps 0-2)   noop (reps 0-2; rep 3 only re-warms the server)
@@ -110,17 +111,17 @@ Fresh checkout, warm cache  clone-warmcache   clone-diskcache
 go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build with it.
 -->
 
-| Scenario | go, 1,000 | Bazel, 1,000 | go, 3,000 | Bazel, 3,000 |
-|---|---|---|---|---|
-| Cold build | 6.9 | 37 | 28 | 84 |
-| No-op build | 0.86 | 0.16 | 2.5 | 0.20 |
-| Body edit to `core` | 3.0 | 1.7 | 14 | 12 |
-| API edit to `core` | 5.3 | 5.1 | 24 | 21 |
-| Test after the body edit | 260 | 460 | 1,200 | TBD |
-| Fresh checkout, warm cache | 5.0 | 9.4 | 22 | TBD |
+| Scenario | go, 1,000 | Bazel, 1,000 | go, 3,000 | Bazel, 3,000 | go, 10,000 | Bazel, 10,000 |
+|---|---|---|---|---|---|---|
+| Cold build | 6.9 | 37 | 28 | 84 | 230 | 320 |
+| No-op build | 0.86 | 0.16 | 2.5 | 0.20 | 14 | 0.36 |
+| Body edit to `core` | 3.0 | 1.7 | 14 | 12 | 130 | 180 |
+| API edit to `core` | 5.3 | 5.1 | 24 | 21 | 200 | 210 |
+| Test after the body edit | 260 | 460 | 1,200 | 2,300 | — | — |
+| Fresh checkout, warm cache | 5.0 | 9.4 | 22 | 6.4 | 200 | 11 |
 
-The repository is the 1,000-package synthetic repository (Appendix A), also generated at 3,000
-packages, `core` its most widely imported package. The builds are `go build -o <dir> ./...` and
+The repository is Appendix A's synthetic repository at 1,000, 3,000 and 10,000 packages, `core`
+its most widely imported package. The builds are `go build -o <dir> ./...` and
 `bazel build` of the same binaries; the test row runs `go test -vet=off ./...` and
 `bazel test //...`:
 
@@ -130,7 +131,8 @@ packages, `core` its most widely imported package. The builds are `go build -o <
 - **No-op build:** the go command loads and hashes the whole tree; Bazel's running server
   compares file times.
 - **Edits to `core`:** after a body or an API edit, the go command recompiles one level of
-  importers more than Bazel; both relink.
+  importers more than Bazel; both relink. At 10,000 packages Bazel's one compile and 100 slower
+  links (Chapter 5) outlasted the go command's 2,724 compiles and 100 links.
 - **Test after the body edit:** both rerun every test whose binary contains `core`, since each
   keys a test result by its binary.[^go-testcache][^bazel-cache-tests] In our view, the `.x`
   saves compiles here, not links or test runs. Bazel's first-run links and test runs were slower
@@ -151,7 +153,7 @@ uncached: the go command builds only Go and never runs `go generate`
 itself.[^go-about][^go-generate]
 
 Bazel, in our analysis, stops scaling where its overheads grow with the graph. Server memory
-grows with the graph; a heap too small fails the build, and the flags that save memory slow
+grows with it; a heap too small fails the build, and the flags that save memory slow
 incremental builds.[^bazel-client-server][^bazel-memory] Every server start, as on each new CI
 runner, repeats loading and analysis,[^bazel-cache-issues] and, as Chapter 2's restart shows,
 checks every action against the action cache again.
@@ -159,9 +161,8 @@ checks every action against the action cache again.
 ## What this means at scale
 
 - Time a no-op build as the repository grows. If it grows with the tree, T_graph and T_detect
-  are the limit. A warm Bazel server keeps the graph, and `--watchfs` stops it rescanning
-  sources, but it still checks every output of the last build.
-- Before sharing a cache across machines, make keys match across them: `-trimpath` with
+  are the limit.
+- Before sharing a cache across machines, make keys match: `-trimpath` with
   `GOCACHEPROG`; a matching environment and platform under Bazel. Only Bazel's shared cache
   holds links.
 - Under the go command, any edit to a widely imported package recompiles every direct importer,

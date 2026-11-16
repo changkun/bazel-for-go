@@ -1,0 +1,325 @@
+{"config":"n1000","tool":"go","scenario":"cold","rep":0,"seconds":6.85558175,"counts":{"asm":48,"compile":964,"link":11}}
+{"config":"n1000","tool":"go","scenario":"noop","rep":0,"seconds":1.132254125}
+{"config":"n1000","tool":"go","scenario":"noop","rep":1,"seconds":0.857950458}
+{"config":"n1000","tool":"go","scenario":"noop","rep":2,"seconds":0.824158417}
+{"config":"n1000","tool":"go","scenario":"noop-discard","rep":0,"seconds":2.038052916,"counts":{"compile":120,"link":11}}
+{"config":"n1000","tool":"go","scenario":"noop-discard","rep":1,"seconds":1.475062583,"counts":{"link":11}}
+{"config":"n1000","tool":"go","scenario":"noop-discard","rep":2,"seconds":1.5268862090000002,"counts":{"link":11}}
+{"config":"n1000","tool":"go","scenario":"leaf-body","rep":0,"seconds":1.276983375,"counts":{"compile":2,"link":1}}
+{"config":"n1000","tool":"go","scenario":"leaf-body","rep":1,"seconds":1.278254834,"counts":{"compile":2,"link":1}}
+{"config":"n1000","tool":"go","scenario":"leaf-body","rep":2,"seconds":1.285274792,"counts":{"compile":2,"link":1}}
+{"config":"n1000","tool":"go","scenario":"core-body","rep":0,"seconds":2.767467083,"counts":{"compile":299,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-body","rep":1,"seconds":2.966190334,"counts":{"compile":299,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-body","rep":2,"seconds":3.142619291,"counts":{"compile":299,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-api","rep":0,"seconds":5.309571167,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-api","rep":1,"seconds":5.348091208,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-api","rep":2,"seconds":5.267277125,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-comment","rep":0,"seconds":5.347383917,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-comment","rep":1,"seconds":5.410402459,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"core-comment","rep":2,"seconds":5.779314125,"counts":{"compile":712,"link":10}}
+{"config":"n1000","tool":"go","scenario":"test-first","rep":0,"seconds":278.6809435,"counts":{"asm":21,"compile":2111,"link":1000,"test":1000}}
+{"config":"n1000","tool":"go","scenario":"test-noop","rep":0,"seconds":1.993158583}
+{"config":"n1000","tool":"go","scenario":"test-noop","rep":1,"seconds":1.297174542}
+{"config":"n1000","tool":"go","scenario":"test-noop","rep":2,"seconds":1.306110625}
+{"config":"n1000","tool":"go","scenario":"test-core-body","rep":0,"seconds":259.445406166,"counts":{"compile":647,"link":927,"test":927}}
+{"config":"n1000","tool":"go","scenario":"codegen-generate","rep":0,"seconds":6.744452}
+{"config":"n1000","tool":"go","scenario":"codegen-build","rep":0,"seconds":1.529052125,"counts":{"compile":7,"link":10}}
+{"config":"n1000","tool":"go","scenario":"codegen-generate","rep":1,"seconds":5.523757916}
+{"config":"n1000","tool":"go","scenario":"codegen-build","rep":1,"seconds":1.432289667,"counts":{"compile":7,"link":10}}
+{"config":"n1000","tool":"go","scenario":"clone-warmcache","rep":0,"seconds":4.9818458329999995,"counts":{"compile":891,"link":11}}
+{"config":"n1000","tool":"go","scenario":"clone-warmcache-trimpath","rep":0,"seconds":1.8250157919999999,"counts":{"link":11}}
+{"config":"n1000","tool":"bazel","scenario":"cold","rep":0,"seconds":37.383063334,"counts":{"critical_path_ms":29920,"darwin-sandbox":999,"internal":52,"processes":1051}}
+{"config":"n1000","tool":"bazel","scenario":"noop","rep":0,"seconds":0.303084833}
+{"config":"n1000","tool":"bazel","scenario":"noop","rep":1,"seconds":0.148975708}
+{"config":"n1000","tool":"bazel","scenario":"noop","rep":2,"seconds":0.160139625}
+{"config":"n1000","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":3.323348375}
+{"config":"n1000","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":3.491148917}
+{"config":"n1000","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":3.183055084}
+{"config":"n1000","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":2.892694375}
+{"config":"n1000","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":2.76212825}
+{"config":"n1000","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":2.750711625}
+{"config":"n1000","tool":"bazel","scenario":"noop","rep":3,"seconds":0.634392042}
+{"config":"n1000","tool":"bazel","scenario":"leaf-body","rep":0,"seconds":0.991661125,"counts":{"action cache hit":1,"critical_path_ms":820,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n1000","tool":"bazel","scenario":"leaf-body","rep":1,"seconds":0.8837765,"counts":{"action cache hit":1,"critical_path_ms":730,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n1000","tool":"bazel","scenario":"leaf-body","rep":2,"seconds":0.84531775,"counts":{"action cache hit":1,"critical_path_ms":710,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n1000","tool":"bazel","scenario":"core-body","rep":0,"seconds":2.471412583,"counts":{"action cache hit":298,"critical_path_ms":2320,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000","tool":"bazel","scenario":"core-body","rep":1,"seconds":1.7126485420000002,"counts":{"action cache hit":298,"critical_path_ms":1530,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000","tool":"bazel","scenario":"core-body","rep":2,"seconds":1.713821042,"counts":{"action cache hit":298,"critical_path_ms":1560,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000","tool":"bazel","scenario":"core-api","rep":0,"seconds":5.700417459,"counts":{"action cache hit":423,"critical_path_ms":4650,"darwin-sandbox":309,"internal":1,"processes":310}}
+{"config":"n1000","tool":"bazel","scenario":"core-api","rep":1,"seconds":4.703857,"counts":{"action cache hit":423,"critical_path_ms":3600,"darwin-sandbox":309,"internal":1,"processes":310}}
+{"config":"n1000","tool":"bazel","scenario":"core-api","rep":2,"seconds":5.052172625,"counts":{"action cache hit":423,"critical_path_ms":3750,"darwin-sandbox":309,"internal":1,"processes":310}}
+{"config":"n1000","tool":"bazel","scenario":"core-comment","rep":0,"seconds":4.925168041,"counts":{"action cache hit":413,"critical_path_ms":3790,"darwin-sandbox":309,"internal":11,"processes":320}}
+{"config":"n1000","tool":"bazel","scenario":"core-comment","rep":1,"seconds":5.036514167,"counts":{"action cache hit":413,"critical_path_ms":3980,"darwin-sandbox":309,"internal":11,"processes":320}}
+{"config":"n1000","tool":"bazel","scenario":"core-comment","rep":2,"seconds":5.348674166,"counts":{"action cache hit":413,"critical_path_ms":4080,"darwin-sandbox":309,"internal":11,"processes":320}}
+{"config":"n1000","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":84,"unit":"MB"}
+{"config":"n1000","tool":"bazel","scenario":"test-first","rep":0,"seconds":530.747340125,"counts":{"critical_path_ms":13280,"darwin-sandbox":6142,"internal":4001,"processes":10143}}
+{"config":"n1000","tool":"bazel","scenario":"test-noop","rep":0,"seconds":1.319463416}
+{"config":"n1000","tool":"bazel","scenario":"test-noop","rep":1,"seconds":0.264736542}
+{"config":"n1000","tool":"bazel","scenario":"test-noop","rep":2,"seconds":0.255462125}
+{"config":"n1000","tool":"bazel","scenario":"test-core-body","rep":0,"seconds":458.136357416,"counts":{"action cache hit":1402,"critical_path_ms":17680,"darwin-sandbox":1868,"internal":938,"processes":2806}}
+{"config":"n1000","tool":"bazel","scenario":"server-heap-after-test","rep":0,"seconds":0,"value":130,"unit":"MB"}
+{"config":"n1000","tool":"bazel","scenario":"codegen-build","rep":0,"seconds":4.669737542,"counts":{"action cache hit":6,"critical_path_ms":4000,"darwin-sandbox":12,"internal":11,"processes":23}}
+{"config":"n1000","tool":"bazel","scenario":"codegen-build","rep":1,"seconds":1.949486083,"counts":{"action cache hit":6,"critical_path_ms":1580,"darwin-sandbox":12,"internal":11,"processes":23}}
+{"config":"n1000","tool":"bazel","scenario":"clone-diskcache","rep":0,"seconds":9.448852125,"counts":{"critical_path_ms":740,"disk cache hit":999,"internal":52,"processes":1051}}
+{"config":"n1000","tool":"go","scenario":"workload-build","rep":0,"seconds":13.4432415}
+{"config":"n1000","tool":"go","scenario":"workload-test","rep":0,"seconds":307.345682292}
+{"config":"n100","tool":"bazel","scenario":"cold","rep":0,"seconds":27.840921333,"counts":{"critical_path_ms":24810,"darwin-sandbox":106,"internal":20,"processes":126}}
+{"config":"n100","tool":"bazel","scenario":"noop","rep":0,"seconds":0.228633166}
+{"config":"n100","tool":"bazel","scenario":"noop","rep":1,"seconds":0.143218792}
+{"config":"n100","tool":"bazel","scenario":"noop","rep":2,"seconds":0.134414875}
+{"config":"n100","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":3.047866833}
+{"config":"n100","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":2.858852209}
+{"config":"n100","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":2.710228625}
+{"config":"n100","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":2.650388792}
+{"config":"n100","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":2.774788125}
+{"config":"n100","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":2.507732458}
+{"config":"n100","tool":"bazel","scenario":"noop","rep":3,"seconds":0.430129625}
+{"config":"n100","tool":"bazel","scenario":"leaf-body","rep":0,"seconds":0.603714292,"counts":{"action cache hit":1,"critical_path_ms":430,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n100","tool":"bazel","scenario":"leaf-body","rep":1,"seconds":0.511982917,"counts":{"action cache hit":1,"critical_path_ms":380,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n100","tool":"bazel","scenario":"leaf-body","rep":2,"seconds":0.508025583,"counts":{"action cache hit":1,"critical_path_ms":370,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n100","tool":"bazel","scenario":"core-body","rep":0,"seconds":0.547066917,"counts":{"action cache hit":29,"critical_path_ms":430,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n100","tool":"bazel","scenario":"core-body","rep":1,"seconds":0.51164125,"counts":{"action cache hit":29,"critical_path_ms":390,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n100","tool":"bazel","scenario":"core-body","rep":2,"seconds":0.533745709,"counts":{"action cache hit":29,"critical_path_ms":420,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n100","tool":"bazel","scenario":"core-api","rep":0,"seconds":1.0809965,"counts":{"action cache hit":48,"critical_path_ms":960,"darwin-sandbox":32,"internal":1,"processes":33}}
+{"config":"n100","tool":"bazel","scenario":"core-api","rep":1,"seconds":1.023283625,"counts":{"action cache hit":48,"critical_path_ms":900,"darwin-sandbox":32,"internal":1,"processes":33}}
+{"config":"n100","tool":"bazel","scenario":"core-api","rep":2,"seconds":0.952361584,"counts":{"action cache hit":48,"critical_path_ms":840,"darwin-sandbox":32,"internal":1,"processes":33}}
+{"config":"n100","tool":"bazel","scenario":"core-comment","rep":0,"seconds":0.965306167,"counts":{"action cache hit":46,"critical_path_ms":860,"darwin-sandbox":32,"internal":3,"processes":35}}
+{"config":"n100","tool":"bazel","scenario":"core-comment","rep":1,"seconds":0.951870417,"counts":{"action cache hit":46,"critical_path_ms":840,"darwin-sandbox":32,"internal":3,"processes":35}}
+{"config":"n100","tool":"bazel","scenario":"core-comment","rep":2,"seconds":0.957837667,"counts":{"action cache hit":46,"critical_path_ms":850,"darwin-sandbox":32,"internal":3,"processes":35}}
+{"config":"n100","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":68,"unit":"MB"}
+{"config":"n100","tool":"bazel","scenario":"test-first","rep":0,"seconds":39.771888792,"counts":{"critical_path_ms":11400,"darwin-sandbox":621,"internal":401,"processes":1022}}
+{"config":"n100","tool":"bazel","scenario":"test-noop","rep":0,"seconds":0.289894833}
+{"config":"n100","tool":"bazel","scenario":"test-noop","rep":1,"seconds":0.185711833}
+{"config":"n100","tool":"bazel","scenario":"test-noop","rep":2,"seconds":0.212551875}
+{"config":"n100","tool":"bazel","scenario":"test-core-body","rep":0,"seconds":44.919812625,"counts":{"action cache hit":133,"critical_path_ms":10650,"darwin-sandbox":198,"internal":99,"processes":297}}
+{"config":"n100","tool":"bazel","scenario":"server-heap-after-test","rep":0,"seconds":0,"value":74,"unit":"MB"}
+{"config":"n100","tool":"bazel","scenario":"codegen-build","rep":0,"seconds":0.69150125,"counts":{"action cache hit":4,"critical_path_ms":510,"darwin-sandbox":4,"internal":3,"processes":7}}
+{"config":"n100","tool":"bazel","scenario":"codegen-build","rep":1,"seconds":0.689743208,"counts":{"action cache hit":4,"critical_path_ms":510,"darwin-sandbox":4,"internal":3,"processes":7}}
+{"config":"n100","tool":"bazel","scenario":"clone-diskcache","rep":0,"seconds":5.759968417,"counts":{"critical_path_ms":210,"disk cache hit":106,"internal":20,"processes":126}}
+{"config":"n100","tool":"go","scenario":"cold","rep":0,"seconds":2.773951333,"counts":{"asm":48,"compile":162,"link":3}}
+{"config":"n100","tool":"go","scenario":"noop","rep":0,"seconds":0.257671709}
+{"config":"n100","tool":"go","scenario":"noop","rep":1,"seconds":0.195589375}
+{"config":"n100","tool":"go","scenario":"noop","rep":2,"seconds":0.182386125}
+{"config":"n100","tool":"go","scenario":"noop-discard","rep":0,"seconds":0.406719917,"counts":{"compile":17,"link":3}}
+{"config":"n100","tool":"go","scenario":"noop-discard","rep":1,"seconds":0.298062083,"counts":{"link":3}}
+{"config":"n100","tool":"go","scenario":"noop-discard","rep":2,"seconds":0.291549583,"counts":{"link":3}}
+{"config":"n100","tool":"go","scenario":"leaf-body","rep":0,"seconds":0.356407375,"counts":{"compile":2,"link":3}}
+{"config":"n100","tool":"go","scenario":"leaf-body","rep":1,"seconds":0.313056125,"counts":{"compile":2,"link":1}}
+{"config":"n100","tool":"go","scenario":"leaf-body","rep":2,"seconds":0.294274583,"counts":{"compile":2,"link":1}}
+{"config":"n100","tool":"go","scenario":"core-body","rep":0,"seconds":0.60472975,"counts":{"compile":30,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-body","rep":1,"seconds":0.629051959,"counts":{"compile":30,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-body","rep":2,"seconds":0.6050565,"counts":{"compile":30,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-api","rep":0,"seconds":0.814778875,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-api","rep":1,"seconds":0.843536458,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-api","rep":2,"seconds":0.853789541,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-comment","rep":0,"seconds":0.88372725,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-comment","rep":1,"seconds":0.869893792,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"core-comment","rep":2,"seconds":0.818219875,"counts":{"compile":76,"link":2}}
+{"config":"n100","tool":"go","scenario":"test-first","rep":0,"seconds":25.975312792,"counts":{"asm":21,"compile":265,"link":100,"test":100}}
+{"config":"n100","tool":"go","scenario":"test-noop","rep":0,"seconds":0.184351875}
+{"config":"n100","tool":"go","scenario":"test-noop","rep":1,"seconds":0.1789005}
+{"config":"n100","tool":"go","scenario":"test-noop","rep":2,"seconds":0.182643791}
+{"config":"n100","tool":"go","scenario":"test-core-body","rep":0,"seconds":23.767275167,"counts":{"compile":64,"link":96,"test":96}}
+{"config":"n100","tool":"go","scenario":"codegen-generate","rep":0,"seconds":1.321564958}
+{"config":"n100","tool":"go","scenario":"codegen-build","rep":0,"seconds":0.328775125,"counts":{"compile":8,"link":3}}
+{"config":"n100","tool":"go","scenario":"codegen-generate","rep":1,"seconds":0.637398667}
+{"config":"n100","tool":"go","scenario":"codegen-build","rep":1,"seconds":0.289708792,"counts":{"compile":5,"link":2}}
+{"config":"n100","tool":"go","scenario":"clone-warmcache","rep":0,"seconds":0.726068667,"counts":{"compile":89,"link":3}}
+{"config":"n100","tool":"go","scenario":"clone-warmcache-trimpath","rep":0,"seconds":0.282467834,"counts":{"link":3}}
+{"config":"n3000","tool":"go","scenario":"cold","rep":0,"seconds":27.637469,"counts":{"asm":48,"compile":2806,"link":31}}
+{"config":"n3000","tool":"go","scenario":"noop","rep":0,"seconds":5.280740333}
+{"config":"n3000","tool":"go","scenario":"noop","rep":1,"seconds":2.450254834}
+{"config":"n3000","tool":"go","scenario":"noop","rep":2,"seconds":2.303622833}
+{"config":"n3000","tool":"go","scenario":"noop-discard","rep":0,"seconds":12.567092042,"counts":{"compile":298,"link":31}}
+{"config":"n3000","tool":"go","scenario":"noop-discard","rep":1,"seconds":8.880232125,"counts":{"compile":31,"link":31}}
+{"config":"n3000","tool":"go","scenario":"noop-discard","rep":2,"seconds":8.476051083,"counts":{"link":31}}
+{"config":"n3000","tool":"go","scenario":"leaf-body","rep":0,"seconds":8.561895792,"counts":{"compile":2,"link":31}}
+{"config":"n3000","tool":"go","scenario":"leaf-body","rep":1,"seconds":4.040066417,"counts":{"compile":2,"link":1}}
+{"config":"n3000","tool":"go","scenario":"leaf-body","rep":2,"seconds":4.656354041,"counts":{"compile":2,"link":1}}
+{"config":"n3000","tool":"go","scenario":"core-body","rep":0,"seconds":15.009497958,"counts":{"compile":793,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-body","rep":1,"seconds":14.04598125,"counts":{"compile":793,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-body","rep":2,"seconds":12.626771708,"counts":{"compile":824,"link":31}}
+{"config":"n3000","tool":"go","scenario":"core-api","rep":0,"seconds":24.092874292,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-api","rep":1,"seconds":24.386346083,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-api","rep":2,"seconds":24.791834583,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-comment","rep":0,"seconds":24.292087459,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-comment","rep":1,"seconds":23.969074833,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"core-comment","rep":2,"seconds":22.422982125,"counts":{"compile":2163,"link":30}}
+{"config":"n3000","tool":"go","scenario":"test-first","rep":0,"seconds":1313.274158833,"counts":{"asm":21,"compile":6169,"link":3000,"test":3000}}
+{"config":"n3000","tool":"go","scenario":"test-noop","rep":0,"seconds":12.026840375}
+{"config":"n3000","tool":"go","scenario":"test-noop","rep":1,"seconds":9.823538291}
+{"config":"n3000","tool":"go","scenario":"test-noop","rep":2,"seconds":6.4662243329999995}
+{"config":"n3000","tool":"go","scenario":"test-core-body","rep":0,"seconds":1157.434596833,"counts":{"compile":1726,"link":2820,"test":2820}}
+{"config":"n3000","tool":"go","scenario":"codegen-generate","rep":0,"seconds":20.787853625}
+{"config":"n3000","tool":"go","scenario":"codegen-build","rep":0,"seconds":8.9845,"counts":{"compile":39,"link":31}}
+{"config":"n3000","tool":"go","scenario":"codegen-generate","rep":1,"seconds":17.382884916}
+{"config":"n3000","tool":"go","scenario":"codegen-build","rep":1,"seconds":7.150440542,"counts":{"compile":8,"link":30}}
+{"config":"n3000","tool":"go","scenario":"clone-warmcache","rep":0,"seconds":21.709504833,"counts":{"compile":2733,"link":31}}
+{"config":"n3000","tool":"go","scenario":"clone-warmcache-trimpath","rep":0,"seconds":10.1857555,"counts":{"link":31}}
+{"config":"n3000","tool":"bazel","scenario":"cold","rep":0,"seconds":83.62812975,"counts":{"critical_path_ms":49670,"darwin-sandbox":3035,"internal":132,"processes":3167}}
+{"config":"n3000","tool":"bazel","scenario":"noop","rep":0,"seconds":0.777547375}
+{"config":"n3000","tool":"bazel","scenario":"noop","rep":1,"seconds":0.198337417}
+{"config":"n3000","tool":"bazel","scenario":"noop","rep":2,"seconds":0.194925583}
+{"config":"n3000","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":5.1388655}
+{"config":"n3000","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":4.721173459}
+{"config":"n3000","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":4.828539125}
+{"config":"n3000","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":3.854606583}
+{"config":"n3000","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":3.50214075}
+{"config":"n3000","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":3.62573825}
+{"config":"n3000","tool":"bazel","scenario":"noop","rep":3,"seconds":1.540035791}
+{"config":"n3000","tool":"bazel","scenario":"leaf-body","rep":0,"seconds":2.6847265,"counts":{"action cache hit":1,"critical_path_ms":2400,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n3000","tool":"bazel","scenario":"leaf-body","rep":1,"seconds":1.913620709,"counts":{"action cache hit":1,"critical_path_ms":1690,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n3000","tool":"bazel","scenario":"leaf-body","rep":2,"seconds":1.662025917,"counts":{"action cache hit":1,"critical_path_ms":1490,"darwin-sandbox":2,"internal":2,"processes":4}}
+{"config":"n3000","tool":"bazel","scenario":"core-body","rep":0,"seconds":21.408424541,"counts":{"action cache hit":792,"critical_path_ms":17530,"darwin-sandbox":31,"internal":31,"processes":62}}
+{"config":"n3000","tool":"bazel","scenario":"core-body","rep":1,"seconds":11.597082,"counts":{"action cache hit":792,"critical_path_ms":7770,"darwin-sandbox":31,"internal":31,"processes":62}}
+{"config":"n3000","tool":"bazel","scenario":"core-body","rep":2,"seconds":10.891237625,"counts":{"action cache hit":792,"critical_path_ms":6980,"darwin-sandbox":31,"internal":31,"processes":62}}
+{"config":"n3000","tool":"bazel","scenario":"core-api","rep":0,"seconds":21.154591791,"counts":{"action cache hit":1400,"critical_path_ms":11680,"darwin-sandbox":823,"internal":1,"processes":824}}
+{"config":"n3000","tool":"bazel","scenario":"core-api","rep":1,"seconds":19.308033792,"counts":{"action cache hit":1400,"critical_path_ms":9270,"darwin-sandbox":823,"internal":1,"processes":824}}
+{"config":"n3000","tool":"bazel","scenario":"core-api","rep":2,"seconds":21.046303833,"counts":{"action cache hit":1400,"critical_path_ms":11240,"darwin-sandbox":823,"internal":1,"processes":824}}
+{"config":"n3000","tool":"bazel","scenario":"core-comment","rep":0,"seconds":20.204180041,"counts":{"action cache hit":1370,"critical_path_ms":10260,"darwin-sandbox":823,"internal":31,"processes":854}}
+{"config":"n3000","tool":"bazel","scenario":"core-comment","rep":1,"seconds":20.852598959,"counts":{"action cache hit":1370,"critical_path_ms":9970,"darwin-sandbox":823,"internal":31,"processes":854}}
+{"config":"n3000","tool":"bazel","scenario":"core-comment","rep":2,"seconds":28.0497525,"counts":{"action cache hit":1370,"critical_path_ms":17110,"darwin-sandbox":823,"internal":31,"processes":854}}
+{"config":"n3000","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":119,"unit":"MB"}
+{"config":"n3000","tool":"bazel","scenario":"test-first","rep":0,"seconds":2773.657447667,"counts":{"critical_path_ms":38900,"darwin-sandbox":18366,"internal":12001,"processes":30367}}
+{"config":"n3000","tool":"bazel","scenario":"test-noop","rep":0,"seconds":3.718718875}
+{"config":"n3000","tool":"bazel","scenario":"test-noop","rep":1,"seconds":0.740862167}
+{"config":"n3000","tool":"bazel","scenario":"test-noop","rep":2,"seconds":0.710688916}
+{"config":"n3000","tool":"bazel","scenario":"test-core-body","rep":0,"seconds":2290.601390334,"counts":{"action cache hit":3773,"critical_path_ms":27310,"darwin-sandbox":5674,"internal":2851,"processes":8525}}
+{"config":"n3000","tool":"bazel","scenario":"server-heap-after-test","rep":0,"seconds":0,"value":229,"unit":"MB"}
+{"config":"n3000","tool":"bazel","scenario":"codegen-build","rep":0,"seconds":18.110167583,"counts":{"action cache hit":7,"critical_path_ms":12600,"darwin-sandbox":32,"internal":31,"processes":63}}
+{"config":"n3000","tool":"bazel","scenario":"codegen-build","rep":1,"seconds":9.94057775,"counts":{"action cache hit":7,"critical_path_ms":6410,"darwin-sandbox":32,"internal":31,"processes":63}}
+{"config":"n3000","tool":"bazel","scenario":"clone-diskcache","rep":0,"seconds":6.43119875,"counts":{"critical_path_ms":640,"disk cache hit":3035,"internal":132,"processes":3167}}
+{"config":"n3000","tool":"go","scenario":"workload-build","rep":0,"seconds":27.169576542}
+{"config":"n3000","tool":"go","scenario":"workload-test","rep":0,"seconds":1573.685340209}
+{"config":"n1000-wide","tool":"bazel","scenario":"cold","rep":0,"seconds":70.049703916,"counts":{"critical_path_ms":54700,"darwin-sandbox":766,"internal":52,"processes":818}}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop","rep":0,"seconds":0.448179958}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop","rep":1,"seconds":0.5961245}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop","rep":2,"seconds":0.951389417}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":14.891630291}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":8.876757333}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":12.413770583}
+{"config":"n1000-wide","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":19.326743708}
+{"config":"n1000-wide","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":11.84553325}
+{"config":"n1000-wide","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":11.559414542}
+{"config":"n1000-wide","tool":"bazel","scenario":"noop","rep":3,"seconds":2.692368834}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-body","rep":0,"seconds":4.5499425,"counts":{"action cache hit":201,"critical_path_ms":3730,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-body","rep":1,"seconds":3.867782917,"counts":{"action cache hit":201,"critical_path_ms":3200,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-body","rep":2,"seconds":3.751393625,"counts":{"action cache hit":201,"critical_path_ms":3090,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-api","rep":0,"seconds":8.983240084,"counts":{"action cache hit":296,"critical_path_ms":5330,"darwin-sandbox":212,"internal":1,"processes":213}}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-api","rep":1,"seconds":7.149767292,"counts":{"action cache hit":296,"critical_path_ms":4680,"darwin-sandbox":212,"internal":1,"processes":213}}
+{"config":"n1000-wide","tool":"bazel","scenario":"core-api","rep":2,"seconds":5.875984333,"counts":{"action cache hit":296,"critical_path_ms":3100,"darwin-sandbox":212,"internal":1,"processes":213}}
+{"config":"n1000-wide","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":77,"unit":"MB"}
+{"config":"n1000-wide","tool":"go","scenario":"cold","rep":0,"seconds":12.043581875,"counts":{"asm":48,"compile":754,"link":11}}
+{"config":"n1000-wide","tool":"go","scenario":"noop","rep":0,"seconds":3.373042875}
+{"config":"n1000-wide","tool":"go","scenario":"noop","rep":1,"seconds":1.874195458}
+{"config":"n1000-wide","tool":"go","scenario":"noop","rep":2,"seconds":1.5720154160000002}
+{"config":"n1000-wide","tool":"go","scenario":"noop-discard","rep":0,"seconds":4.343164542,"counts":{"compile":330,"link":11}}
+{"config":"n1000-wide","tool":"go","scenario":"noop-discard","rep":1,"seconds":2.023591542,"counts":{"link":11}}
+{"config":"n1000-wide","tool":"go","scenario":"noop-discard","rep":2,"seconds":2.110891333,"counts":{"link":11}}
+{"config":"n1000-wide","tool":"go","scenario":"core-body","rep":0,"seconds":3.164775125,"counts":{"compile":202,"link":10}}
+{"config":"n1000-wide","tool":"go","scenario":"core-body","rep":1,"seconds":3.153534167,"counts":{"compile":202,"link":10}}
+{"config":"n1000-wide","tool":"go","scenario":"core-body","rep":2,"seconds":3.0793241670000002,"counts":{"compile":202,"link":10}}
+{"config":"n1000-wide","tool":"go","scenario":"core-api","rep":0,"seconds":4.552129583,"counts":{"compile":488,"link":10}}
+{"config":"n1000-wide","tool":"go","scenario":"core-api","rep":1,"seconds":4.378397875,"counts":{"compile":488,"link":10}}
+{"config":"n1000-wide","tool":"go","scenario":"core-api","rep":2,"seconds":5.130006291,"counts":{"compile":488,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"cold","rep":0,"seconds":14.099438417,"counts":{"asm":48,"compile":996,"link":11}}
+{"config":"n1000-deep","tool":"go","scenario":"noop","rep":0,"seconds":3.416861167}
+{"config":"n1000-deep","tool":"go","scenario":"noop","rep":1,"seconds":2.711954959}
+{"config":"n1000-deep","tool":"go","scenario":"noop","rep":2,"seconds":2.8744845420000003}
+{"config":"n1000-deep","tool":"go","scenario":"noop-discard","rep":0,"seconds":5.996643167,"counts":{"compile":88,"link":11}}
+{"config":"n1000-deep","tool":"go","scenario":"noop-discard","rep":1,"seconds":5.778675583,"counts":{"link":11}}
+{"config":"n1000-deep","tool":"go","scenario":"noop-discard","rep":2,"seconds":6.375996583,"counts":{"link":11}}
+{"config":"n1000-deep","tool":"go","scenario":"core-body","rep":0,"seconds":10.690895583,"counts":{"compile":285,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"core-body","rep":1,"seconds":10.250594833,"counts":{"compile":285,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"core-body","rep":2,"seconds":9.5492595,"counts":{"compile":285,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"core-api","rep":0,"seconds":13.49216825,"counts":{"compile":706,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"core-api","rep":1,"seconds":15.330156791,"counts":{"compile":706,"link":10}}
+{"config":"n1000-deep","tool":"go","scenario":"core-api","rep":2,"seconds":7.928646125,"counts":{"compile":706,"link":10}}
+{"config":"n1000-deep","tool":"bazel","scenario":"cold","rep":0,"seconds":85.949766541,"counts":{"critical_path_ms":67670,"darwin-sandbox":1030,"internal":52,"processes":1082}}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop","rep":0,"seconds":0.702704459}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop","rep":1,"seconds":0.451856125}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop","rep":2,"seconds":0.268445}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":7.183587375}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":7.9218515}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":7.848042375}
+{"config":"n1000-deep","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":7.411106375}
+{"config":"n1000-deep","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":6.164069208}
+{"config":"n1000-deep","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":5.70104925}
+{"config":"n1000-deep","tool":"bazel","scenario":"noop","rep":3,"seconds":1.678388042}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-body","rep":0,"seconds":4.560789542,"counts":{"action cache hit":284,"critical_path_ms":4200,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-body","rep":1,"seconds":2.910722208,"counts":{"action cache hit":284,"critical_path_ms":2600,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-body","rep":2,"seconds":2.683177917,"counts":{"action cache hit":284,"critical_path_ms":2410,"darwin-sandbox":11,"internal":11,"processes":22}}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-api","rep":0,"seconds":11.061092459,"counts":{"action cache hit":431,"critical_path_ms":10800,"darwin-sandbox":295,"internal":1,"processes":296}}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-api","rep":1,"seconds":9.043772167,"counts":{"action cache hit":431,"critical_path_ms":8720,"darwin-sandbox":295,"internal":1,"processes":296}}
+{"config":"n1000-deep","tool":"bazel","scenario":"core-api","rep":2,"seconds":8.62338475,"counts":{"action cache hit":431,"critical_path_ms":8230,"darwin-sandbox":295,"internal":1,"processes":296}}
+{"config":"n1000-deep","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":82,"unit":"MB"}
+{"config":"n1000-local","tool":"bazel","scenario":"cold","rep":0,"seconds":49.89253425,"counts":{"critical_path_ms":40650,"internal":52,"local":999,"processes":1051}}
+{"config":"n1000-local","tool":"bazel","scenario":"noop","rep":0,"seconds":1.960120125}
+{"config":"n1000-local","tool":"bazel","scenario":"noop","rep":1,"seconds":1.694310875}
+{"config":"n1000-local","tool":"bazel","scenario":"noop","rep":2,"seconds":0.280064}
+{"config":"n1000-local","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":5.764183583}
+{"config":"n1000-local","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":4.795548209}
+{"config":"n1000-local","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":3.775661875}
+{"config":"n1000-local","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":3.237368125}
+{"config":"n1000-local","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":3.5888255}
+{"config":"n1000-local","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":4.237743917}
+{"config":"n1000-local","tool":"bazel","scenario":"noop","rep":3,"seconds":0.975388167}
+{"config":"n1000-local","tool":"bazel","scenario":"leaf-body","rep":0,"seconds":2.027106708,"counts":{"action cache hit":1,"critical_path_ms":1660,"internal":2,"local":2,"processes":4}}
+{"config":"n1000-local","tool":"bazel","scenario":"leaf-body","rep":1,"seconds":3.215361667,"counts":{"action cache hit":1,"critical_path_ms":2230,"internal":2,"local":2,"processes":4}}
+{"config":"n1000-local","tool":"bazel","scenario":"leaf-body","rep":2,"seconds":1.941001542,"counts":{"action cache hit":1,"critical_path_ms":1440,"internal":2,"local":2,"processes":4}}
+{"config":"n1000-local","tool":"bazel","scenario":"core-body","rep":0,"seconds":3.659898333,"counts":{"action cache hit":298,"critical_path_ms":3040,"internal":11,"local":11,"processes":22}}
+{"config":"n1000-local","tool":"bazel","scenario":"core-body","rep":1,"seconds":3.447516625,"counts":{"action cache hit":298,"critical_path_ms":2990,"internal":11,"local":11,"processes":22}}
+{"config":"n1000-local","tool":"bazel","scenario":"core-body","rep":2,"seconds":2.74373475,"counts":{"action cache hit":298,"critical_path_ms":2310,"internal":11,"local":11,"processes":22}}
+{"config":"n1000-local","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":80,"unit":"MB"}
+{"config":"n10000","tool":"go","scenario":"cold","rep":0,"seconds":232.90016925,"counts":{"asm":48,"compile":9292,"link":101}}
+{"config":"n10000","tool":"go","scenario":"noop","rep":0,"seconds":23.899038292}
+{"config":"n10000","tool":"go","scenario":"noop","rep":1,"seconds":13.637082375}
+{"config":"n10000","tool":"go","scenario":"noop","rep":2,"seconds":13.441131375}
+{"config":"n10000","tool":"go","scenario":"noop-discard","rep":0,"seconds":107.841919125,"counts":{"compile":882,"link":101}}
+{"config":"n10000","tool":"go","scenario":"noop-discard","rep":1,"seconds":104.024770208,"counts":{"link":101}}
+{"config":"n10000","tool":"go","scenario":"noop-discard","rep":2,"seconds":98.532252,"counts":{"link":101}}
+{"config":"n10000","tool":"go","scenario":"leaf-body","rep":0,"seconds":25.615837834,"counts":{"compile":3,"link":2}}
+{"config":"n10000","tool":"go","scenario":"leaf-body","rep":1,"seconds":11.900397,"counts":{"compile":3,"link":2}}
+{"config":"n10000","tool":"go","scenario":"leaf-body","rep":2,"seconds":11.770462083,"counts":{"compile":3,"link":2}}
+{"config":"n10000","tool":"go","scenario":"core-body","rep":0,"seconds":102.750684834,"counts":{"compile":2724,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-body","rep":1,"seconds":144.6698725,"counts":{"compile":2724,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-body","rep":2,"seconds":133.714424917,"counts":{"compile":2724,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-api","rep":0,"seconds":202.26581125,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-api","rep":1,"seconds":191.682257209,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-api","rep":2,"seconds":201.029722291,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-comment","rep":0,"seconds":242.326760792,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-comment","rep":1,"seconds":174.399358041,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"core-comment","rep":2,"seconds":162.3212605,"counts":{"compile":7353,"link":100}}
+{"config":"n10000","tool":"go","scenario":"codegen-generate","rep":0,"seconds":137.840225959}
+{"config":"n10000","tool":"go","scenario":"codegen-build","rep":0,"seconds":112.137088459,"counts":{"compile":6,"link":100}}
+{"config":"n10000","tool":"go","scenario":"codegen-generate","rep":1,"seconds":86.066328875}
+{"config":"n10000","tool":"go","scenario":"codegen-build","rep":1,"seconds":81.337417583,"counts":{"compile":6,"link":100}}
+{"config":"n10000","tool":"go","scenario":"clone-warmcache","rep":0,"seconds":195.327106,"counts":{"compile":9219,"link":101}}
+{"config":"n10000","tool":"go","scenario":"clone-warmcache-trimpath","rep":0,"seconds":123.923123208,"counts":{"link":101}}
+{"config":"n10000","tool":"bazel","scenario":"cold","rep":0,"seconds":317.696685459,"counts":{"critical_path_ms":78280,"darwin-sandbox":10241,"internal":412,"processes":10653}}
+{"config":"n10000","tool":"bazel","scenario":"noop","rep":0,"seconds":4.807528458}
+{"config":"n10000","tool":"bazel","scenario":"noop","rep":1,"seconds":0.35395175}
+{"config":"n10000","tool":"bazel","scenario":"noop","rep":2,"seconds":0.358813417}
+{"config":"n10000","tool":"bazel","scenario":"noop-cold-server","rep":0,"seconds":13.823237125}
+{"config":"n10000","tool":"bazel","scenario":"noop-cold-server","rep":1,"seconds":14.054921916}
+{"config":"n10000","tool":"bazel","scenario":"noop-cold-server","rep":2,"seconds":13.040914375}
+{"config":"n10000","tool":"bazel","scenario":"analysis-cold-server","rep":0,"seconds":10.272318}
+{"config":"n10000","tool":"bazel","scenario":"analysis-cold-server","rep":1,"seconds":6.349828875}
+{"config":"n10000","tool":"bazel","scenario":"analysis-cold-server","rep":2,"seconds":6.064754958}
+{"config":"n10000","tool":"bazel","scenario":"noop","rep":3,"seconds":8.153526583}
+{"config":"n10000","tool":"bazel","scenario":"leaf-body","rep":0,"seconds":22.033458166,"counts":{"action cache hit":2,"critical_path_ms":21530,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n10000","tool":"bazel","scenario":"leaf-body","rep":1,"seconds":7.595974625,"counts":{"action cache hit":2,"critical_path_ms":7230,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n10000","tool":"bazel","scenario":"leaf-body","rep":2,"seconds":6.945831542,"counts":{"action cache hit":2,"critical_path_ms":6560,"darwin-sandbox":3,"internal":3,"processes":6}}
+{"config":"n10000","tool":"bazel","scenario":"core-body","rep":0,"seconds":250.6718075,"counts":{"action cache hit":2723,"critical_path_ms":73790,"darwin-sandbox":101,"internal":101,"processes":202}}
+{"config":"n10000","tool":"bazel","scenario":"core-body","rep":1,"seconds":184.781879541,"counts":{"action cache hit":2723,"critical_path_ms":43260,"darwin-sandbox":101,"internal":101,"processes":202}}
+{"config":"n10000","tool":"bazel","scenario":"core-body","rep":2,"seconds":161.892765625,"counts":{"action cache hit":2723,"critical_path_ms":39910,"darwin-sandbox":101,"internal":101,"processes":202}}
+{"config":"n10000","tool":"bazel","scenario":"core-api","rep":0,"seconds":214.595013125,"counts":{"action cache hit":4729,"critical_path_ms":49200,"darwin-sandbox":2824,"internal":1,"processes":2825}}
+{"config":"n10000","tool":"bazel","scenario":"core-api","rep":1,"seconds":234.882432208,"counts":{"action cache hit":4729,"critical_path_ms":48210,"darwin-sandbox":2824,"internal":1,"processes":2825}}
+{"config":"n10000","tool":"bazel","scenario":"core-api","rep":2,"seconds":204.04829825,"counts":{"action cache hit":4729,"critical_path_ms":48670,"darwin-sandbox":2824,"internal":1,"processes":2825}}
+{"config":"n10000","tool":"bazel","scenario":"core-comment","rep":0,"seconds":222.491241041,"counts":{"action cache hit":4629,"critical_path_ms":48740,"darwin-sandbox":2824,"internal":101,"processes":2925}}
+{"config":"n10000","tool":"bazel","scenario":"core-comment","rep":1,"seconds":251.314614083,"counts":{"action cache hit":4629,"critical_path_ms":52690,"darwin-sandbox":2824,"internal":101,"processes":2925}}
+{"config":"n10000","tool":"bazel","scenario":"core-comment","rep":2,"seconds":212.150150708,"counts":{"action cache hit":4629,"critical_path_ms":46520,"darwin-sandbox":2824,"internal":101,"processes":2925}}
+{"config":"n10000","tool":"bazel","scenario":"server-heap-after-build","rep":0,"seconds":0,"value":214,"unit":"MB"}
+{"config":"n10000","tool":"bazel","scenario":"codegen-build","rep":0,"seconds":207.308380958,"counts":{"action cache hit":5,"critical_path_ms":51330,"darwin-sandbox":102,"internal":101,"processes":203}}
+{"config":"n10000","tool":"bazel","scenario":"codegen-build","rep":1,"seconds":199.055294875,"counts":{"action cache hit":5,"critical_path_ms":43490,"darwin-sandbox":102,"internal":101,"processes":203}}
+{"config":"n10000","tool":"bazel","scenario":"clone-diskcache","rep":0,"seconds":11.494764458,"counts":{"critical_path_ms":1190,"disk cache hit":10241,"internal":412,"processes":10653}}

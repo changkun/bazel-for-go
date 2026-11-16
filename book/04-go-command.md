@@ -52,9 +52,9 @@ section).[^go-buildactionid] Unless `-trimpath` (which removes file system paths
 output) is set, it also hashes the package's absolute directory, because the object file may
 record that directory in its debug information.[^go-actionid-dir]
 
-So a cache filled at one checkout path gives no hits at another. In our measurements on 1,000
-packages (Appendix A), a second checkout with a warm GOCACHE recompiled all 891 of its own
-packages in the build; when both checkouts built with `-trimpath`, it recompiled none.[^bench]
+So a cache filled at one checkout path gives no hits for the repository's packages at another.
+In our measurements on 1,000 packages (Appendix A), a second checkout with a warm GOCACHE
+recompiled all 891 of its own packages in the build; when both checkouts built with `-trimpath`, it recompiled none.[^bench]
 And every process hashes file contents afresh, remembering hashes only until it
 exits,[^go-filehash] so even a build with nothing to do reads every source file in full.
 
@@ -333,9 +333,10 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L756>
 
 [^go-testlog]: Go, `testing/internal/testdeps/deps.go`, `testLog`; the `testlog` calls in
-    `os.Getenv`, `os.OpenFile` and `os.Stat`.
+    `os.Getenv`, `os.Chdir`, `os.OpenFile` and `os.Stat`.
     <https://github.com/golang/go/blob/go1.27.3/src/testing/internal/testdeps/deps.go#L82-L96>
     <https://github.com/golang/go/blob/go1.27.3/src/os/env.go#L102>
+    <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L376-L381>
     <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L411>
     <https://github.com/golang/go/blob/go1.27.3/src/os/stat.go#L12>
 
