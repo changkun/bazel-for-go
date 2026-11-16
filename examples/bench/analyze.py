@@ -563,7 +563,8 @@ def main():
     if (w := load(d / "workload.jsonl", jsonl)) is None:
         return
     w, links = workload(w, graphs)
-    config = w.config.value_counts().idxmax()  # the figures show the largest repository measured per process
+    # The figures show n1000, the repository Chapter 5 describes, or else the largest one measured.
+    config = "n1000" if "n1000" in set(w.config) else w.config.value_counts().idxmax()
     print(f"<!-- figures 5.2 and 5.3 show {config} -->\n")
     configs = load(d / "configs.jsonl", jsonl)
     pkgs = None if configs is None else configs.set_index("config").stats.get(config, {}).get("Pkgs")
