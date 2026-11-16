@@ -507,7 +507,7 @@ export default {
       lines: [
         { say: "Bazel looks up each action's hash in the remote cache; on a miss, remote execution sends the Action to an execution service.", hold: 0.6 },
         { say: "Bazel uploads the inputs the CAS lacks; an executor from the pool runs the command and stores the outputs in the CAS.", hold: 1.0 },
-        { say: "Parallelism is then bounded by the pool rather than by one machine's cores.", hold: 0.8 },
+        { say: "With `--jobs` raised above the local core count, the pool bounds parallelism.", hold: 0.8 },
         { say: "Since 7.0, Bazel by default downloads only the outputs of top-level targets and those local actions need, knowing the rest by hash alone.", hold: 0.8 },
       ],
       draw(s) {

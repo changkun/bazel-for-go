@@ -23,7 +23,7 @@ Bazel's answers to Chapter 1's six decisions, which Chapter 8 weighs for Go:
 | Change | Compare each known file's times with the last build, or ask the operating system |
 | Key | The command, its environment and machine type, and the contents of every input, with paths relative to one directory |
 | Sharing | One local cache per checkout; a shared cache on disk or on a server, across checkouts and machines |
-| Execution | Locally, hidden from undeclared files, or on a pool of remote machines |
+| Execution | Locally, in a directory of declared inputs only, or on a pool of remote machines |
 
 ## The model
 
@@ -36,14 +36,14 @@ written in Starlark (Bazel's Python-like language), that says how to build targe
 kind.[^glossary]
 
 To analyze a target, Bazel runs its rule's function, which does two things. It registers
-**actions**: commands with declared inputs and outputs, such as "compile `greet.go` into
-`greet.a`",[^rules-actions] plus `greet.x`, the export data that importers compile against
+**actions**: commands with declared inputs and outputs, such as compiling `greet.go` into
+`greet.a`,[^rules-actions] plus `greet.x`, the export data that importers compile against
 (Chapter 7). And it returns **providers**: data for the targets that depend on it. A rule reads
 only its direct dependencies' providers, so each target passes on what its dependents
 need.[^rules-providers] `go_library` returns `GoArchive`, "the compiled form ... with
-everything needed to link it into a binary", and `GoInfo`, the inputs that a binary embedding
-the library compiles itself.[^rules-go-providers] The files that actions read and write are
-**artifacts**; each output is written by exactly one action.[^glossary]
+everything needed to link it into a binary", and `GoInfo`, "the filtered inputs and dependencies
+needed to build a GoArchive".[^rules-go-providers] The files that actions read and write are
+**artifacts**; each output is written by exactly one action.[^glossary][^rules-actions]
 
 A **configuration** is the set of settings outside the rules, such as the target platform (the
 operating system and CPU to build for)[^platforms] and the command-line flags, that shapes the
@@ -101,12 +101,13 @@ PACKAGE             168
 ACTION_EXECUTION    120
 ```
 
-Before each command, Bazel looks for changed files. By default it runs `stat` on every file in
-the graph and compares its modification time, change time and inode number with the stored
-ones, without reading it.[^filestate] With `--watchfs`, off by default, it asks the operating
-system which source files changed instead,[^watchfs] though by default it still checks every
-output of the last build.[^output-check] Every node that depends on a changed file,
-directly or not, is marked dirty.[^skyframe]
+Before each command, Bazel looks for changed files. By default it reads the metadata of every
+file in the graph with `stat` and compares its modification time, change time and inode number
+(the file's identifier on disk) with the stored ones, without reading its
+contents.[^filestate] With `--watchfs`, off by default, it asks the operating system which
+source files changed instead,[^watchfs] though by default it still checks every output of the
+last build.[^output-check] Every node that depends on a changed file, directly or not, is
+marked dirty.[^skyframe]
 
 Bazel then recomputes the dirty nodes from the bottom, with change pruning: "if a node is
 invalidated, but upon rebuild, it is discovered that its new value is the same as its old
@@ -120,7 +121,7 @@ Together they give Chapter 1's early cutoff.
 
 The graph is what makes a repeated build cheap. In our measurements on the 1,000-package synthetic
 repository (Appendix A), a build
-with nothing to do took 0.15–0.3 s with a warm server. A new server must load and analyze
+with nothing to do took 0.16 s with a warm server. A new server must load and analyze
 everything again before it can tell that nothing changed: the same build took 3.3 s, and one
 that stopped after analysis (`--nobuild`) took 2.8 s.[^bench]
 
@@ -149,16 +150,16 @@ of every input and output.[^action-cache] If the hash computed from the current 
 the outputs already in `bazel-out` are current and the action is skipped. This cache stores no
 file contents.
 
-A remote cache speaks the Remote Execution API, an open gRPC protocol,[^rbe] or a simpler HTTP
-protocol, and a disk cache (`--disk_cache`) is a local directory that Bazel uses as
-one.[^remote-caching] In all of them, an action becomes an **Action** message: the hash of a
-**Command** (arguments, environment, output paths), the hash of the input root, the platform
-and a timeout.[^reapi] The input root's hash is a Merkle tree hash, a single hash computed over
-the whole directory tree of inputs, so it changes when any input does. The hash of the Action
-is the key. The cache has two parts: a remote action cache from an Action's hash to the hashes
-of its outputs, and a content-addressed store (CAS) from each hash to the
-bytes.[^remote-caching] GOCACHE makes the same split between action entries and content
-entries (Chapter 4).
+A remote cache speaks the Remote Execution API, an open protocol over gRPC (a remote procedure
+call framework),[^rbe] or a simpler HTTP protocol, and a disk cache (`--disk_cache`) is a local
+directory that Bazel uses as one.[^remote-caching] In all of them, an action becomes an
+**Action** message: the hash of a **Command** (arguments, environment, output paths), the hash
+of the input root, the platform and a timeout.[^reapi] The input root's hash is a Merkle tree
+hash, a single hash computed over the whole directory tree of inputs, so it changes when any
+input does. The hash of the Action is the key. The cache has two parts: a remote action cache
+from an Action's hash to the hashes of its outputs, and a content-addressed store (CAS) from
+each hash to the bytes.[^remote-caching] The go command's build cache (GOCACHE) makes the same
+split between action entries and content entries (Chapter 4).
 
 Every path in the Command and the tree is relative to the execroot, so the checkout's location
 does not enter the key unless a rule writes an absolute path into a command.[^path-resolver] The
@@ -180,8 +181,9 @@ absolute path. Setting up and tearing down each sandbox costs time; on Linux, sa
 are "rarely more than a few percent slower".[^sandboxing]
 
 A **persistent worker** is a long-running process that serves many actions, saving a tool's
-start-up on each one. The tool must speak Bazel's worker protocol.[^workers] rules_go's actions
-do not ask for workers, so every Go compile and link is a new process.[^rules-go-workers]
+start-up on each one. The tool, or a wrapper around it, must speak Bazel's worker
+protocol.[^workers] rules_go's actions do not ask for workers, so every Go compile and link is
+a new process.[^rules-go-workers]
 
 ## Remote caching and remote execution
 
@@ -190,14 +192,15 @@ do not ask for workers, so every Go compile and link is a new process.[^rules-go
 With a remote cache, Bazel looks up each action's hash before running it and uploads the
 results of the actions it runs.[^remote-caching] With remote execution it sends the Action to
 an execution service instead: it uploads the inputs the CAS lacks, and an executor from the
-service's pool runs the command and stores the outputs in the CAS.[^reapi-exec] An executor
-gets no file of the checkout outside the input root, which is why every input must be
-declared.[^reapi] Parallelism is then bounded by the pool rather than by one machine's cores.
+service's pool runs the command and stores the outputs in the CAS.[^rbe][^reapi-exec] An
+executor gets no file of the checkout outside the input root, which is why every input must be
+declared.[^reapi] Parallelism is then bounded by the pool, once `--jobs` (by default the local
+core count) is raised.[^jobs]
 
 Since 7.0, Bazel by default downloads only the outputs of top-level targets and those that
 local actions need, and knows the rest by hash alone ("Build without the Bytes").[^bwob] The
 remote cache may then evict an output that a later action needs. Since 9.3, rewinding is the
-default: Bazel reruns only the actions that produced the lost outputs.[^rewind]
+default: Bazel reruns the actions that produced the lost outputs.[^rewind]
 
 ## What the design costs
 
@@ -206,7 +209,7 @@ default: Bazel reruns only the actions that produced the lost outputs.[^rewind]
 | Cost | Cause | Grows with |
 |---|---|---|
 | A second description of the graph | The graph is declared, not derived | Every change to imports must reach the BUILD files (Chapter 3) |
-| Server memory | Skyframe keeps every node in the server's heap[^client-server] | Targets and configurations |
+| Server memory | Skyframe keeps every node in the server's heap[^client-server][^memory] | Targets and configurations |
 | A fixed cost per action | A process, a sandbox, hashes and a cache entry for every action[^sandboxing][^rules-go-workers] | The number of actions |
 | Loading and analysis after every start | The graph lives only in memory[^cache-issues] | The number of targets; paid by every new continuous integration (CI) runner[^bench] |
 
@@ -281,14 +284,14 @@ incremental builds slower.[^memory]
     and `lib/actions/FileContentsProxy.java`: file metadata stands in for contents unless the
     file system offers a fast digest.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L172>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L21-L38>
 
 [^watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option (default
     `false`) and `EVERYTHING_MODIFIED`, used when it is off; `lib/skyframe/SkyframeExecutor.java`,
     `handleDiffsWithMissingDiffInformation`, which then checks every known file.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3941-L3958>
 
 [^output-check]: Bazel, `lib/pkgcache/PackageOptions.java`, `--experimental_check_output_files`
     (default `true`), and `lib/buildtool/ExecutionTool.java`, which skips the output check only
@@ -306,6 +309,8 @@ incremental builds slower.[^memory]
     `lib/skyframe/ActionOutputMetadataStore.java`, `fileArtifactValueFromStat`, which builds an
     output's metadata from `stat` and keeps the proxy; `lib/actions/FileStateValue.java`, which
     keeps the proxy unless the file system supplies a hash;
+    `ActionOutputMetadataStore.constructFileArtifactValue` and
+    `FileArtifactValue.createFromInjectedDigest`, which add the computed hash and keep the proxy;
     `lib/skyframe/ActionExecutionFunction.java`, which on an action cache hit builds the value
     from the outputs' current metadata;
     and `FileArtifactValue.addTo`, which puts only the hash in the action cache: "Modifying a
@@ -314,6 +319,8 @@ incremental builds slower.[^memory]
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L593-L603>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L566-L589>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L158-L171>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L441-L453>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L335-L338>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionExecutionFunction.java#L717-L724>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L254-L264>
 
@@ -372,14 +379,27 @@ incremental builds slower.[^memory]
 
 [^rules-go-workers]: rules_go, `go/private/actions/compilepkg.bzl`, the compile action, and
     `go/private/actions/utils.bzl`, `path_mapping_action_settings`: the only execution
-    requirement is `supports-path-mapping`.
+    requirement is `supports-path-mapping`; `go/private/actions/link.bzl`, the link action,
+    which sets none.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L201-L210>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/utils.bzl#L10-L14>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L229-L238>
 
 [^reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, services
-    `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
+    `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`), and the
+    comment on the CAS, which "is used to store the inputs to and outputs from the execution
+    service".
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L198-L200>
+
+[^jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs` (default `auto`) and
+    `JobsConverter`, which turns `auto` into the host's CPU count; and
+    `--experimental_async_execution` (default `false`), under which "the number of actions in
+    flight is still capped with `--jobs`".
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
 
 [^bwob]: Bazel 7.0.0 release notes, which also name `--remote_download_regex`;
     `lib/remote/options/RemoteOptions.java`, `--remote_download_outputs`, default `toplevel`.
@@ -392,8 +412,8 @@ incremental builds slower.[^memory]
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L372-L378>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/rewinding/ActionRewindStrategy.java#L86-L90>
 
-[^cache-issues]: Bazel, "Remote Caching", section "Known issues".
-    <https://bazel.build/remote/caching#known-issues>
-
 [^memory]: Bazel, "Optimize Memory", section "Trade incremental build speeds for memory".
     <https://bazel.build/advanced/performance/memory#trade-incremental>
+
+[^cache-issues]: Bazel, "Remote Caching", section "Known issues".
+    <https://bazel.build/remote/caching#known-issues>
