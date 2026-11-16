@@ -21,7 +21,7 @@ development kit: the Go distribution that rules_go downloads, Chapter 2) and its
 `GoStdlib` action compiles all of it from source for each configuration (a set of build settings,
 such as the target platform or the race detector) that needs it.[^stdlib] Inside the action it runs
 the go command itself, `go install std`, with a cache that it deletes afterwards.[^stdlib-go]
-rules_go first resets every setting that cannot change the standard library, so that most targets
+rules_go first resets every Go setting that cannot change the standard library, so that most targets
 share one copy.[^stdlib-reset]
 
 **The builder** is a Go program in rules_go that most Go actions run, with one subcommand per job:
@@ -30,7 +30,7 @@ filter the sources by build constraints (`//go:build` lines),[^builder-filter] c
 import is a declared dependency ("missing strict dependencies" otherwise),[^builder-strict] write
 the configuration files the compiler reads, run cgo and the assembler, and add their object files
 to the compiled package.[^builder-compile] The go command does this work in its own process
-(Chapter 4). Under Bazel it must happen inside an action, and one program for every job "reduces
+(Chapter 4). Under Bazel it must happen inside an action, and one program for most jobs "reduces
 the number of inputs needed for each action".[^builder] Bazel builds the builder from source, with
 `go build`, for the machine that runs the actions (the execution platform) rather than the
 target.[^builder-exec]
@@ -52,9 +52,9 @@ $ ar t bazel-bin/internal/greet/greet.a
 _go_.o
 $ ar t bazel-bin/internal/greet/greet.x
 __.PKGDEF
-$ bazel aquery 'mnemonic("GoCompilePkg", //cmd/hello:hello_lib)' --output=text
+$ bazel aquery 'mnemonic("GoCompilePkg", //cmd/hello:hello)' --output=text
   Inputs: [.../stdlib_/pkg, .../internal/greet/greet.x, .../builder, ...]
-  Outputs: [.../cmd/hello/hello_lib.a, .../cmd/hello/hello_lib.imports, .../cmd/hello/hello_lib.x]
+  Outputs: [.../cmd/hello/hello.a, ..., .../cmd/hello/hello.x]
 ```
 
 A compile reads its sources, the standard library (built as whole archives) and the `.x` of
@@ -83,7 +83,7 @@ the next level too.
 The go command takes these edits one level further still. A package's object code records a
 fingerprint, a hash of the export data, of every package it imports,[^go-fingerprint] so the
 direct importers' archives change and their own importers recompile. Under Bazel the importers'
-`.a` files change too, but their `.x` files change only if they copy a moved declaration. In our
+`.a` files change too, but their `.x` files change only if they copy what changed. In our
 measurements none did: the synthetic packages use `core` only inside a function too large to
 inline.[^bench]
 
@@ -107,11 +107,11 @@ and its dependents' rules read during analysis. For its package, a `go_library` 
 the `.x` and the nogo facts file (below); from its dependencies it gathers every `.a` below it, for
 the link.[^providers]
 
-`go_test` builds three packages, as `go test` does.[^go-test] The first is the library compiled
-with its in-package test files. The second is the external test package, the files that declare
-`package greet_test` and import the library together with its in-package test files. The third is a
-main package that the builder generates, which imports both and runs the tests. One link joins them
-into the test binary.
+`go_test` builds three packages, as `go test` does for a package with external
+tests.[^go-test] The first is the library compiled with its in-package test files. The second is
+the external test package, the files that declare `package greet_test` and import the library
+together with its in-package test files. The third is a main package that the builder generates,
+which imports both and runs the tests. One link joins them into the test binary.
 
 `go_binary` and `go_test` also set the configuration. Their `goos`, `goarch`, `race` and `pure` (no
 cgo) attributes are applied by a transition: a rule's change to the configuration of itself and
@@ -136,13 +136,13 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
 
 ## What this means at scale
 
-- A body edit that keeps a function too large to inline, and does not change what escapes,
-  recompiles one package however widely it is imported: 1 compile against the go command's 299
-  in our measurements.
-- In a widely imported package, a comment that moves exported declarations costs as much as an
-  API change, and so does an edit to a small inlinable function: every direct importer
-  recompiles (299 compiles in our measurements), and so do the importers of every package whose
-  API mentions a moved declaration.
+- A body edit that keeps a function too large to inline, moves no declaration and does not
+  change what escapes, recompiles one package however widely it is imported: 1 compile against
+  the go command's 299 in our measurements.
+- Under Bazel, in a widely imported package, a comment that moves exported declarations costs
+  as much as an API change, and so does an edit to an inlinable body the `.x` holds: every
+  direct importer recompiles (299 compiles in our measurements), and so do the importers of
+  every package whose `.x` copies what changed.
 - Every binary that contains a changed package still relinks: 10 links in every row above. We
   recommend routing links through `go_link` to machines sized for them.
 - Each new combination of `goos`, `goarch`, `race` and `pure` adds a standard library build and
@@ -199,8 +199,11 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L488-L494>
 
 [^builder-exec]: rules_go, `go/private/go_toolchain.bzl`, the `builder` attribute with
-    `cfg = "exec"`; `go/private/rules/binary_wrapper.sh`, which runs `go build -trimpath`.
+    `cfg = "exec"`; `go/private/sdk_build_defs.bzl`, which declares the builder as a
+    `go_tool_binary`; `go/private/rules/binary_wrapper.sh`, which that rule runs:
+    `go build -trimpath`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/sdk_build_defs.bzl#L65-L67>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
 
 [^gc-linkobj]: Go, `cmd/compile/internal/gc/obj.go`, the comment above `modeCompilerObj` and
@@ -226,14 +229,14 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
 [^export-pos]: Go, `cmd/compile/internal/noder/writer.go`, `pos`, called for each object in
     `doObj`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L391-L404>
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L859>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L958>
 
 [^export-inline]: Go, `cmd/compile/internal/noder/linker.go`, `exportBody`: a body is exported
     if the function is inlinable and declared in, or inlined into, the package.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L214-L251>
 
 [^export-ext]: Go, `cmd/compile/internal/noder/linker.go`, `relocFuncExt`: the escape-analysis
-    tag of each parameter and the inlining cost of each function.
+    tag of each parameter and the inlining cost of each inlinable function.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
 
 [^export-reloc]: Go, `cmd/compile/internal/noder/linker.go`, the `linker` comment ("a single,
@@ -280,11 +283,13 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
 [^go-test]: rules_go, `go/private/rules/test.bzl`, `_go_test_impl`: the internal and external
     archives, `GoTestGenTest`, and the compile and link of the test main; the docstring of
     `_recompile_external_deps`: "go_test, like 'go test', splits tests into two separate
-    archives".
+    archives". Go, `cmd/go/internal/load/test.go`, `TestPackagesAndErrors`, which builds the
+    external test package only if there are files that declare it (`XTestGoFiles`).
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L548-L550>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L77-L105>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L143-L152>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L171-L198>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/test.go#L264-L265>
 
 [^transition]: rules_go, `go/private/rules/transition.bzl`, `_go_transition_impl`, attached to
     `go_binary` and `go_test` as `cfg`; `go/private/rules/library.bzl`, `go_library`, which sets

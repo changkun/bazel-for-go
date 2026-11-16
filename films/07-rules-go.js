@@ -161,8 +161,8 @@ export default {
     {
       section: "Who does what",
       lines: [
-        { say: "For each configuration (set of build settings) that needs it, one `GoStdlib` action compiles the standard library, running the go command itself: `go install std`.", hold: 1.0 },
-        { say: "rules_go first resets every setting that cannot change the standard library, so most targets share one copy.", hold: 1.2 },
+        { say: "For each configuration (set of build settings) that needs it, one `GoStdlib` action compiles the standard library, running the go command itself: `go install std`.", hold: 0.6 },
+        { say: "rules_go first resets every Go setting that cannot change the standard library, so most targets share one copy.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, -46, 1000, 422);
@@ -279,7 +279,7 @@ export default {
       lines: [
         { say: "Edit the body of a function that the compiler does not inline: `core.a` changes and `core.x` does not." },
         { say: "Bazel's action cache compares input contents, so the importers' compiles are hits; only `core`'s compile and the links run." },
-        { say: "Under the go command, an importer's key includes a hash of the whole archive, so every direct importer recompiles.", hold: 1.6 },
+        { say: "Under the go command, an importer's key includes a hash of the whole archive, so every direct importer recompiles.", hold: 1.0 },
       ],
       draw(s) {
         // Figure 7.3, top half.
@@ -368,7 +368,7 @@ export default {
       lines: [
         { say: "A comment line above `core`'s exported types moves them, so `core.x` changes and every direct importer recompiles." },
         { say: "An importer's `.x` copies the declarations its API or inlinable functions use; here importers use `core` only inside a function too large to inline, so theirs stay the same." },
-        { say: "The go command takes these edits one level further: an archive records a hash of each import's export data, so the importers' importers recompile.", hold: 1.2 },
+        { say: "The go command takes these edits one level further: an archive records a hash of each import's export data, so the importers' importers recompile.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 7.3, bottom half.
@@ -401,8 +401,8 @@ export default {
     {
       section: "From library to binary and test",
       lines: [
-        { say: "`go_test` builds three packages, as `go test` does: the library with its in-package tests, and the external test package, `greet_test`." },
-        { say: "The third is a main package that the builder generates, which imports both and runs the tests; one link joins them into the test binary.", hold: 1.0 },
+        { say: "`go_test` builds three packages, as `go test` does for a package with external tests: the library with its in-package tests, and the external test package." },
+        { say: "The third is a main package that the builder generates, which imports both and runs the tests; one link joins them into the test binary.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 7.4.
@@ -422,10 +422,10 @@ export default {
         return (t, cue) => {
           const [c0, c1] = cue;
           appear(frame, t, 0.2);
-          appear(greet, t, c0 + 4.2);
-          appear(external, t, c0 + 7.0);
-          trace(imports, during(t, c0 + 7.6, c0 + 8.2));
-          appear(word, t, c0 + 7.8);
+          appear(greet, t, c0 + 6.6);
+          appear(external, t, c0 + 9.4);
+          trace(imports, during(t, c0 + 10.0, c0 + 10.6));
+          appear(word, t, c0 + 10.2);
           appear(main, t, c1 + 0.8);
           both.forEach((e, i) => trace(e, during(t, c1 + 4.0 + 0.3 * i, c1 + 4.6 + 0.3 * i)));
           appear(link, t, c1 + 7.6);
