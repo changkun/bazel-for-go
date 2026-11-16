@@ -312,9 +312,9 @@ export default {
     {
       section: "Two files per compile",
       lines: [
-        { say: "The `.x` holds more than the API: each declaration's position, the bodies of functions small enough to inline, and what escapes to the heap." },
+        { say: "The `.x` holds more than the API: each described declaration's position, the bodies of functions small enough to inline, and what escapes to the heap.", hold: 0.6 },
         { say: "So a change to the API, to an inlinable body or to what escapes reaches every direct importer." },
-        { say: "So does anything that moves a declaration, such as a comment line above it; a comment at the end of a line moves nothing.", hold: 1.0 },
+        { say: "So does anything that moves a described declaration, such as a comment line above it; a comment at the end of a line moves nothing.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 7.2's `.x`, opened: which edits reach it.
@@ -366,9 +366,9 @@ export default {
     {
       section: "Two files per compile",
       lines: [
-        { say: "A comment line above `core`'s types moves them, so `core.x` changes and every direct importer recompiles." },
+        { say: "A comment line above `core`'s exported types moves them, so `core.x` changes and every direct importer recompiles." },
         { say: "An importer's `.x` copies the declarations its API or inlinable functions use; here importers use `core` only inside a function too large to inline, so theirs stay the same." },
-        { say: "The go command takes these edits one level further: an archive records a hash of each import's export data, so the importers' importers recompile.", hold: 1.6 },
+        { say: "The go command takes these edits one level further: an archive records a hash of each import's export data, so the importers' importers recompile.", hold: 1.2 },
       ],
       draw(s) {
         // Figure 7.3, bottom half.
@@ -492,7 +492,7 @@ export default {
       lines: [
         { say: "nogo, rules_go's counterpart to `go vet`, runs analyzers in the build once a `nogo` target is configured; by default it analyzes nothing." },
         { say: "Each package then gets a `RunNogo` action, separate from its compile, that reads the same `.x` files." },
-        { say: "A separate `ValidateNogo` action fails the build on findings.", hold: 0.8 },
+        { say: "A separate `ValidateNogo` action fails the build on findings.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, -92, 1000, 520);

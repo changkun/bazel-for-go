@@ -190,9 +190,9 @@ export default {
       section: "Skyframe",
       lines: [
         { say: "All three phases run on Skyframe: one graph of nodes, each holding a value and edges to the nodes it read.", hold: 0.6 },
-        { say: "Before each command, Bazel runs `stat` on every known file; every node that depends on a changed file is marked dirty.", hold: 0.8 },
+        { say: "Before each command, Bazel by default runs `stat` on every known file; every node that depends on a changed file is marked dirty.", hold: 0.8 },
         { say: "Dirty nodes are recomputed from the bottom; when a node's value comes out the same, the nodes it invalidated are resurrected.", hold: 0.6 },
-        { say: "A rerun action that writes the same bytes still counts as changed: its value records each output's file times and inode number.", hold: 0.6 },
+        { say: "A rerun action that writes the same bytes to local disk still counts as changed: its value records each output's file times and inode number.", hold: 0.6 },
         { say: "Each action that reads those outputs is checked against the action cache, which compares hashes only.", hold: 0.6 },
         { say: "On a hit it does not run, its value is unchanged, and pruning resumes above it.", hold: 1.2 },
       ],
@@ -424,7 +424,7 @@ export default {
     {
       section: "Action keys and two caches",
       lines: [
-        { say: "Actions run in the execroot, and every path in the Command and the tree is relative to it, so the checkout's location does not enter the key.", hold: 1.4 },
+        { say: "Every path in the Command and the tree is relative to the execroot, so the checkout's location does not enter the key unless a rule writes an absolute path into a command.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 6.4, bottom right: two checkouts at different paths give the same key.

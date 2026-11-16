@@ -104,7 +104,7 @@ export default {
       lines: [
         "Unit: both run one compile per package and one link per binary.",
         "Bazel adds a fixed cost to every action: a sandbox, rules_go's builder, and hashing for its action cache.",
-        { say: "In our view, the cost weighs most where packages are many and small.", hold: 1 },
+        { say: "In our view, the cost weighs most where packages are many and small.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, -26, 1008, 506);
@@ -176,7 +176,7 @@ export default {
       lines: [
         "Graph: the go command derives it from imports; every run lists every directory and checks every file.",
         "Bazel reads it from BUILD files and keeps it in the memory of its server, a long-lived process.",
-        { say: "So the go command pays `T_graph`, the time to obtain the graph, on every run; Bazel pays it after each server start.", hold: 1 },
+        { say: "So the go command pays `T_graph`, the time to obtain the graph, on every run; Bazel pays it after each server start.", hold: 0.6 },
         { say: "Gazelle, a tool that writes BUILD files from the imports, must rerun whenever imports change.", hold: 0.8 },
       ],
       draw(s) {
@@ -270,7 +270,7 @@ export default {
         "Change: keeping no process between runs, the go command hashes every source file again, reading every byte.",
         "Bazel's server compares each known file's timestamps and inode number with the last build's, without reading it.",
         "`T_detect`, the time to find what changed, thus grows with the bytes of source under the go command and with the number of files under Bazel.",
-        { say: "With `--watchfs`, Bazel asks the operating system instead, but by default it still checks every output of the last build.", hold: 1 },
+        { say: "With `--watchfs`, Bazel asks the operating system instead, but by default it still checks every output of the last build.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, -26, 1042, 640);
@@ -448,8 +448,8 @@ export default {
       section: "Six decisions, two answers",
       lines: [
         "Sharing: GOCACHE, the go command's build cache, belongs to one user on one machine.",
-        "`GOCACHEPROG` can hand it to a program that stores entries anywhere, but without `-trimpath` a checkout at another path misses.",
-        "Bazel runs every action in the execroot, with fixed relative paths, so its keys ignore where the checkout lies.",
+        "Since Go 1.24, `GOCACHEPROG` can hand it to a program that stores entries anywhere, but without `-trimpath` a checkout at another path misses.",
+        "Bazel runs every action in the execroot, with fixed relative paths, so its keys ignore the checkout's location unless a rule writes an absolute path.",
         "Its action cache serves one checkout, a disk cache every checkout on a machine, and a remote cache a team, links included.",
       ],
       draw(s) {
@@ -590,10 +590,10 @@ export default {
     {
       section: "Where each stops scaling",
       lines: [
-        { say: "Take one local body edit that leaves the export data unchanged, split by Chapter 1's cost terms.", hold: 1 },
+        { say: "Take one local body edit that leaves the export data unchanged, split by Chapter 1's cost terms.", hold: 0.6 },
         "Finding the graph and the change grows with the repository; running what missed grows with the edit.",
         "In our analysis, the go command stops scaling where a run's work grows with the repository rather than the change.",
-        { say: "Bazel, in our analysis, stops scaling where its overheads grow with the graph: server memory, and loading and analysis at every server start.", hold: 1 },
+        { say: "Bazel, in our analysis, stops scaling where its overheads grow with the graph: server memory, and loading and analysis at every server start.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 8.2.

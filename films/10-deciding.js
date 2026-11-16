@@ -34,9 +34,9 @@ export default {
     {
       section: "Where each tool fits",
       lines: [
-        { say: "The go command already splits a build into actions, keys each by an action ID, and keeps the outputs in GOCACHE, a per-user cache on disk.", hold: 0.8 },
+        { say: "The go command already splits a build into actions, keys each by an action ID, and keeps the outputs in GOCACHE, a per-user cache on disk.", hold: 0.6 },
         { say: "Since Go 1.24, `GOCACHEPROG` replaces that cache with an external program that speaks a JSON protocol.", hold: 0.8 },
-        { say: "A program the team supplies can keep entries in a store shared by every continuous integration (CI) machine.", hold: 1.2 },
+        { say: "A program the team supplies can keep entries in a store shared by every continuous integration (CI) machine.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, 0, 960, 540, 0.82);
@@ -111,8 +111,8 @@ export default {
       lines: [
         "A shared store helps only when action IDs match.",
         "An action ID covers the compiler's version, the flags, the target platform and the contents of every input.",
-        { say: "Unless `-trimpath` removes file system paths from the output, it also covers the package's directory.", hold: 2.4 },
-        { say: "A cgo package, Go code that calls C, adds the C compiler's command, flags and version.", hold: 0.8 },
+        { say: "Unless `-trimpath` removes file system paths from the output, it also covers the package's directory.", hold: 1.8 },
+        { say: "A cgo package, Go code that calls C, adds the C compiler's command, flags and version.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(-10, 0, 1080, 790, 0.84);
@@ -192,11 +192,11 @@ export default {
       lines: [
         "Every command still loads its packages and hashes their source files again, so its cost grows with the tree.",
         "Binaries are not stored: a machine without the previous output links every binary again.",
-        "A test result is reused only if each file the test opened has the same path, size and modification time.",
+        "A test result is reused only if each file the test opened in its module has the same absolute path, size and modification time.",
         "We expect a fresh checkout to rerun every test that reads files.",
         "Each hit arrives as a local file, so every machine downloads what it uses.",
         "`go generate` and other non-Go steps stay outside the graph, and every action runs on the machine that started the command.",
-        { say: "For a CI fleet whose time goes to compiling, we recommend `-trimpath`, one Go version and a shared store first.", hold: 1 },
+        { say: "For a CI fleet whose time goes to compiling, we recommend `-trimpath`, one Go version and a shared store first, written only by CI.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, 0, 1110, 720, 0.85);
@@ -277,7 +277,7 @@ export default {
       section: "Where each tool fits",
       lines: [
         "In our view, Bazel pays when many machines build the same code and time beyond compiling goes to links, tests or generators.",
-        { say: "Bazel caches each, test runs included, as an action keyed by its declared inputs, in a remote cache shared by every machine.", hold: 0.8 },
+        { say: "Bazel caches each, test runs included, as an action keyed by its declared inputs, in a remote cache shared by every machine.", hold: 0.6 },
       ],
       draw(s) {
         s.fit(0, -74, 1074, 496, 0.84);
@@ -388,10 +388,10 @@ export default {
       section: "Where each tool fits",
       lead: 0.8,
       lines: [
-        { say: "In our view, a shared Go cache pays once several machines share builds.", hold: 1 },
-        "Bazel pays once work that cache cannot share dominates CI time, as that work grows with the build and recurs on every machine.",
+        { say: "In our view, a shared Go cache pays once several machines share builds.", hold: 0.6 },
+        "Bazel pays, in our view, once work that cache cannot share dominates CI time, as that work grows with the build and recurs on every machine.",
         "Once one build outgrows one machine, remote execution runs actions on a pool, though no pool shortens the critical path.",
-        { say: "The map assumes Go only; other languages or generators in the graph enlarge Bazel's regions.", hold: 1.4 },
+        { say: "The map assumes Go only; other languages or generators in the graph enlarge Bazel's regions.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 10.1's geometry, from its 720-unit canvas to this one.
@@ -498,7 +498,7 @@ export default {
         "Third, share a cache before CI depends on Bazel; only CI writes to it.",
         "Fourth, make Bazel CI's required check, then move laptops once gopls, Go's language server, works through Bazel.",
         "Fifth, add remote execution last, only when builds wait on cores rather than on the critical path, or some actions need bigger machines.",
-        { say: "In our view, until step 4, stopping costs only the BUILD files, the Gazelle check and the cache server.", hold: 1.2 },
+        { say: "In our view, until step 4, stopping costs only the BUILD files, the Gazelle check and the cache server.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 10.2's steps, with each step's commands under its name.

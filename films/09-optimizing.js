@@ -12,7 +12,7 @@ import { during, measure, mix, place, ramp, show } from "./stage.js";
 // number of compiles on the cold one. Only the blocks' widths use them; no number is drawn.
 const BENCH = {
   cold: { builder: 12.6, stdlib: 11.6, generator: 1.3, compiles: 2.0, link: 2.4, count: 13 },
-  edit: { compile: 0.06, link: 2.26 },
+  edit: { compile: 0.05, link: 2.26 },
 };
 
 // Fade something in from second a, over d seconds.
@@ -33,9 +33,9 @@ export default {
       section: "Measure first",
       lines: [
         { say: "Bazel writes a trace profile of every build; its `Critical Path` row shows one block for each action on the critical path." },
-        { say: "In a cold build, rules_go's own setup takes most of it: building the builder and the standard library for tools." },
+        { say: "In our cold build, rules_go's own setup takes most of it: building the builder and the standard library for tools." },
         { say: "Neither depends on the repository's code, so, in our reading, a shared cache can serve both to every machine of the same platform after the first." },
-        { say: "After an edit to a function body in `core`, one link takes most of it.", hold: 1 },
+        { say: "After an edit to a function body in `core`, one link takes most of it.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 9.1: both critical paths on one time scale.
@@ -128,7 +128,7 @@ export default {
         { say: "Bazel's guide runs `bazel clean` before each of two builds, then diffs the two logs." },
         { say: "The input or setting that differs is the cause.", hold: 1.4 },
         { say: "Stamping: rules_go's `x_defs` sets string variables at link time, and a value can name a workspace status key, such as `{STABLE_GIT_COMMIT}`, that `--stamp` fills in." },
-        { say: "A link whose values name a stable key reads `stable-status.txt`, which always holds `BUILD_HOST` and `BUILD_USER`, so such links share no results across machines or users." },
+        { say: "A stamped link that names a stable key reads `stable-status.txt`, which always holds `BUILD_HOST` and `BUILD_USER`, so such links share no results across machines or users." },
         { say: "We recommend stamping only release builds.", hold: 1.2 },
       ],
       draw(s) {
@@ -349,10 +349,10 @@ export default {
     {
       section: "Place work on machines",
       lines: [
-        { say: "Locally, Bazel starts an action when its declared CPUs and memory fit; an action that declares none counts as one CPU." },
+        { say: "Locally, Bazel starts an action when its declared CPUs and memory fit; a rule's action that declares none counts as one CPU." },
         { say: "rules_go declares none and passes no `-c`, the number of the compiler's back-end workers, so a compile may start one worker per core." },
         { say: "We recommend making the two agree: `-c=1`, passed to every compile, matches the one CPU that Bazel books." },
-        { say: "In the other direction, a `resources:cpu` entry in `exec_properties` or tags changes what Bazel books locally.", hold: 1.6 },
+        { say: "In the other direction, since 9.2 a `resources:cpu` entry in `exec_properties` or tags changes what Bazel books locally.", hold: 1.2 },
       ],
       draw(s) {
         // One machine with four cores: what Bazel books, and what the compiler runs.
@@ -422,7 +422,7 @@ export default {
         { say: "`bazel test` reruns a test only if the test or its dependencies changed, it failed last time, it is marked `external`, or more than one run was asked for." },
         { say: "Other results come from the cache, so testing `//...` costs, beyond loading and analyzing the graph, only the tests the change reaches." },
         { say: "`shard_count = N` runs a test as N processes, possibly on N machines." },
-        { say: "rules_go gives each shard every N-th top-level `Test` function, so one slow function cannot be split.", hold: 1 },
+        { say: "rules_go gives each shard every N-th top-level `Test` function, so one slow function cannot be split.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 9.4: what `bazel test //...` runs after an edit to core.
@@ -474,7 +474,7 @@ export default {
     {
       section: "Tests and the local loop",
       lines: [
-        { say: "On a laptop few actions rerun, so finding changes takes a large share.", hold: 1.4 },
+        { say: "On a laptop the server is warm and few actions rerun, so finding changes takes a large share.", hold: 0.6 },
         { say: "`--watchfs`, off by default, takes changes to source files from the operating system instead of checking each one; the outputs of the last build are still checked." },
       ],
       draw(s) {
