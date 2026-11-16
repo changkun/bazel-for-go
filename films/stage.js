@@ -342,6 +342,8 @@ class Edge {
   trace(u) {
     for (const layer of [this.base, ...Object.values(this.layers)]) {
       layer.path.setAttribute("stroke-dasharray", u >= 1 ? layer.dash || "none" : `${fixed(this.total * clamp(u))} ${fixed(this.total + 20)}`);
+      // A zero-length dash still paints a round cap: hide the arrow until it starts.
+      layer.path.setAttribute("visibility", u > 0 ? "visible" : "hidden");
       layer.head.setAttribute("opacity", during(u, 0.9, 1).toFixed(3));
     }
     return this;
@@ -359,7 +361,7 @@ class Edge {
   // A dot travelling along the arrow, at part u of its way; hidden outside
   // 0 < u < 1, and shown at most at strength (to fade one that stopped short).
   pulse(u, kind = "run", strength = 1) {
-    if (!this.dot) this.dot = svg("circle", { r: 11, fill: SHAPE[kind] }, this.g);
+    if (!this.dot) this.dot = svg("circle", { r: 11, fill: SHAPE[kind] || "currentColor" }, this.g);
     const [x, y] = along(this.points, u);
     this.dot.setAttribute("cx", fixed(x));
     this.dot.setAttribute("cy", fixed(y));
