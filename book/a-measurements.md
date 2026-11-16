@@ -186,27 +186,48 @@ Table A.6: The go command's processes in one cold build and test, as the probe r
 | `n3000` | link, binary | 31 | 3,253 | 2,329 | 1,151 | 1,182 | 69.8 |
 | `n3000` | link, test | 3,000 | 243 | 283 | 343 | 929 | 1,100.3 |
 | `n3000` | test run | 3,000 | 7,731 | 7 | 10 | 17 | 22.3 |
+
+Table A.7: Configurations measured twice, median seconds, first run / second run.[^a-second]
+
+| Scenario | `n1000`, go | `n1000`, Bazel | `n10000`, go | `n10000`, Bazel |
+|---|---|---|---|---|
+| `cold` | 6.86 / 7.44 | 37.4 / 48.2 | 233 / 185 | 318 / 375 |
+| `noop` | 0.86 / 0.87 | 0.16 / 0.13 | 13.6 / 33.3 | 0.36 / 0.31 |
+| `noop-discard` | 1.53 / 1.58 | — | 104 / 127 | — |
+| `leaf-body` | 1.28 / 1.36 | 0.88 / 0.88 | 11.9 / 44.0 | 7.60 / 9.23 |
+| `core-body` | 2.97 / 3.00 | 1.71 / 1.73 | 134 / 136 | 185 / 192 |
+| `core-api` | 5.31 / 4.77 | 5.05 / 5.56 | 201 / 175 | 215 / 227 |
+| `core-comment` | 5.41 / 5.43 | 5.04 / 4.75 | 174 / 199 | 222 / 229 |
+| `test-first` | 279 / 305 | 531 / 615 | — | — |
+| `test-noop` | 1.31 / 1.51 | 0.26 / 0.27 | — | — |
+| `test-core-body` | 259 / 275 | 458 / 479 | — | — |
+| `codegen-generate` | 6.13 / 9.92 | — | 112 / 188 | — |
+| `codegen-build` | 1.48 / 2.24 | 3.31 / 2.40 | 96.7 / 136 | 203 / 197 |
+| `clone-warmcache` | 4.98 / 6.07 | — | 195 / 220 | — |
+| `clone-warmcache-trimpath` | 1.83 / 2.34 | — | 124 / 116 | — |
+| `noop-cold-server` | — | 3.32 / 4.13 | — | 13.8 / 12.5 |
+| `analysis-cold-server` | — | 2.76 / 3.43 | — | 6.35 / 5.59 |
+| `clone-diskcache` | — | 9.45 / 5.92 | — | 11.5 / 12.0 |
 <!-- END -->
 
 The first `noop-discard` also
 compiles the packages that no binary imports. Some other go command runs relinked every binary,
 some after recompiling every main package: the go command stamped the book's git commit into
-each binary (Chapter 4), and we committed during the run; the harness now sets
+each binary (Chapter 4), and we committed during the first run; the harness now sets
 `-buildvcs=false`.[^a-goenv] Bazel's analysis-only runs, and the first run's no-ops, show no
 count: the pattern missed their summary line.[^a-time]
 
 In our measurements, from 100 to 10,000 packages, the go command's no-op ran no tool, yet took 0.20
-s to 13.6 s, since every run loads and hashes the whole tree (Chapter 4). Bazel's warm no-op took
-0.14 s to 0.36 s, a new server's loading and analysis 2.65 s to 6.35 s, and its heap after the
-builds 68 MB to 214 MB. Edits to `core` grew under both tools with the importers they reach. Bazel's
-body edit recompiled only `core` at every size, yet at 10,000 packages its one compile and 100 links
-took 185 s, against 134 s for the go command's 2,724 compiles and 100 links.
+s to 13.6 s (33.3 s in the second run), since every run loads and hashes the whole tree (Chapter
+4); Bazel's warm no-op took 0.14 s to 0.36 s. Bazel's body edit recompiled only `core` at every
+size, yet at 10,000 packages its one compile and 100 links outlasted the go command's 2,724
+compiles and 100 links in both runs (Table A.7).
 
 ## Limits
 
 - **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6,[^a-meta] shared during parts of the run with other work, such as `go test -race`. Table A.5's
-  variants were rerun alone.[^a-results]
+  26.6,[^a-meta] shared with other work, such as `go test -race`. Table A.5's variants were
+  rerun under less load.[^a-results]
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
   nothing and one code generator. We expect the results' shape, more than their numbers, to
   carry over to real repositories.
@@ -214,10 +235,11 @@ took 185 s, against 134 s for the go command's 2,724 compiles and 100 links.
   one, without network time.
 - **macOS:** Chapter 5 infers that macOS's check of a newly launched app[^apple-xprotect] slows
   every new test binary's first run.
-- **Whole milliseconds:** this run's probe truncated each process's times to whole
+- **Whole milliseconds:** the first run's probe truncated each process's times to whole
   milliseconds, so the shortest processes read low; it now keeps microseconds.[^a-probe]
-- **Few runs:** at most three per scenario (Tables A.2 and A.3 count them), and medians without
-  spread; `results.jsonl` has every run.
+- **Few runs:** at most three per scenario. A second run of `n1000` and `n10000` (Table A.7)
+  moved three-run medians by up to 1.25 times and other cells by up to 1.7, except the go
+  command's no-op and leaf edit at 10,000 packages: 2.4 and 3.7 times.[^a-second]
 
 ## Reproduce
 
@@ -235,13 +257,17 @@ go build -o ../../.tools/bin/bench .
 ../../.tools/bin/bench run -configs n1000-wide,n1000-deep,n1000-local \
     -reps 3 -work work -out results/2026-11-16-variants \
     -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
-uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants
+for c in n1000 n10000; do   # the second run
+  ../../.tools/bin/bench run -configs $c -reps 3 -work work -out results/2026-11-16-$c-check \
+      -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+done
+uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants \
+    --second results/2026-11-16-n1000-check results/2026-11-16-n10000-check
 ```
 
-`bench run` writes `meta.json` (the machine and versions), `configs.jsonl`, `results.jsonl`,
-`workload.jsonl`, the action graphs and the profiles to the `-out` directory, and each command's
-output to `work/logs`.[^a-run] Without `--appendix`, `analyze.py` prints Chapter 5's tables and
-redraws its figures.
+`bench run` writes the records, action graphs and profiles to the `-out` directory, and each
+command's output to `work/logs`.[^a-run] Without `--appendix`, `analyze.py` prints Chapter 5's
+tables and redraws its figures.
 
 ## References
 
@@ -279,7 +305,7 @@ redraws its figures.
     [gen.go](../examples/bench/gen.go#L233-L237)
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
 [^a-goenv]: This book's harness, `examples/bench/run.go`, `harness.goEnv`, which sets
-    `GOFLAGS=-buildvcs=false` since this run.
+    `GOFLAGS=-buildvcs=false` since the first run.
     [run.go](../examples/bench/run.go#L305-L324)
 [^go-toolchain-local]: Go, `cmd/go/internal/toolchain/select.go`, `Select`: with
     `GOTOOLCHAIN=local`, the running go command handles the command itself.
@@ -308,7 +334,7 @@ redraws its figures.
 [^go-exec]: Go, `cmd/go/internal/test/test.go`, the documentation of `-exec`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L155-L157>
 [^a-probe]: This book's harness, `examples/bench/probe.go`, `cmdToolexec` and `ms`, which since
-    this run records each time to the microsecond, and `examples/bench/run.go`,
+    the first run records each time to the microsecond, and `examples/bench/run.go`,
     `harness.runWorkload`.
     [probe.go](../examples/bench/probe.go#L21-L67),
     [run.go](../examples/bench/run.go#L633-L662)
@@ -321,10 +347,20 @@ redraws its figures.
     [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl);
     `n1000-wide`, `n1000-deep` and `n1000-local` from the rerun, whose pattern also counts Bazel's
     no-op (the first run's medians were 1.5 to 2.4 times the rerun's for cold builds, 9.5 times
-    for `n1000-local`'s no-op):
+    for `n1000-local`'s no-op; the `System load average` counter of Bazel's cold-build profiles
+    averaged 47.1 to 68.3 in the first run, 8.7 to 11.0 in the rerun):
     [`examples/bench/results/2026-11-16-variants/results.jsonl`](../examples/bench/results/2026-11-16-variants/results.jsonl).
 [^a-workload]: This book's measurements, one record per process:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl).
+[^a-second]: This book's measurements, a second run of `n1000` and `n10000` with
+    `-buildvcs=false`, one record per command, and the machine's load average and the CPU use of
+    all its processes every 30 s:
+    [`2026-11-16-n1000-check/results.jsonl`](../examples/bench/results/2026-11-16-n1000-check/results.jsonl),
+    [`load.log`](../examples/bench/results/2026-11-16-n1000-check/load.log),
+    [`2026-11-16-n10000-check/results.jsonl`](../examples/bench/results/2026-11-16-n10000-check/results.jsonl),
+    [`load.log`](../examples/bench/results/2026-11-16-n10000-check/load.log).
+    The `System load average` counter of Bazel's cold-build profiles averaged 21.4 and 36.5 at
+    1,000 packages, 38.6 and 29.6 at 10,000, in the first and second runs.
 [^a-meta]: This book's measurements, the machine and Go version:
     [`examples/bench/results/2026-11-16/meta.json`](../examples/bench/results/2026-11-16/meta.json).
 [^apple-xprotect]: Apple, *Apple Platform Security*, "Protecting against malware in macOS",
