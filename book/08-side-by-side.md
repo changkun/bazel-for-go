@@ -143,7 +143,7 @@ its most widely imported package. The builds are `go build -o <dir> ./...` and
 
 ## Where each stops scaling
 
-![Figure 8.2: One local body edit that leaves the export data unchanged, by Chapter 1's cost terms. Finding the graph and the change grows with the repository.](figures/08-scaling.svg)
+![Figure 8.2: One local body edit that leaves the export data unchanged, by Chapter 1's cost terms. Finding the graph and the change grows with the repository; running what missed, with the edit and the binaries it relinks.](figures/08-scaling.svg)
 
 In our analysis, the go command stops scaling where a run's work grows with the repository
 rather than the change: every invocation pays T_graph and T_detect over the whole tree (Figure
