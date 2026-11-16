@@ -196,9 +196,12 @@ server's memory and a second build; we have not tested this.
 [^bench]: This book's measurements, `examples/bench/results/2026-11-16/`, configuration `n1000`.
     `n1000-bazel-cold.profile.gz`: critical path 29.9 s, of which `GoToolchainBinaryBuild` 12.6 s
     and `GoStdlib ... [for tool]` 11.6 s; wall time 37.4 s (`results.jsonl`, scenario `cold`).
-    `n1000-bazel-core-body.profile.gz`: critical path 2.32 s, of which `GoLink` 2.26 s. Bazel marks
-    actions in the tool configuration with `[for tool]` (`lib/actions/AbstractAction.java`).
-    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
+    `n1000-bazel-core-body.profile.gz`: critical path 2.32 s, of which `GoLink` 2.26 s. A second
+    run's profiles (Appendix A, Table A.7): 38.2 s, of which 16.0 s and 16.1 s; 2.22 s, of which
+    2.17 s. Bazel marks actions in the tool configuration with `[for tool]`
+    (`lib/actions/AbstractAction.java`).
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl),
+    [the second run's profiles](../examples/bench/results/2026-11-16-n1000-check/)
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L381>
 
 [^builder-env]: rules_go, `go/private/rules/binary.bzl`, the `GoToolchainBinaryBuild` action and
@@ -409,7 +412,7 @@ server's memory and a second build; we have not tested this.
 
 [^bench-loop]: This book's measurements, `examples/bench/results/2026-11-16/`, tool `bazel`,
     configurations `n1000` and `n3000`, scenarios `noop` and `leaf-body`: medians of reps 0 to 2
-    (Table A.3).
+    (Table A.3); at 1,000 packages, 0.13 s and 0.88 s in a second run (Table A.7).
     [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
 
 [^watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option, default

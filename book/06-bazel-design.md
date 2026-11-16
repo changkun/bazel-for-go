@@ -327,8 +327,11 @@ incremental builds slower.[^memory]
 [^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`:
     configuration `n1000` (1,000 packages), tool `bazel`, scenarios `noop` (reps 0 to 2),
     `noop-cold-server`, `analysis-cold-server` (`bazel build --nobuild` on a new server),
-    `cold` and `clone-diskcache` (999 disk cache hits, no sandboxed processes).
-    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
+    `cold` and `clone-diskcache` (999 disk cache hits, no sandboxed processes). A second run
+    (Appendix A, Table A.7): `noop` 0.13 s, `noop-cold-server` 4.1 s, `analysis-cold-server`
+    3.4 s, `cold` 48.2 s, `clone-diskcache` 5.9 s, with the same 999 hits.
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl),
+    [second run](../examples/bench/results/2026-11-16-n1000-check/results.jsonl)
 
 [^output-dirs]: Bazel, "Output Directory Layout", sections "Current layout" and "Layout
     diagram". <https://bazel.build/remote/output-directories#layout-diagram>
