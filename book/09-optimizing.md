@@ -114,7 +114,6 @@ or when nothing else holds them; a rule's action that declares none counts as on
 back-end workers, which compile functions in parallel), so a compile may start one worker per
 core (Chapter 5). We recommend making the two agree. `--@rules_go//go/config:gc_goopts=-c=<n>`
 passes `-c` to every compile,[^gc-goopts] and `-c=1` matches the one CPU that Bazel books.
-<!-- rerun: bazel aquery ... to confirm -c reaches GoCompilePkg -->
 In the other direction, since 9.2 a `resources:cpu` entry in `exec_properties`
 (`{"resources:cpu": "4"}`) or tags (`resources:cpu:4`) changes what Bazel books locally; in
 `exec_properties` it is also sent to the remote executors, which may reject a name they do not
