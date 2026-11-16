@@ -544,6 +544,53 @@ html[data-toc="open"] .book-toc { display: block; }
     }
   }
 
+  // A chapter's film, under its title (make.go): films/player.js draws the
+  // film into .film-frame in the page's colours and puts its controls in
+  // .film-bar, before the download link. The frame keeps 16:9 before then.
+  .film {
+    margin: 0 0 2em;
+
+    .film-frame {
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      font-size: 0.88em;
+      color: var(--fg-muted);
+
+      svg { display: block; width: 100%; height: 100%; cursor: pointer; }
+    }
+    .film-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--fg-muted);
+
+      input[type="range"] { flex: 1 1 auto; min-width: 0; margin: 0; accent-color: var(--fg-muted); }
+      .film-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .film-download { white-space: nowrap; }
+    }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+    // Full screen: the frame as large as fits, the controls under it.
+    &:fullscreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 0;
+      padding: 0 16px;
+      background: var(--bg);
+
+      // unquote: libsass would take min() for its own function.
+      .film-frame { width: unquote("min(100%, calc((100vh - 48px) * 16 / 9))"); margin: 0 auto; border: 0; border-radius: 0; }
+      .film-bar { width: unquote("min(100%, calc((100vh - 48px) * 16 / 9))"); margin: 6px auto 0; }
+    }
+  }
+
   // Footnotes. Chapters cite sources as [^name]; goldmark renders a small
   // numbered superscript that links to the numbered list it appends at the
   // end of the page, which is right under the final "## References".
@@ -693,4 +740,11 @@ html:lang(en) #footer { max-width: 46rem; }
   #footer { padding-left: 16px; padding-right: 16px; }
 
   html, body { overflow-x: hidden; max-width: 100%; }
+}
+
+// --- Wide screens -------------------------------------------------------
+// A film reads better wider than the text. Where the page has room beside
+// the reading column, even with the 20rem sidebar open, it reaches out.
+@media screen and (min-width: 1440px) {
+  .markdown .film { margin-left: -6rem; margin-right: -6rem; }
 }

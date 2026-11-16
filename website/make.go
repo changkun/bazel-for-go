@@ -28,6 +28,10 @@
 // with its alt text as the caption (see inlineSVG). External URLs and
 // footnotes are left as they are.
 //
+// A chapter with a film, ../films/<chapter>.js (see films/README.md), shows
+// it under its title: a figure that films/player.js fills, and a link to the
+// MP4 that `make films` renders. config.toml publishes ../films at /films/.
+//
 // Usage:
 //
 //	go run make.go                       # generate content/ once
@@ -64,7 +68,7 @@ const (
 var (
 	rootDir = flag.String("root", "..", "repository root")
 	outDir  = flag.String("out", "content", "output directory (replaced entirely)")
-	watch   = flag.Bool("watch", false, "regenerate whenever README.md or book/ changes; with arguments, run them as a command and stop when it exits")
+	watch   = flag.Bool("watch", false, "regenerate whenever README.md, book/ or films/ changes; with arguments, run them as a command and stop when it exits")
 )
 
 func main() {
@@ -447,8 +451,42 @@ func (g *generator) chapterPage(c *chapter, weight int, prev, next string) error
 	if c.label == title {
 		fm = append(fm[:1], fm[2:]...)
 	}
-	g.files[dir+"/index.md"] = fm.wrap(g.rewrite(src, pg))
+	body := g.rewrite(src, pg)
+	if film := filmHTML(c.slug, pg.depth); film != "" {
+		body = afterTitle(body, film)
+	}
+	g.files[dir+"/index.md"] = fm.wrap(body)
 	return nil
+}
+
+// filmHTML returns the HTML that plays the chapter's film at the top of its
+// page, or "" if the chapter has none. The links are relative to a page
+// depth levels below the site root.
+func filmHTML(slug string, depth int) string {
+	if _, err := os.Stat(filepath.Join(*rootDir, "films", slug+".js")); err != nil {
+		return ""
+	}
+	films := strings.Repeat("../", depth) + "films/"
+	return `<figure class="film" data-film="` + slug + `"><div class="film-frame"></div>` +
+		`<figcaption class="film-bar"><a class="film-download" href="` + films + slug + `.mp4" download>Download MP4</a></figcaption></figure>` + "\n" +
+		`<script type="module" src="` + films + `player.js"></script>`
+}
+
+// afterTitle inserts the HTML block html after the first "# " heading of
+// md, outside fenced code, or at the start if there is none.
+func afterTitle(md, html string) string {
+	lines := strings.SplitAfter(md, "\n")
+	fence := ""
+	for i, l := range lines {
+		if f := fenceMarker(l); f != "" || fence != "" {
+			fence = nextFence(fence, f)
+			continue
+		}
+		if reH1.MatchString(strings.TrimRight(l, "\n")) {
+			return strings.Join(lines[:i+1], "") + "\n" + html + "\n\n" + strings.Join(lines[i+1:], "")
+		}
+	}
+	return html + "\n\n" + md
 }
 
 // chapterTitle returns the text of the first "# " heading outside fenced
@@ -1264,8 +1302,9 @@ func watchLoop(args []string) int {
 }
 
 // snapshot fingerprints the names, sizes and modification times of the
-// inputs: README.md and everything under book/. (An image elsewhere in the
-// repository is picked up on the next change to the chapter that shows it.)
+// inputs: README.md, everything under book/, and the films, whose presence
+// decides whether a chapter shows one. (An image elsewhere in the repository
+// is picked up on the next change to the chapter that shows it.)
 func snapshot() string {
 	h := sha256.New()
 	add := func(p string, info fs.FileInfo) {
@@ -1283,5 +1322,11 @@ func snapshot() string {
 		}
 		return nil
 	})
+	films, _ := filepath.Glob(filepath.Join(*rootDir, "films", "*.js"))
+	for _, p := range films {
+		if info, err := os.Stat(p); err == nil {
+			add(p, info)
+		}
+	}
 	return string(h.Sum(nil))
 }

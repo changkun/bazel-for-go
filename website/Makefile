@@ -4,10 +4,12 @@
 #   make build                 generate content/ and build public/
 #   make build BASEURL=...     the same for another host or path
 #   make serve                 live preview at http://localhost:1313/bazel-for-go/,
-#                              regenerating content/ when README.md or book/ changes
+#                              regenerating content/ when README.md, book/ or ../films/ changes
 #                              (rendered in memory, so public/ is left alone)
+#   make films                 render the chapters' films to MP4 into public/films/
+#                              (after build; needs Chrome and ffmpeg, see ../films/README.md)
 #   make clean                 remove everything generated
-#   make deploy                build the last commit and publish it at $(BASEURL)
+#   make deploy                build the last commit, with its films, and publish it at $(BASEURL)
 
 BASEURL ?= https://changkun.de/bazel-for-go/
 HUGO    ?= hugo
@@ -15,8 +17,11 @@ PORT    ?= 1313
 HOST    ?= changkunde
 DEST    ?= /www/changkun.de/bazel-for-go/
 SNAPSHOT ?= ../.cache/snapshot
+# Rendered films are kept here with a hash of their sources, so only a film
+# that changed is rendered again, also by a deploy from a fresh snapshot.
+FILMS_OUT ?= ../films/out
 
-.PHONY: all build content serve clean deploy
+.PHONY: all build content serve clean deploy films
 
 all: build
 
@@ -29,6 +34,11 @@ build: clean content
 serve:
 	go run make.go -watch $(HUGO) server --renderToMemory --port $(PORT) --baseURL "$(BASEURL)"
 
+# The MP4 that each film's download link points to. build empties public/,
+# so this runs after it.
+films:
+	node ../films/render.mjs --out "$(FILMS_OUT)" --publish public/films
+
 clean:
 	rm -rf content public resources .hugo_build.lock
 
@@ -37,6 +47,6 @@ clean:
 deploy:
 	rm -rf $(SNAPSHOT) && mkdir -p $(SNAPSHOT)
 	git -C .. archive HEAD | tar -x -C $(SNAPSHOT)
-	$(MAKE) -C $(SNAPSHOT)/website build BASEURL="$(BASEURL)"
+	$(MAKE) -C $(SNAPSHOT)/website build films BASEURL="$(BASEURL)" FILMS_OUT="$(abspath $(FILMS_OUT))"
 	rsync -az --delete $(SNAPSHOT)/website/public/ $(HOST):$(DEST)
 	@echo "published $$(git -C .. rev-parse --short HEAD) to $(BASEURL)"

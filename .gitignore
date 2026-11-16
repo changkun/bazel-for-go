@@ -14,3 +14,5 @@ bazel-*
 /website/.hugo_build.lock
 # Snapshot of the last commit that make deploy builds from.
 /.cache/
+# Films rendered by films/render.mjs: videos, frames and contact sheets.
+/films/out/

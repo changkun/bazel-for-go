@@ -15,6 +15,20 @@ theme = "book"
 # The book has no tags or categories; do not render empty taxonomy pages.
 disableKinds = ["taxonomy", "term"]
 
+# The chapters' films (../films, see films/README.md) play in the page from
+# their own modules: the engine and every film are published at /films/,
+# beside the MP4s that `make films` renders. make.go puts a film under its
+# chapter's title. Mounting static replaces the default mount, so it is
+# listed too.
+[module]
+  [[module.mounts]]
+    source = "static"
+    target = "static"
+  [[module.mounts]]
+    source = "../films"
+    target = "static/films"
+    files = ["*.js"]
+
 [params]
   # Share/SEO description for pages without their own (part pages). The home
   # page takes the README's first paragraph (make.go), chapters their summary.
