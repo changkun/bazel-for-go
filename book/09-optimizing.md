@@ -22,8 +22,8 @@ action built the builder, the Go program that runs most of rules_go's actions (C
 `GOMAXPROCS=1`, so its `go build` commands compiled one package at a time.[^builder-env] Another
 built the standard library for tools, programs that run during the build, here the repository's
 code generator. Neither depends on the repository's code, so, in our reading, a shared cache can
-serve both to every machine of the same platform after the first. After an edit to a function
-body in `core`, 2.26 s of the 2.32 s was one link.
+serve both to every machine of the same platform after the first. After the first edit to a
+function body in `core`, 2.26 s of the 2.32 s was one link.
 
 Bazel's documentation suggests splitting a slow action that sits on the critical
 path.[^profile-issues] For Go the smallest unit is a package: the compiler compiles one per run,

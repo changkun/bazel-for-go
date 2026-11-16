@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="f91-title" class="f91">
-  <title id="f91-title">The critical path of two Bazel builds of 1,000 packages, drawn to one time scale. Cold build, 30.4 seconds: building rules_go's builder 14.1 s, the standard library for tools 9.5 s, the code generator 2.0 s, thirteen compiles 2.4 s and one link 2.3 s. The first two, 23.6 s, are rules_go's own setup and the same on every machine of the same platform. After an edit to a function body in core, 3.3 seconds: one compile of 0.1 s, then one link of 3.2 s.</title>
+  <title id="f91-title">The critical path of two Bazel builds of 1,000 packages, drawn to one time scale. Cold build, 29.9 seconds: building rules_go's builder 12.6 s, the standard library for tools 11.6 s, the code generator 1.3 s, thirteen compiles 2.0 s and one link 2.4 s. The first two, 24.2 s, are rules_go's own setup and the same on every machine of the same platform. After the first edit to a function body in core, 2.3 seconds: one compile of 0.05 s, then one link of 2.26 s.</title>
   <style>
     .f91 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f91 .f91-sm { font-size: 13px; opacity: 0.8; }
