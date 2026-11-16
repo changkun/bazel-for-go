@@ -14,7 +14,7 @@ system splits it into steps and skips each step whose result it already has.
   inputs and outputs.[^bazel-actions] Actions form a **graph** (Figure 1.1): an edge runs from
   each action to those that read its output.
 - Its **key** is a hash of everything that can change its output: its input files, what it reads
-  from earlier actions, the tool, the flags and the environment.
+  from earlier actions, the tool, the flags and the environment.[^bazel-actions]
 - A **cache hit** means an output is already stored under that key, so the action is
   skipped.[^bazel-actions]
 - A build is **hermetic** when the same inputs always give the same output, whatever else is on
@@ -55,7 +55,8 @@ The graph can be derived from the sources, as the go command does from import
 statements,[^go-command] or declared in build files, as Bazel requires.[^bazel-build-files] A
 derived graph needs no upkeep but describes only what the language can;[^go-command] the go
 command derives it again on every run (Chapter 4). A declared graph can describe anything, such
-as a code generator or a C library, and a long-lived process can keep it in memory.[^bazel-server]
+as a code generator or a C library,[^bazel-build-files] and a long-lived process can keep it in
+memory.[^bazel-server]
 In exchange, someone must keep it in step with the code.
 
 ### 3. Change
@@ -72,7 +73,7 @@ A key that leaves out an input lets a stale output through: a wrong hit.[^bazel-
 key that includes something that does not affect the output, such as an environment variable
 that differs between machines, causes misses.[^bazel-cache-issues] A subtler choice is which
 part of a dependency enters its dependents' keys. With its sources, there is no early
-cutoff.[^alacarte-traces] With its whole output, any change to that output reruns every
+cutoff.[^alacarte-traces] With its whole output, any change to that output reruns every direct
 dependent. With only the part dependents read, a change elsewhere reruns none of them (Chapter 7).
 
 ### 5. Sharing
@@ -85,12 +86,13 @@ builds are hermetic and keys match across machines.[^bazel-remote-caching]
 
 Actions can run on the machine that started the build or on a pool of remote machines. Remote
 execution raises the limit on parallelism from one machine's cores to the size of the
-pool,[^bazel-rbe] and adds time to move inputs and outputs over the network. Each action must
-then declare every input, because the remote machine has nothing else.[^bazel-remote-execution]
+pool,[^bazel-rbe] and adds time to move inputs and outputs over the network.[^bazel-reapi-exec]
+Each action must then declare every input, because the remote machine has nothing
+else.[^bazel-remote-execution][^bazel-reapi-exec]
 
 ## A cost model
 
-![Figure 1.4: Illustrative shares of one build's time: an edit on a laptop with a long-lived process, and a fresh CI runner.](figures/01-cost.svg)
+![Figure 1.4: Illustrative shares of one build's time: an edit on a laptop without a long-lived process, and a fresh CI runner.](figures/01-cost.svg)
 
 We model the time of one build with four terms:
 
@@ -117,9 +119,9 @@ is T summed over its builds. Each kind of scale drives different terms:
 | Languages and generated code | Uncached steps outside the graph, not in T | A graph that can declare any action |
 
 Figure 1.4 sketches what we expect. On a laptop whose caches hold the last build, one edit
-reruns few actions, so finding the change takes a large share, and finding the graph too if no
-long-lived process keeps it. A fresh CI runner without a shared cache obtains the graph from
-scratch[^bazel-cache-issues] and runs every action, so T_exec dominates; across a fleet,
+reruns few actions, so without a long-lived process, finding the graph and the change dominates;
+with one, running the actions does. A fresh CI runner without a shared cache obtains the graph
+from scratch[^bazel-cache-issues] and runs every action, so T_exec dominates; across a fleet,
 sharing results reduces it.[^bazel-remote-caching] In our view, the go command is designed for
 one engineer on one machine with a repository small enough to rescan on every run, and Bazel
 for a large repository built on many machines; Chapters 4 to 8 show why.
@@ -178,5 +180,10 @@ for a large repository built on many machines; Chapters 4 to 8 show why.
     <https://github.com/snowleopard/build/releases/download/icfp-final/build-systems.pdf>)
 [^bazel-rbe]: Bazel, "Remote Execution Overview".
     <https://bazel.build/remote/rbe>
+[^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, service
+    `Execution`, `Execute`: "the client must first upload all of the inputs"; message `Action`,
+    `input_root_digest`: the input files available on the build machine.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L614-L621>
 [^bazel-remote-execution]: Bazel, "Distributed Builds", section "Remote execution".
     <https://bazel.build/basics/distributed-builds#remote-execution>

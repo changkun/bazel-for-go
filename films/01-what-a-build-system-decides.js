@@ -90,9 +90,9 @@ export default {
     {
       section: "Actions and keys",
       lines: [
-        { say: "Its key is a hash of everything that can change its output: its input files, what it reads from earlier actions, the tool, the flags and the environment.", hold: 1 },
-        { say: "A cache hit reuses the output stored under the key; a miss runs the action and stores its output.", hold: 1 },
-        { say: "Reuse is safe only if the build is hermetic: the same inputs always give the same output, whatever else is on the machine.", hold: 1 },
+        { say: "Its key is a hash of everything that can change its output: its input files, what it reads from earlier actions, the tool, the flags and the environment." },
+        { say: "A cache hit reuses the output stored under the key; a miss runs the action and stores its output." },
+        { say: "Reuse is safe only if the build is hermetic: the same inputs always give the same output, whatever else is on the machine." },
       ],
       draw(s) {
         s.fit(0, 0, 1110, 610, 0.85);
@@ -149,7 +149,7 @@ export default {
         { say: "The change spreads along the graph until early cutoff stops it: an action reruns, but its output is identical to last time.", hold: 1 },
         { say: "The actions after it need not run: only `a` and `d` rerun.", hold: 1 },
         { say: "The critical path is the chain of actions, each needing the output of the one before, that takes longest to run.", hold: 1 },
-        { say: "No number of cores or machines finishes a build sooner than its critical path.", hold: 3 },
+        { say: "No number of cores or machines finishes a build sooner than its critical path.", hold: 2 },
       ],
       draw(s) {
         // Figure 1.2's graph, within the bounds G.
@@ -247,7 +247,7 @@ export default {
         { say: "A derived graph needs no upkeep but describes only what the language can; a declared one can describe anything, but must be kept in step with the code." },
         { say: "Change: hash every input again, compare each file's saved metadata, or be told by the operating system." },
         { say: "Key: which part of a dependency enters its dependents' keys: its sources, its whole output, or only the part they read." },
-        { say: "Sharing: one process, one machine, or a team and its CI jobs, if builds are hermetic and keys match across machines." },
+        { say: "Sharing: one process, one machine, or a team and its continuous integration (CI) jobs, if builds are hermetic and keys match across machines." },
         { say: "Execution: local, or on a remote pool that raises the limit on parallelism and adds time to move bytes.", hold: 1.2 },
       ],
       draw(s) {
@@ -319,10 +319,10 @@ export default {
     {
       section: "A cost model",
       lines: [
-        { say: "We model one build's time with four terms: obtaining the graph, finding what changed, running cache misses, and moving bytes.", hold: 1 },
-        { say: "The terms can overlap, so the wait can be shorter than their sum.", hold: 1 },
-        { say: "On a laptop whose caches hold the last build, one edit reruns few actions, so finding the change should take a large share.", hold: 1 },
-        { say: "A fresh CI runner without a shared cache obtains the graph from scratch and runs every action, so `T_exec` dominates; across a fleet, sharing reduces it.", hold: 1 },
+        { say: "We model one build's time with four terms: obtaining the graph, finding what changed, running cache misses, and moving bytes." },
+        { say: "The terms can overlap, so the wait can be shorter than their sum." },
+        { say: "On a laptop whose caches hold the last build, one edit reruns few actions, so without a long-lived process, finding the graph and the change should dominate." },
+        { say: "A fresh CI runner without a shared cache obtains the graph from scratch and runs every action, so `T_exec` dominates; across a fleet, sharing reduces it." },
         { say: "In our view, the go command is designed for one engineer on one machine, with a repository small enough to rescan on every run." },
         { say: "And Bazel for a large repository built on many machines.", hold: 1.2 },
       ],
@@ -364,7 +364,7 @@ export default {
 
         // Figure 1.4's shares, in its proportions: illustrative, not measured.
         const bars = [
-          { label: "One engineer's edit; a long-lived process holds the graph", y: 440, parts: [["graph", 14], ["detect", 330], ["exec", 322]] },
+          { label: "One engineer's edit; no long-lived process", y: 440, parts: [["graph", 200], ["detect", 250], ["exec", 216]] },
           { label: "Fresh CI runner; no shared cache", y: 660, parts: [["graph", 196], ["detect", 80], ["exec", 390]] },
         ].map((bar) => {
           const title = s.text(96, bar.y - 22, bar.label, { size: 30 });
