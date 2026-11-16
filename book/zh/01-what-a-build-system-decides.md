@@ -1,5 +1,5 @@
 # 1. 构建系统决定什么
-<!-- 译自 8038a91 -->
+<!-- 译自 eba6ff5 -->
 
 go 命令与 Bazel 都把 Go 源码变成二进制，但二者在六个地方做出了不同的选择。
 
@@ -73,7 +73,7 @@ go 命令每次运行都会重新推导它（第 4 章）。声明式的图可�
 ### 6. 执行
 
 动作可以在发起构建的机器上运行，也可以在一个远程机器池上运行。
-远程执行把并行度的上限从一台机器的核心数提高到机器池的规模（在 Bazel 中，需调高默认为本机核心数的 `--jobs`），[^bazel-rbe][^bazel-jobs]
+远程执行把并行度的上限从一台机器的核心数提高到机器池的规模（在 Bazel 中，需调高 `--jobs`，即同时运行的作业数上限，默认为本机核心数），[^bazel-rbe][^bazel-jobs]
 同时也增加了通过网络传输输入与输出的时间。[^bazel-reapi-exec]此时每个动作都必须声明全部输入，
 因为远程机器上除此之外一无所有。[^bazel-remote-execution][^bazel-reapi-exec]
 
@@ -163,10 +163,13 @@ T ≤ T_graph + T_detect + T_exec + T_transfer
     <https://github.com/snowleopard/build/releases/download/icfp-final/build-systems.pdf>）
 [^bazel-rbe]: Bazel，「Remote Execution Overview」。
     <https://bazel.build/remote/rbe>
-[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`（默认值为 `auto`）与
-    `JobsConverter`，后者把 `auto` 换算为主机的 CPU 数。
+[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`：「the number of
+    concurrent jobs to run」，取值 1 至 5000，默认值为 `auto`；以及 `JobsConverter`，它把 `auto`
+    换算为 `HOST_CPUS_SUPPLIER`；`lib/util/ResourceConverter.java`，`HOST_CPUS_SUPPLIER`，即主机的
+    CPU 数。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API，Bazel 中收录的 `remote_execution.proto`，服务
     `Execution` 的 `Execute`：「客户端必须先上传全部输入」；消息 `Action` 的
     `input_root_digest`：在构建机器上可用的输入文件。

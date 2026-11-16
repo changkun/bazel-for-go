@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 23e2f9f -->
+<!-- 译自 eba6ff5 -->
 
 本章比较 go 命令与 Bazel 对第 1 章六项决策的回答，并说明随着仓库增长，各自要付出什么
 代价。
@@ -76,14 +76,15 @@ execroot（动作运行的根目录）中运行每个动作，其中每个输入
 
 go 命令在一台机器上以子进程的形式运行每个动作，同时运行 `-p` 个，默认每个核心一个。[^go-do]
 于是，一台机器的核心数决定了 T_exec 的下限；T_exec 是运行未命中缓存的动作所需的时间。Bazel 默认在
-本地运行动作；启用远程执行时，它把动作发往一个机器池，并上传远程缓存中缺少的
-输入，[^bazel-reapi-exec]因此调高 `--jobs`（默认为本机的核心数）之后，并行度的上限由机器池决定。[^bazel-jobs]这会增加 T_transfer，即与远程机器和缓存之间
+本地运行动作；启用远程执行时，它把动作发往一个机器池，调高 `--jobs`（默认为本机的核心数）之后，
+机器池的规模决定并行度的上限，[^bazel-rbe][^bazel-jobs]并上传远程缓存中缺少的输入。[^bazel-reapi-exec]
+这会增加 T_transfer，即与远程机器和缓存之间
 传输字节的时间；Build without the Bytes（自 Bazel 7.0 起默认启用）只下载命令行上请求的输出和本地
 动作需要的输出，以此限制这部分时间。[^bazel-bwob]
 
 ## 端到端
 
-表 8.1：墙钟时间（秒）：取三次运行的中位数（冷构建、测试与全新检出：一次）；1000 与 10000 个包时，两次运行结果不同处给出范围。[^bench]
+表 8.1：墙钟时间（秒）：取三次重复的中位数（冷构建、测试与全新检出：一次；10000 个包时未运行测试）；范围跨越两次运行。[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
@@ -295,14 +296,19 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L223-L229>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L87>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/shell.go#L626>
+[^bazel-rbe]: Bazel，「Remote Execution Overview」。
+    <https://bazel.build/remote/rbe>
+[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`：「the number of
+    concurrent jobs to run」，取值 1 至 5000，默认值为 `auto`；以及 `JobsConverter`，它把 `auto`
+    换算为 `HOST_CPUS_SUPPLIER`；`lib/util/ResourceConverter.java`，`HOST_CPUS_SUPPLIER`，即主机的
+    CPU 数。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API，Bazel 中收录的 `remote_execution.proto`，服务
     `Execution`（`Execute`）与 `ContentAddressableStorage`（`FindMissingBlobs`）。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
-[^bazel-jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`（默认值为 `auto`）与
-    `JobsConverter`，后者把 `auto` 换算为主机的 CPU 数。
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
 [^bazel-bwob]: Bazel 7.0.0 发布说明；`lib/remote/options/RemoteOptions.java`，
     `--remote_download_outputs`，默认值为 `toplevel`。
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
@@ -322,8 +328,8 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     属性；`go/private/rules/binary_wrapper.sh`，它用 `go build -trimpath` 从源码构建构建器。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
-[^bench-links]: 本书在 10000 个包时两次运行的测量：冷构建中，一个二进制的链接在 Bazel 下耗时的中位数
-    为 32 s 和 36 s，在 go 命令下为 19 s 和 12 s；在 Bazel 的第一次函数体修改中为 41 s 和 34 s；go 命令的
+[^bench-links]: 本书在 10000 个包时两次运行的测量，数值依次为第一次与第二次运行：冷构建中，一个二进制的
+    链接在 Bazel 下耗时的中位数为 32 s 和 36 s，在 go 命令下为 19 s 和 12 s；在 Bazel 的第一次函数体修改中为 41 s 和 34 s；go 命令的
     修改没有记录链接耗时。每次运行中，两个工具在这一规模下的运行都相隔一小时，所用机器同时运行着其他
     工作（附录 A）。
     [n10000-bazel-cold.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz)，

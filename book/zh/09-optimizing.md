@@ -1,5 +1,5 @@
 # 9. 优化 Bazel Go 构建
-<!-- 译自 3951d18 -->
+<!-- 译自 b3daf42 -->
 
 第 1 章把一次构建的时间分为四部分：获取图、找出变化、运行动作和传输字节。
 本章在 Bazel 的 Go 构建中逐一降低这四部分。
@@ -171,8 +171,8 @@ main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-sh
 [^bench]: 本书的测量，`examples/bench/results/2026-11-16/`，配置 `n1000`。
     `n1000-bazel-cold.profile.gz`：关键路径 29.9 s，其中 `GoToolchainBinaryBuild` 12.6 s，
     `GoStdlib ... [for tool]` 11.6 s；墙钟时间 37.4 s（`results.jsonl`，场景 `cold`）。
-    `n1000-bazel-core-body.profile.gz`：关键路径 2.32 s，其中 `GoLink` 2.26 s。第二次运行的剖面
-    （附录 A，表 A.7）：38.2 s，其中 16.0 s 与 16.1 s；2.22 s，其中 2.17 s。Bazel 用
+    `n1000-bazel-core-body.profile.gz`：关键路径 2.32 s，其中 `GoLink` 2.26 s。第二次运行
+    （附录 A，表 A.7）的剖面：38.2 s，其中 16.0 s 与 16.1 s；2.22 s，其中 2.17 s。Bazel 用
     `[for tool]` 标记工具配置中的动作（`lib/actions/AbstractAction.java`）。
     [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)，
     [第二次运行的剖面](../../examples/bench/results/2026-11-16-n1000-check/)

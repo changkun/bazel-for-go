@@ -1,5 +1,5 @@
 # 5. 工具链的负载
-<!-- 译自 988b20a -->
+<!-- 译自 4ffc529 -->
 
 go 命令与 rules_go 运行的是同一批程序：编译器、链接器、汇编器、cgo（让 Go 代码调用 C 的工具）和测试二进制。本章测量每种程序
 消耗多少资源、这一消耗如何增长，以便第 9 章把每种程序放到合适的机器上。
@@ -31,7 +31,7 @@ CPU 和 250 MB。[^bazel-resources]这样，在 Bazel 下，18 次编译可能�
 go 命令下至多 108 个；笔者没有测量其影响。
 
 编译本书合成仓库中的一个包，所用 CPU 时间与内存的中位数分别为 61 ms 和 45 MB，`-c` 在 4 至 18
-之间。[^m-workload]总体而言，这些编译的 CPU 时间至多是墙钟时间的 1.3 倍。[^m-check]按笔者的理解，小包的编译以串行的
+之间。[^m-workload]总体而言，这些编译的 CPU 时间是墙钟时间的 1.0 至 1.3 倍。[^m-workload][^m-check]按笔者的理解，小包的编译以串行的
 前端为主，而在繁忙的机器上，多出的工作 goroutine 找不到空闲的核心。有空闲的核心时，后端确实有帮助：
 运行时包是代价最高的编译，它较早运行，`-c=18`：其动作在 0.67 s 内用了 2.05 s 的 CPU
 时间，[^m-graph]内存为 302 MB。[^m-workload]
@@ -48,21 +48,21 @@ goroutine。[^go-link-phases]
 go 命令那次构建中的 11 次链接（其中十次各链接约 730 个仓库包）[^m-graph]峰值内存的中位数为
 450 MB：是一次编译的十倍，CPU 时间是墙钟时间的 1.1 至 1.2 倍。[^m-workload][^m-check]测试二进制在链接时不带调试
 信息，[^go-test-strip]它们显示了链接如何增长（图 5.2 右）：链接的仓库包不超过 10 个时，中位数为
-96 MB 和 59 ms；超过 300 个时，为 282 MB 和 172 ms。[^m-workload][^m-graph]二进制中任何一个包改变，链接都要
+96 MB 和 59 ms；超过 300 个时，为 282 MB 和 172 ms。[^m-workload][^m-graph][^m-check]二进制中任何一个包改变，链接都要
 重新运行：[^go-linkactionid]对 `core`（被导入最广的包，第 4 章）做一次函数体修改（body edit），两种工具都重新链接了
 全部十个应用。[^m-results][^m-profile]
 
 在 macOS 上，两种工具都构建位置无关可执行文件（position-independent executable，PIE，即可以加载到
 任意地址的二进制）。Go 自己的链接器写出这种文件，[^go-internal-pie]但除非关闭 cgo，rules_go 会把
 每次 PIE 链接都交给 C 工具链的链接器。[^rules-go-pie]在冷构建中以整个动作计时（同时还有其他工作在
-运行），链接耗时的中位数在 Bazel 下为 2.3 s，在 go 命令下为 0.63 s。[^m-profile][^m-graph]这一差距
+运行），链接耗时的中位数在 Bazel 下为 2.3 s，在 go 命令下为 0.63 s。[^m-profile][^m-graph][^m-check]这一差距
 可能包含 C 链接器、Bazel 的沙箱（sandbox，只含一个动作所声明输入的目录）和 rules_go 的构建器（builder，
 包装每次编译与链接的程序）的影响；笔者没有把它们区分开。
 
 ## asm 与 cgo
 
 汇编器对每个汇编文件运行一次，在此之前先对所有汇编文件扫描一遍以收集符号。[^go-asm]这里只有标准库
-含有汇编：共 69 个进程，耗时与内存的中位数为 7 ms 和 7 MB。[^m-workload]
+含有汇编：共 69 个进程，耗时与内存的中位数为 7 ms 和 7 MB。[^m-workload][^m-check]
 
 对于 cgo，go 命令先运行 cgo 工具，再把每个 C 文件作为单独的动作编译，然后编译
 Go 代码。[^go-cgo]rules_go 在一个编译动作内完成全部这些工作。[^rules-go-cgo]本书的合成仓库不含 cgo。
@@ -72,11 +72,11 @@ Go 代码。[^go-cgo]rules_go 在一个编译动作内完成全部这些工作�
 每个包的测试先被编译，再链接成独立的二进制，然后运行。本书的测试几乎不做什么：一次运行的 CPU 时间
 中位数为 5 ms，耗时的中位数却为 5.1 s。[^m-workload]最先结束的 18 次运行（与同时运行的数目相同）每一次都比前
 一次多花约 0.22 s，[^m-workload][^m-check]而计时运行的 `go test ./...` 运行 1000 个二进制共耗时 279 s，每个
-0.28 s，[^m-results]就好像这些运行在进程之外的同一个队列里等待。macOS 会在应用首次启动时检查其中是否含有已知的恶意
+0.28 s，[^m-results][^m-check]就好像这些运行在进程之外的同一个队列里等待。macOS 会在应用首次启动时检查其中是否含有已知的恶意
 软件；[^apple-xprotect]笔者推断，这项检查依次施加于每个新的测试二进制，它就是那个队列；笔者还预计
 Linux 机器不会付出这一代价。Bazel 的首次测试运行耗时 531 s，尽管其最长的依赖动作链用了
-13.3 s。[^m-results]以整个动作计时，它的测试链接耗时中位数为 1.4 s，测试运行为 7.5 s，而 go 命令的
-相应进程分别为 0.11 s 和 5.1 s。[^m-test-profile][^m-workload]
+13.3 s。[^m-results][^m-check]以整个动作计时，它的测试链接耗时中位数为 1.4 s，测试运行为 7.5 s，而 go 命令的
+相应进程分别为 0.11 s 和 5.1 s。[^m-test-profile][^m-workload][^m-check]
 
 ## vet、nogo 与代码生成器
 
@@ -95,12 +95,12 @@ Linux 机器不会付出这一代价。Bazel 的首次测试运行耗时 531 s�
 
 一次构建完成所需的时间不可能短于它的关键路径（critical path，即其中每个动作都要等待前一个动作的
 最长动作链），也不可能短于总 CPU 工作量除以核心数。在 go 命令的冷构建中（图 5.3），各动作合计用了 59 s
-的 CPU 时间，摊到 18 个核心上为 3.3 s，关键路径为 3.6 s，但这些动作跨越了 5.7 s。[^m-graph]关键
+的 CPU 时间，摊到 18 个核心上为 3.3 s，关键路径为 3.6 s，但这些动作跨越了 5.7 s。[^m-graph][^m-check]关键
 路径始于标准库，其中仅运行时包的编译动作就用了 0.67 s；随后经过 `core`、12 层中每层的一个包和一个
 main 包，最后止于一次 0.91 s 的链接。笔者把条中的空隙理解为等待：此时关键路径之外的工作占满了
 go 命令全部 18 个动作槽位。
 
-Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 rules_go 的构建器和标准库。[^m-profile]
+Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 rules_go 的构建器和标准库。[^m-profile][^m-check]
 
 ## 四类负载
 
@@ -110,7 +110,7 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
 - **link**：每个二进制一个进程，大部分时间在一个核心上运行，随所链接的包增长。
 - **test**：一次链接加一次运行，运行时长由测试本身决定；在 macOS 上，启动前还要等待。
 - **Bazel 服务进程**（server）：每个工作区一个 Java 虚拟机（Java virtual machine，JVM），在内存中保存图。[^bazel-server]
-  它的堆在构建完二进制后为 84 MB，运行完测试后增长到 130 MB。[^m-results]
+  它的堆在构建完二进制后为 84 MB，运行完测试后增长到 130 MB。[^m-results][^m-check]
 
 ## 规模变大时意味着什么
 
@@ -147,9 +147,13 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/gc/main.go#L377-L381>
 [^go-importcfg]: Go，`cmd/go/internal/work/exec.go`，`Builder.build`，导入配置。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L881-L887>
-[^go-gomaxprocs]: Go，`runtime/debug.go`，`GOMAXPROCS`：默认值取决于「机器上的逻辑 CPU 数」、「进程的
-    CPU 亲和性掩码」，以及在 Linux 上「基于 cgroup CPU 配额的进程平均 CPU 吞吐量上限」。
+[^go-gomaxprocs]: Go，`runtime/extern.go`：GOMAXPROCS「限制能够同时执行用户级 Go 代码的操作系统线程
+    数」；`runtime/debug.go`，`GOMAXPROCS`：默认值取决于「机器上的逻辑 CPU 数」、「进程的 CPU 亲和性
+    掩码」，以及在 Linux 上「基于 cgroup CPU 配额的进程平均 CPU 吞吐量上限」；
+    `cmd/go/internal/cfg/cfg.go`，`BuildP`，即 `-p` 的默认值。
+    <https://github.com/golang/go/blob/go1.27.3/src/runtime/extern.go#L237-L238>
     <https://github.com/golang/go/blob/go1.27.3/src/runtime/debug.go#L12-L30>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L87>
 [^go-token-pool]: Go，`cmd/go/internal/work/gc.go`，`compilerConcurrency` 与
     `initCompilerConcurrencyPool`；`cmd/go/internal/cfg/cfg.go`，`BuildP`，`-p` 的默认值。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L182-L253>，
@@ -170,12 +174,14 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
 [^m-check]: 测量数据，为核对第一次运行而再次运行的 `n1000`：
     [`examples/bench/results/2026-11-16-n1000-check/`](../../examples/bench/results/2026-11-16-n1000-check/)。按进程计：一次仓库包编译的 CPU
     时间与内存中位数为 55 ms 和 45 MB，所有这些编译的 CPU 时间合计是墙钟时间的 1.3 倍；运行时包的编译
-    为 293 MB；构建中的链接为 446 MB，CPU 时间是墙钟时间的 1.2 倍；一次测试运行用 5.7 ms 的 CPU、
-    耗时 4.9 s，最先结束的 18 个依次相隔 0.22 s。以整个动作计：go 命令的冷构建用了 59 s 的 CPU，关键路径
-    3.8 s，跨度 5.9 s；运行时包的动作在 0.68 s 内用了 2.09 s 的 CPU；链接在 go 命令下为 0.59 s，在
-    Bazel 下为 2.24 s。按命令计：`go generate` 9.9 s；`go test ./...` 305 s；Bazel 的首次测试运行
-    615 s，关键路径 22.2 s，测试链接 0.93 s，测试运行 8.25 s；Bazel 冷构建的关键路径为 38.2 s，其中
-    32.1 s 用于构建 rules_go 的构建器和标准库。附录 A 比较了两次运行中的各条命令。
+    为 293 MB；构建中的链接为 446 MB，CPU 时间是墙钟时间的 1.2 倍；测试链接的中位数为 0.10 s，10 个
+    及以下仓库包时为 50 ms，超过 300 个时为 162 ms 和 281 MB；汇编器 5 ms；一次测试运行用 5.7 ms 的
+    CPU、耗时 4.9 s，最先结束的 18 个依次相隔 0.22 s。以整个动作计：go 命令的冷构建用了 59 s 的 CPU，
+    关键路径 3.8 s（终于一次 0.75 s 的链接），跨度 5.9 s；运行时包的动作在 0.68 s 内用了 2.09 s 的
+    CPU；链接在 go 命令下为 0.59 s，在 Bazel 下为 2.24 s。按命令计：`go generate` 9.9 s；
+    `go test ./...` 305 s，每个二进制 0.31 s；Bazel 的首次测试运行 615 s，关键路径 22.2 s，测试链接
+    0.93 s，测试运行 8.25 s；Bazel 冷构建的关键路径为 38.2 s，其中 32.1 s 用于构建 rules_go 的构建器和
+    标准库；Bazel 的堆在构建后为 85 MB，测试后为 132 MB。附录 A 比较了两次运行中的各条命令。
 [^go-link-deps]: Go，`cmd/go/internal/work/action.go`，`addTransitiveLinkDeps`；以及
     `exec.go`，`writeLinkImportcfg`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>，
