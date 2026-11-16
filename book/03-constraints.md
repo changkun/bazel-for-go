@@ -168,7 +168,7 @@ gone.[^rg-test-actions] Its counterpart is nogo, a binary built from analyzers (
 checks, like vet's) you choose. Registered with `go_sdk.nogo`, it runs as an action beside each
 compile in the main repository, and a second action fails the build on any finding.[^rg-nogo]
 The default nogo analyzes nothing,[^rg-default-nogo] and `vet = True` adds only five of the
-eleven that `go test` runs,[^rg-nogo-vet] so until you list them, Bazel checks less than
+twelve that `go test` runs,[^rg-nogo-vet] so until you list them, Bazel checks less than
 `go test` does. With `t.Logf("%d bytes", "want")` added to the test:
 
 ```console
@@ -213,7 +213,7 @@ that the second front end keeps working.
   under `go` and fails only under Bazel.
 - Decide per generator whether its output is checked in or produced by an action. The first keeps
   `go build` working; the second gives caching and removes stale output.
-- Configure nogo with all eleven analyzers `go test` runs, not just the five of `vet = True`,
+- Configure nogo with all twelve analyzers `go test` runs, not just the five of `vet = True`,
   or checks silently disappear.
 - Pin the C toolchain before sharing a cache if any package uses cgo or the race detector, or
   any binary is linked on macOS.
@@ -318,9 +318,10 @@ that the second front end keeps working.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/go/core/cross_compilation.md?plain=1#L19-L27>,
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L185>,
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L206>
-[^go-test-vet]: Go, `cmd/go/internal/test/test.go`: the help text, and `defaultVetFlags`.
+[^go-test-vet]: Go, `cmd/go/internal/test/test.go`: the help text, and `defaultVetFlags`, which
+    enables twelve analyzers; the help text omits `slog`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L77-L82>,
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L654>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L654-L692>
 [^rg-test-actions]: rules_go, `go/private/rules/test.bzl`, `_go_test_impl`, which generates the
     test's main package and links the test binary with the builder.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L122-L146>,
