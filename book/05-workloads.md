@@ -8,7 +8,8 @@ We ran a cold (empty-cache) build of the repository's binaries and `go test ./..
 wrapper (`-toolexec` and `-exec`) that recorded each process's wall time, CPU time (user plus
 system) and peak RSS (resident set size: the most physical memory it held at once). The
 synthetic repository has 1,000 packages of about 690 lines each in 12 layers (Appendix A), built
-on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta]
+on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta] Figure 5.3 and the timings of whole
+actions come instead from the benchmark's cold builds, run without the wrapper.[^m-results]
 
 ## compile: one process per package
 
@@ -51,8 +52,8 @@ as writing the output, use several goroutines.[^go-link-phases]
 The go build's 11 links, ten of them of about 730 repository packages each, took a median of
 0.71 s and 450 MB: ten times a compile's memory, with CPU time 1.1 times wall
 time.[^m-workload] Test binaries, linked without debug information,[^go-test-strip] show how a
-link grows (Figure 5.2, right): a median of 96 MB and 59 ms below 10 of the repository's
-packages, 282 MB and 172 ms at 300 or more.[^m-workload] A link reruns whenever any package in
+link grows (Figure 5.2, right): a median of 96 MB and 59 ms at 10 or fewer of the repository's
+packages, 282 MB and 172 ms at more than 300.[^m-workload] A link reruns whenever any package in
 the binary changes:[^go-linkactionid] a body edit to `core`, the most widely imported package
 (Chapter 4), relinked all ten applications under both tools.[^m-results][^m-profile]
 
@@ -60,8 +61,9 @@ On macOS both tools build position-independent executables (PIE, binaries that c
 address). Go's own linker writes them,[^go-internal-pie] but rules_go hands every PIE link to the
 C toolchain's linker unless cgo is off.[^rules-go-pie] Timed as whole actions amid other work in
 the cold builds, links took a median of 2.3 s under Bazel and 0.63 s under the go
-command.[^m-profile][^m-graph] The difference includes the C linker, Bazel's sandbox and
-rules_go's builder (Chapter 2); we did not separate them.
+command.[^m-profile][^m-graph] The difference includes the C linker, Bazel's sandbox (a directory
+holding only an action's declared inputs) and rules_go's builder (the program that wraps each
+compile and link); we did not separate them.
 
 ## asm and cgo
 
@@ -81,10 +83,10 @@ finish, as many as run at once, each took about 0.22 s longer than the one befor
 and `go test ./...` took 279 s for 1,000 binaries, 0.28 s each,[^m-workload][^m-results] as if
 the runs waited in one queue outside the processes. macOS checks an app for known malware on its
 first launch;[^apple-xprotect] we infer that this check, made on each new test binary in turn,
-is the queue, and expect Linux machines not to pay it. Bazel's first test run took 531 s, with
-a critical path of 13.3 s.[^m-results] Timed as whole actions, its test links took a median of
-1.4 s and its test runs 7.5 s, against 0.11 s and 5.1 s for the go command's
-processes.[^m-test-profile][^m-workload]
+is the queue, and expect Linux machines not to pay it. Bazel's first test run took 531 s,
+though its longest chain of dependent actions took 13.3 s.[^m-results] Timed as whole actions,
+its test links took a median of 1.4 s and its test runs 7.5 s, against 0.11 s and 5.1 s for the
+go command's processes.[^m-test-profile][^m-workload]
 
 ## vet, nogo and code generators
 
