@@ -40,7 +40,7 @@ early with `-c=18` and used 2,025 ms of CPU in 579 ms, and 305 MB.[^m-workload]
 
 ## link: one process per binary
 
-![Figure 5.2: Peak memory and wall time of every compile and link in one build and test.](figures/05-process-cost.svg)
+![Figure 5.2: Left, peak memory against wall time for every compile and link in one build and test. Right, each test link against the repository packages it links, where the build's action graph gives that number.](figures/05-process-cost.svg)
 
 The linker's input is every package in the binary. The go command lists each transitive
 dependency in the link's import configuration,[^go-link-deps] and rules_go declares every
@@ -51,7 +51,7 @@ as writing the output, use several goroutines.[^go-link-phases]
 The go build's 11 links, ten of them of about 730 repository packages each, took a median of
 0.58 s and 443 MB: ten times a compile's memory, with CPU time 1.2 times wall
 time.[^m-workload] Test binaries, linked without debug information, show how a link grows
-(Figure 5.2): a median of 96 MB and 50 ms below 10 of the repository's packages, 281 MB and
+(Figure 5.2, right): a median of 96 MB and 50 ms below 10 of the repository's packages, 281 MB and
 191 ms at 300 or more.[^m-workload] A link reruns whenever any package in the binary
 changes:[^go-linkactionid] a body edit to `core`, the most widely imported package (Chapter 4),
 relinked all ten applications under both tools.[^m-results][^m-profile]
@@ -120,7 +120,7 @@ standard library.[^m-profile]
 
 ## Four workload classes
 
-![Figure 5.4: Four workload classes and the machine each wants, in our view.](figures/05-classes.svg)
+![Figure 5.4: Four workload classes: what each process does and what its cost grows with.](figures/05-classes.svg)
 
 - **compile**: many short, CPU-bound processes with a serial front end; 44 MB at the median,
   305 MB at most.[^m-workload]
