@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 c8cebc2 -->
+<!-- 译自 23e2f9f -->
 
 本章比较 go 命令与 Bazel 对第 1 章六项决策的回答，并说明随着仓库增长，各自要付出什么
 代价。
@@ -83,10 +83,12 @@ go 命令在一台机器上以子进程的形式运行每个动作，同时运�
 
 ## 端到端
 
-表 8.1：墙钟时间（秒）：取三次运行的中位数；冷构建、测试与全新检出只运行一次；10000 个包时未运行测试。[^bench]
+表 8.1：墙钟时间（秒）：取三次运行的中位数（冷构建、测试与全新检出：一次）；1000 与 10000 个包时，两次运行结果不同处给出范围。[^bench]
 
 <!--
-Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
+Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
+and from results/2026-11-16-n1000-check and -n10000-check: where the two runs' medians differ at two
+significant digits, the cell is a range, low–high.
 Row                         go scenario       bazel scenario
 Cold build                  cold              cold
 No-op build                 noop (reps 0-2)   noop (reps 0-2; rep 3 only re-warms the server)
@@ -99,14 +101,14 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 
 | 场景 | go，1000 | Bazel，1000 | go，3000 | Bazel，3000 | go，10000 | Bazel，10000 |
 |---|---|---|---|---|---|---|
-| 冷构建 | 6.9 | 37 | 28 | 84 | 230 | 320 |
-| 空构建 | 0.86 | 0.16 | 2.5 | 0.20 | 14 | 0.36 |
-| 对 `core` 的函数体修改 | 3.0 | 1.7 | 14 | 12 | 130 | 180 |
-| 对 `core` 的 API 修改 | 5.3 | 5.1 | 24 | 21 | 200 | 210 |
-| 函数体修改后的测试 | 260 | 460 | 1200 | 2300 | — | — |
-| 全新检出，热缓存 | 5.0 | 9.4 | 22 | 6.4 | 200 | 11 |
+| 冷构建 | 6.9–7.4 | 37–48 | 28 | 84 | 180–230 | 320–380 |
+| 空构建 | 0.86–0.87 | 0.13–0.16 | 2.5 | 0.20 | 14–33 | 0.31–0.36 |
+| 对 `core` 的函数体修改 | 3.0 | 1.7 | 14 | 12 | 130–140 | 180–190 |
+| 对 `core` 的 API 修改 | 4.8–5.3 | 5.1–5.6 | 24 | 21 | 170–200 | 210–230 |
+| 函数体修改后的测试 | 260–270 | 460–480 | 1200 | 2300 | — | — |
+| 全新检出，热缓存 | 5.0–6.1 | 5.9–9.4 | 22 | 6.4 | 200–220 | 11–12 |
 
-仓库是附录 A 的合成仓库，包数为 1000、3000 和 10000，`core` 是其中被导入最广的包。构建分别是 `go build -o <dir> ./...` 和对同样二进制的 `bazel build`；测试一行运行的是
+仓库是附录 A 的合成仓库，包数为 1000、3000 和 10000，`core` 是其中被导入最多的包。构建分别是 `go build -o <dir> ./...` 和对同样二进制的 `bazel build`；测试一行运行的是
 `go test -vet=off ./...` 和 `bazel test //...`：
 
 - **冷构建**：两者都编译全部代码，包括标准库。[^go-no-prebuilt-std][^rules-go-stdlib]Bazel 还要
@@ -306,8 +308,10 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L519-L533>
 [^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`，配置 `n1000`、`n3000`
-    与 `n10000`；附录 A 介绍了仓库与测量框架。
-    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
+    与 `n10000`，以及 `n1000` 与 `n10000` 的第二次运行（附录 A，表 A.7）；附录 A 介绍了仓库与测量框架。
+    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)，
+    [n1000，第二次运行](../../examples/bench/results/2026-11-16-n1000-check/results.jsonl)，
+    [n10000，第二次运行](../../examples/bench/results/2026-11-16-n10000-check/results.jsonl)
 [^go-no-prebuilt-std]: Go 1.20 发布说明，「Go command」：「`$GOROOT/pkg` 目录不再存放标准库的
     预编译包归档」。
     <https://go.dev/doc/go1.20#go-command>
@@ -318,12 +322,17 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     属性；`go/private/rules/binary_wrapper.sh`，它用 `go build -trimpath` 从源码构建构建器。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
-[^bench-links]: 本书在 10000 个包时的测量：冷构建中，一个二进制的链接在 Bazel 下耗时的中位数为 32 s，
-    在 go 命令下为 19 s；在 Bazel 的第一次函数体修改中为 41 s；go 命令的修改没有记录链接耗时。两个工具在这一规模下的运行相隔一小时，
-    所用机器同时运行着其他工作（附录 A）。
+[^bench-links]: 本书在 10000 个包时两次运行的测量：冷构建中，一个二进制的链接在 Bazel 下耗时的中位数
+    为 32 s 和 36 s，在 go 命令下为 19 s 和 12 s；在 Bazel 的第一次函数体修改中为 41 s 和 34 s；go 命令的
+    修改没有记录链接耗时。每次运行中，两个工具在这一规模下的运行都相隔一小时，所用机器同时运行着其他
+    工作（附录 A）。
     [n10000-bazel-cold.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz)，
     [n10000-bazel-core-body.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz)，
-    [n10000-go-cold-actiongraph.json.gz](../../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)
+    [n10000-go-cold-actiongraph.json.gz](../../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)；
+    第二次运行的
+    [n10000-bazel-cold.profile.gz](../../examples/bench/results/2026-11-16-n10000-check/n10000-bazel-cold.profile.gz)，
+    [n10000-bazel-core-body.profile.gz](../../examples/bench/results/2026-11-16-n10000-check/n10000-bazel-core-body.profile.gz)，
+    [n10000-go-cold-actiongraph.json.gz](../../examples/bench/results/2026-11-16-n10000-check/n10000-go-cold-actiongraph.json.gz)
 [^go-testcache]: Go，`cmd/go/internal/test/test.go`，`tryCacheWithID`：测试 ID 以链接的输入作为
     测试二进制的替代。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1882-L1909>
