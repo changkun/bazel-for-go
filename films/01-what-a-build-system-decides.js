@@ -3,7 +3,7 @@
 // six decisions, and the cost model. Every sentence comes from the chapter,
 // and every picture follows its figures 1.1 to 1.4.
 
-import { during, measure, mix, place, ramp, show } from "./stage.js";
+import { H, RAIL, during, fitted, measure, mix, place, ramp, show } from "./stage.js";
 
 // Fade something in from second a, over d seconds.
 const appear = (thing, t, a, d = 0.6) => show(thing, during(t, a, a + d));
@@ -16,15 +16,16 @@ export default {
       // The chapter's opening: two systems, one job, six choices.
       lines: [{ say: "The go command and Bazel both turn Go source into binaries, but they make different choices at six points.", hold: 0.8 }],
       draw(s) {
-        const source = s.file(104, 468, 220, 76, "Go source", { mono: false });
-        const binaries = s.file(990, 468, 210, 76, "binaries", { mono: false });
-        const go = s.box(500, 330, 290, 80, "go command", { kind: "go" });
-        const bazel = s.box(500, 602, 290, 80, "Bazel", { kind: "bazel" });
+        s.fit(0, 0, 940, 526);
+        const source = s.file(0, 134, 200, 72, "Go source", { mono: false });
+        const binaries = s.file(740, 134, 200, 72, "binaries", { mono: false });
+        const go = s.box(330, 0, 280, 80, "go command", { kind: "go" });
+        const bazel = s.box(330, 260, 280, 80, "Bazel", { kind: "bazel" });
         const edges = [s.edge(source, go), s.edge(go, binaries), s.edge(source, bazel), s.edge(bazel, binaries)];
         const points = [1, 2, 3, 4, 5, 6].map((n, i) => {
           const g = s.group();
-          g.circle(352 + i * 120, 850, 26, { fill: 0, stroke: true });
-          g.text(352 + i * 120, 860, String(n), { size: 28, weight: 600, anchor: "middle" });
+          g.circle(195 + i * 110, 500, 26, { fill: 0, stroke: true });
+          g.text(195 + i * 110, 510, String(n), { size: 28, weight: 600, anchor: "middle" });
           return g;
         });
         return (t, cue) => {
@@ -46,16 +47,17 @@ export default {
         { say: "Actions form a graph: an edge runs from each action to those that read its output.", hold: 1 },
       ],
       draw(s) {
-        const files = ["c.go", "a.go", "b.go"].map((name, i) => s.file(96, 258 + 160 * i, 150, 64, name));
-        const app = s.file(1100, 418, 120, 64, "app");
+        s.fit(0, -40, 1000, 424);
+        const files = ["c.go", "a.go", "b.go"].map((name, i) => s.file(0, 160 * i, 150, 64, name));
+        const app = s.file(880, 160, 120, 64, "app");
         // The whole build, before it is split into steps.
-        const whole = s.box(340, 220, 620, 460, "build", { size: 40, weight: 600 });
+        const whole = s.box(210, -40, 600, 464, "build", { size: 40, weight: 600 });
         const into = files.map((f) => s.edge(f, whole));
         const out = s.edge(whole, app);
         // The steps: one compile per package, and the link.
-        const compile = ["c", "a", "b"].map((p, i) => s.box(390, 258 + 160 * i, 240, 64, `compile ${p}`));
+        const compile = ["c", "a", "b"].map((p, i) => s.box(250, 160 * i, 240, 64, `compile ${p}`));
         const [c, a, b] = compile;
-        const link = s.box(770, 418, 150, 64, "link");
+        const link = s.box(620, 160, 150, 64, "link");
         const reads = files.map((f, i) => s.edge(f, compile[i]));
         const deps = [s.edge(a, c, { from: "top", to: "bottom" }), s.edge(a, b, { from: "bottom", to: "top" })];
         const links = compile.map((x) => s.edge(x, link));
@@ -93,29 +95,30 @@ export default {
         { say: "Reuse is safe only if the build is hermetic: the same inputs always give the same output, whatever else is on the machine.", hold: 1 },
       ],
       draw(s) {
+        s.fit(0, 0, 1110, 610, 0.85);
         const machine = s.group();
-        machine.rect(48, 150, 1200, 820, { r: 14, width: 2 }).setAttribute("stroke-opacity", 0.35);
-        machine.text(80, 200, "one machine", { size: 26, tone: "muted" });
-        const heading = s.text(104, 266, "inputs of `compile b`", { size: 26, tone: "muted" });
+        machine.rect(0, 0, 1110, 610, { r: 14, width: 2 }).setAttribute("stroke-opacity", 0.35);
+        machine.text(28, 42, "one machine", { size: 26, tone: "muted" });
+        const heading = s.text(40, 100, "inputs of `compile b`", { size: 26, tone: "muted" });
         const inputs = [
-          s.file(96, 286, 320, 60, "b.go"),
-          s.file(96, 366, 320, 60, "output of compile a", { mono: false }),
-          s.file(96, 446, 320, 60, "compiler and flags", { mono: false }),
-          s.file(96, 526, 320, 60, "environment", { mono: false }),
+          s.file(30, 120, 340, 60, "b.go"),
+          s.file(30, 196, 340, 60, "output of compile a", { mono: false }),
+          s.file(30, 272, 340, 60, "compiler and flags", { mono: false }),
+          s.file(30, 348, 340, 60, "environment", { mono: false }),
         ];
-        const fence = s.rect(78, 232, 356, 372, { r: 12, width: 2.5, dash: "10 8" });
-        const key = s.box(486, 376, 200, 120, "key", { weight: 600, sub: "4f9c…e1", subMono: true });
+        const fence = s.rect(14, 64, 372, 364, { r: 12, width: 2.5, dash: "10 8" });
+        const key = s.box(440, 209, 170, 110, "key", { weight: 600, sub: "4f9c…e1", subMono: true });
         const feed = inputs.map((f) => s.edge(f, key));
-        const cache = s.cache(892, 436, { w: 150, h: 150 });
+        const cache = s.cache(770, 264, { w: 120, h: 130 });
         const lookup = s.edge(key, cache);
-        const look = s.text(752, 414, "look up", { size: 26, anchor: "middle", tone: "muted" });
-        const hit = s.box(1036, 290, 200, 100, "hit", { kind: "hit", sub: "reuse output", weight: 600 });
-        const miss = s.box(1036, 486, 200, 100, "miss", { kind: "run", sub: "run, store", weight: 600 });
+        const look = s.text(660, 242, "look up", { size: 26, anchor: "middle", tone: "muted" });
+        const hit = s.box(900, 140, 180, 96, "hit", { kind: "hit", sub: "reuse output", weight: 600 });
+        const miss = s.box(900, 292, 180, 96, "miss", { kind: "run", sub: "run, store", weight: 600 });
         const toHit = s.edge(cache, hit, { kind: "hit" });
         const toMiss = s.edge(cache, miss, { kind: "run" });
         const others = s.group();
-        ["other files", "other tools"].forEach((name, i) => others.file(96 + 250 * i, 720, 220, 60, name, { mono: false }));
-        others.text(104, 846, "whatever else is on the machine", { size: 26, tone: "muted" });
+        ["other files", "other tools"].forEach((name, i) => others.file(30 + 250 * i, 470, 220, 56, name, { mono: false }));
+        others.text(40, 570, "whatever else is on the machine", { size: 26, tone: "muted" });
         return (t, cue) => {
           // The key: a hash of everything that can change the output.
           appear(heading, t, cue[0]);
@@ -149,33 +152,45 @@ export default {
         { say: "No number of cores or machines finishes a build sooner than its critical path.", hold: 3 },
       ],
       draw(s) {
-        const at = { a: [172, 200], b: [172, 340], c: [172, 480], d: [412, 200], e: [412, 410], f: [652, 200], g: [892, 300], h: [1132, 300] };
-        const band = s.band([at.a, at.f, at.g, at.h]);
-        const node = Object.fromEntries(Object.entries(at).map(([n, [x, y]]) => [n, s.box(x - 60, y - 32, 120, 64, n, { mono: true })]));
+        // Figure 1.2's graph, within the bounds G.
+        const G = [0, -3, 920, 490];
+        const graph = s.group();
+        const at = { a: [60, 90], b: [60, 230], c: [60, 370], d: [260, 90], e: [260, 300], f: [460, 90], g: [660, 190], h: [860, 190] };
+        const band = graph.band([at.a, at.f, at.g, at.h]);
+        const node = Object.fromEntries(Object.entries(at).map(([n, [x, y]]) => [n, graph.box(x - 60, y - 32, 120, 64, n, { mono: true })]));
         const { a, b, c, d, e, f, g, h } = node;
-        const ad = s.edge(a, d);
-        const df = s.edge(d, f);
-        for (const [from, to] of [[f, g], [e, g], [b, e], [c, e], [g, h]]) s.edge(from, to);
-        const edit = s.pill(172, 116, "edit", { kind: "run" });
-        const same = s.pill(412, 280, "same output");
-        const stop = s.line(532, 174, 532, 226, { width: 6, opacity: 1 });
-        const key = s.legend(112, 610, [["run", "reran"], ["hit", "cache hit"]]);
-        const path = s.legend(112 + 58 + measure("reran", { size: 26 }) + 44 + 58 + measure("cache hit", { size: 26 }) + 44, 610, [["band", "critical path of a full build"]]);
+        const ad = graph.edge(a, d);
+        const df = graph.edge(d, f);
+        for (const [from, to] of [[f, g], [e, g], [b, e], [c, e], [g, h]]) graph.edge(from, to);
+        const edit = graph.pill(60, 20, "edit", { kind: "run" });
+        const same = graph.pill(260, 170, "same output");
+        const stop = graph.line(360, 64, 360, 116, { width: 6, opacity: 1 });
+        const key = graph.legend(0, 480, [["run", "reran"], ["hit", "cache hit"]]);
+        const path = graph.legend(58 + measure("reran", { size: 26 }) + 44 + 58 + measure("cache hit", { size: 26 }) + 44, 480, [["band", "critical path of a full build"]]);
 
-        // A full build, scheduled on 1, 2 and then 4 cores: it never ends before the chain a, d, f, g, h.
-        const UNIT = 136, X0 = 112, LANE = 64, Y0 = 752;
-        const lanes = [0, 1, 2, 3].map((i) => s.rect(X0 - 8, Y0 + LANE * i - 30, UNIT * 8 + 4, 60, { r: 8, fill: 0.05, stroke: false }));
-        const heading = s.text(X0, 690, "a full build on", { size: 28 });
-        const cores = ["1 core", "2 cores", "4 cores"].map((label) => s.text(X0 + measure("a full build on ", { size: 28 }), 690, label, { size: 28, weight: 600 }));
+        // A full build, scheduled on 1, 2 and then 4 cores, within the bounds P: it never ends before the chain a, d, f, g, h.
+        const P = [-6, -30, 994, 306];
+        const plan = s.group();
+        const UNIT = 120, LANE = 72, Y0 = 50;
+        const lanes = [0, 1, 2, 3].map((i) => plan.rect(-6, Y0 + LANE * i - 32, UNIT * 8, 64, { r: 8, fill: 0.05, stroke: false }));
+        const heading = plan.text(0, 0, "a full build on", { size: 30 });
+        const cores = ["1 core", "2 cores", "4 cores"].map((label) => plan.text(measure("a full build on ", { size: 30 }), 0, label, { size: 30, weight: 600 }));
         const order = ["a", "b", "c", "d", "e", "f", "g", "h"];
         // [lane, slot] of each action on 2 and on 4 cores; on 1 core, all in lane 0 in this order.
         const two = { a: [0, 0], d: [0, 1], f: [0, 2], g: [0, 3], h: [0, 4], b: [1, 0], c: [1, 1], e: [1, 2] };
         const four = { ...two, c: [2, 0], e: [1, 1] };
-        const chain = s.band([[X0 + 62, Y0], [X0 + 62 + 4 * UNIT, Y0]], { width: 78 });
-        const blocks = order.map((n) => s.box(X0, Y0 - 25, 124, 50, n, { mono: true, kind: "run", size: 28 }));
-        const finish = s.group();
-        finish.line(0, 716, 0, Y0 + 3 * LANE + 34, { width: 3, opacity: 0.8 });
-        finish.text(0, 700, "finish", { size: 26, anchor: "middle", tone: "muted" });
+        const chain = plan.band([[54, Y0], [54 + 4 * UNIT, Y0]], { width: 72 });
+        const blocks = order.map((n) => plan.box(0, Y0 - 28, 108, 56, n, { mono: true, kind: "run" }));
+        const finish = plan.group();
+        finish.line(0, 14, 0, Y0 + 3 * LANE + 36, { width: 3, opacity: 0.8 });
+        finish.text(0, 0, "finish", { size: 26, anchor: "middle", tone: "muted" });
+
+        // The graph fills the plate alone; when the schedule comes, it moves up to make room.
+        const alone = fitted(G);
+        const tall = G[3] - G[1] + 44 + P[3] - P[1];
+        const top = (H - tall) / 2;
+        const above = fitted(G, { into: [0, top, RAIL, top + G[3] - G[1]], scale: 1 });
+        place(plan, ...fitted(P, { into: [0, H - top - (P[3] - P[1]), RAIL, H - top], scale: 1 }));
 
         return (t, cue) => {
           // An edit reruns a; its new output changes d's key, so d reruns.
@@ -195,7 +210,9 @@ export default {
           const c4 = cue[3], c5 = cue[4];
           band.trace(during(t, c4 + 0.6, c4 + 2.6));
           appear(path, t, c4 + 0.6);
-          const shown = during(t, c4 + 4.0, c4 + 4.7);
+          const room = during(t, c4 + 3.6, c4 + 4.4);
+          place(graph, ...alone.map((v, i) => mix(v, above[i], room)));
+          const shown = during(t, c4 + 4.4, c4 + 5.0);
           // On more cores: two, then four.
           const spread = during(t, c5 + 0.8, c5 + 1.8);
           const more = during(t, c5 + 4.0, c5 + 4.8);
@@ -213,10 +230,10 @@ export default {
             const lane = mix(mix(0, two[n][0], spread), four[n][0], more);
             const slot = mix(mix(i, two[n][1], spread), four[n][1], more);
             place(blocks[i], slot * UNIT, lane * LANE);
-            show(blocks[i], during(t, c4 + 4.2 + 0.1 * i, c4 + 4.7 + 0.1 * i));
+            show(blocks[i], during(t, c4 + 4.5 + 0.1 * i, c4 + 5.0 + 0.1 * i));
           });
-          place(finish, X0 - 4 + mix(8, 5, spread) * UNIT - 6, 0);
-          show(finish, during(t, c4 + 5.6, c4 + 6.1));
+          place(finish, mix(8, 5, spread) * UNIT - 6, 0);
+          show(finish, during(t, c4 + 5.9, c4 + 6.4));
           chain.trace(during(t, c5 + 5.6, c5 + 6.6));
         };
       },
@@ -234,7 +251,8 @@ export default {
         { say: "Execution: local, or on a remote pool that raises parallelism and adds time to move bytes.", hold: 1.2 },
       ],
       draw(s) {
-        const X0 = 480, X1 = 1160;
+        s.fit(88, 100, 1160, 905, 0.84);
+        const X0 = 470, X1 = 1100;
         const decisions = [
           ["Unit", ["module", "package", "file"]],
           ["Graph", ["derived", "declared"]],
@@ -313,6 +331,9 @@ export default {
         const terms = [["T_graph", "obtain the graph"], ["T_detect", "find what changed"], ["T_exec", "run the misses"], ["T_transfer", "move bytes"]];
         const wide = (string) => measure(string, { size: SIZE, mono: true });
         const total = wide("T ≤ ") + terms.reduce((sum, [term]) => sum + wide(term), 0) + 3 * wide(" + ");
+        // Drawn on the plate's own scale; the formula stands alone in the middle until the bars come.
+        s.fit(96, 150, 1216, 979, 0.855);
+        const top = s.group();
         let x = 656 - total / 2;
         const formula = [];
         const style = (kind) => ({ graph: { fill: 0.2 }, detect: { fill: null }, exec: { kind: "run", fill: 0.18 }, transfer: { kind: "remote", fill: 0.18 } })[kind];
@@ -323,20 +344,20 @@ export default {
           if (kind === "detect") r.setAttribute("fill", hatch);
           return r;
         };
-        const lead = s.text(x, 200, "T", { size: SIZE, mono: true });
-        const atMost = s.text(x + wide("T "), 200, "≤", { size: SIZE, mono: true });
-        const ring = s.circle(x + wide("T ") + wide("≤") / 2, 186, 28, { fill: 0, stroke: true, width: 2.5 });
+        const lead = top.text(x, 200, "T", { size: SIZE, mono: true });
+        const atMost = top.text(x + wide("T "), 200, "≤", { size: SIZE, mono: true });
+        const ring = top.circle(x + wide("T ") + wide("≤") / 2, 186, 28, { fill: 0, stroke: true, width: 2.5 });
         x += wide("T ≤ ");
         terms.forEach(([term, label], i) => {
-          const g = s.group();
+          const g = top.group();
           const w = wide(term);
           g.text(x, 200, term, { size: SIZE, mono: true });
           swatch(g, kinds[i], x, 222, w, 12);
-          const name = s.text(x + w / 2, 280, label, { size: 26, anchor: "middle", tone: "muted" });
+          const name = top.text(x + w / 2, 280, label, { size: 26, anchor: "middle", tone: "muted" });
           formula.push({ g, name });
           x += w;
           if (i < 3) {
-            formula[i].plus = s.text(x + wide(" + ") / 2, 200, "+", { size: SIZE, mono: true, anchor: "middle" });
+            formula[i].plus = top.text(x + wide(" + ") / 2, 200, "+", { size: SIZE, mono: true, anchor: "middle" });
             x += wide(" + ");
           }
         });
@@ -377,6 +398,7 @@ export default {
         bazelGroup.text(700 + bazelPill.w / 2 + 16, 965, "a large repository, many machines", { size: 26 });
 
         return (t, cue) => {
+          place(top, 0, mix((150 + 979) / 2 - 220, 0, during(t, cue[2], cue[2] + 0.8)));
           appear(lead, t, cue[0] + 0.2);
           appear(atMost, t, cue[0] + 0.2);
           formula.forEach((term, i) => {
@@ -388,10 +410,10 @@ export default {
           show(ring, during(t, cue[1] + 0.6, cue[1] + 1.2) * (1 - during(t, cue[2], cue[2] + 0.6)));
           bars.forEach((bar, i) => {
             const c = cue[2 + i];
-            appear(bar.title, t, c + 0.2);
-            bar.parts.forEach((part, j) => appear(part, t, c + 0.9 + 0.7 * j));
+            appear(bar.title, t, c + 0.9);
+            bar.parts.forEach((part, j) => appear(part, t, c + 1.4 + 0.7 * j));
           });
-          appear(note, t, cue[2] + 0.9);
+          appear(note, t, cue[2] + 1.4);
           appear(view, t, cue[4] + 1.2);
           appear(bazelGroup, t, cue[5] + 0.6);
         };

@@ -49,9 +49,19 @@ const element = (thing) => thing.g || thing;
 export function show(thing, amount) {
   element(thing).setAttribute("opacity", clamp(amount).toFixed(3));
 }
-// Move something by (x, y) from where it was drawn.
-export function place(thing, x, y) {
-  element(thing).setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+// Move something by (x, y) from where it was drawn, and scale it by k.
+export function place(thing, x, y, k = 1) {
+  element(thing).setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)})` + (k === 1 ? "" : ` scale(${k.toFixed(4)})`));
+}
+
+// The [x, y, k] for place() that puts the box [x0, y0, x1, y1], in the units
+// it was drawn in, in the middle of the area into (the plate, unless given),
+// scaled so that it takes fill of the area's width or of its height,
+// whichever it reaches first; or scaled by scale exactly, if given.
+export function fitted([x0, y0, x1, y1], { into = [0, 0, RAIL, H], fill = 0.8, scale = null } = {}) {
+  const [a0, b0, a1, b1] = into;
+  const k = scale ?? Math.min((fill * (a1 - a0)) / (x1 - x0), (fill * (b1 - b0)) / (y1 - y0));
+  return [(a0 + a1) / 2 - (k * (x0 + x1)) / 2, (b0 + b1) / 2 - (k * (y0 + y1)) / 2, k];
 }
 
 // The width of a string as the browser will draw it, for wrapping and for
@@ -119,6 +129,15 @@ export class Stage {
     return new Stage(this.g, this.film);
   }
 
+  // Fill the plate with this stage: draw at any size, then give the bounds of
+  // all the scene ever shows. They are centred on the plate and scaled to take
+  // fill of its width or height. Returns the scale, which text sizes are multiplied by.
+  fit(x0, y0, x1, y1, fill = 0.8) {
+    const [x, y, k] = fitted([x0, y0, x1, y1], { fill });
+    place(this, x, y, k);
+    return k;
+  }
+
   // Text at (x, y), y being the baseline. Backticks mark code; mono sets all of it in monospace.
   // tone: "ink", "muted", "faint", or a colour's meaning ("go", "run", ...).
   text(x, y, string, { size = 30, weight = 400, anchor = "start", tone = "ink", mono = false, italic = false, fit = null } = {}) {
@@ -154,7 +173,7 @@ export class Stage {
 
   // A box: an action, a step, a node of a graph. (x, y) is its top-left corner.
   // kind colours it from the start; sub is a second, smaller line. Returns a Box.
-  box(x, y, w, h, label = "", { kind = null, mono = false, size = 30, weight = 400, sub = "", subMono = false, r = 10, file = false } = {}) {
+  box(x, y, w, h, label = "", { kind = null, mono = false, size = 32, weight = 400, sub = "", subMono = false, r = 10, file = false } = {}) {
     return new Box(this, x, y, w, h, label, { kind, mono, size, weight, sub, subMono, r, file });
   }
 
@@ -177,7 +196,7 @@ export class Stage {
     const colour = kind ? SHAPE[kind] : "currentColor";
     svg("path", { d: `M${x0},${top} L${x0},${bottom} A${rx},${ry} 0 0 0 ${x1},${bottom} L${x1},${top}`, fill: kind ? colour : "none", "fill-opacity": kind ? FILL : null, stroke: colour, "stroke-width": 2.5 }, g);
     svg("ellipse", { cx, cy: top, rx, ry, fill: "none", stroke: colour, "stroke-width": 2.5 }, g);
-    const text = svg("text", { x: cx, y: cy + ry + 10, "font-size": 30, "text-anchor": "middle", "data-fit": w - 12 }, g);
+    const text = svg("text", { x: cx, y: cy + ry + 11, "font-size": 32, "text-anchor": "middle", "data-fit": w - 12, "data-least": 32 }, g);
     spell(text, label, false);
     return { g, cx, cy, x: x0, y: cy - h / 2, w, h, left: [x0, cy], right: [x1, cy], top: [cx, cy - h / 2], bottom: [cx, cy + h / 2] };
   }
@@ -243,7 +262,7 @@ class Box {
     this.layers = {};
     this.labels = [];
     if (label) {
-      const text = svg("text", { x: this.cx, y: sub ? this.cy - 4 : this.cy + size * 0.35, "font-size": size, "font-weight": weight, "text-anchor": "middle", "data-fit": w - 16 }, this.g);
+      const text = svg("text", { x: this.cx, y: sub ? this.cy - 4 : this.cy + size * 0.35, "font-size": size, "font-weight": weight, "text-anchor": "middle", "data-fit": w - 16, "data-least": 32 }, this.g);
       spell(text, label, mono);
       this.labels.push(text);
     }

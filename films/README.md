@@ -26,7 +26,8 @@ write only that one file; the engine draws the rest.
 ```
 
 The frame is 1920 × 1080 units (one unit is one video pixel). You draw on the
-plate and keep everything inside `SAFE` (x 72 to 1240, y 72 to 1008). The rail
+plate (1312 × 1080), and each scene fills it: centred both ways, taking 70 to
+85% of its width or height (see Look). The rail
 shows the chapter's sections as a timeline and, under it, the transcript:
 your lines, the current one at full strength. So the plate carries **no
 captions**: only labels, names and terms, as in the book's figures.
@@ -50,11 +51,13 @@ export default {
         { say: "The change spreads along the graph until early cutoff stops it.", hold: 1.2 },
       ],
       draw(s) {
-        // Build the scene once, on Stage s.
-        const a = s.box(112, 168, 120, 64, "a", { mono: true });
-        const d = s.box(352, 168, 120, 64, "d", { mono: true });
+        // Build the scene once, on Stage s, at any size; then fit the bounds
+        // of all it will ever show to the plate.
+        s.fit(0, -3, 920, 490);
+        const a = s.box(0, 58, 120, 64, "a", { mono: true });
+        const d = s.box(200, 58, 120, 64, "d", { mono: true });
         const ad = s.edge(a, d);
-        const edit = s.pill(172, 116, "edit", { kind: "run" });
+        const edit = s.pill(60, 20, "edit", { kind: "run" });
         // Then set the frame at second t of the scene; cue[i] is when line i starts.
         return (t, cue) => {
           appear(edit, t, cue[0] + 0.6);
@@ -126,7 +129,8 @@ From `./stage.js`:
 | `ramp(t, a, b)` | the same, linear: for a pulse travelling along an edge |
 | `mix(a, b, u)`, `clamp(v)` | arithmetic |
 | `show(thing, u)` | opacity u (things start visible: hide what comes later) |
-| `place(thing, x, y)` | move by (x, y) from where it was drawn |
+| `place(thing, x, y, k)` | move by (x, y) from where it was drawn, scaled by k (default 1) |
+| `fitted(box, { into, fill, scale })` | the `[x, y, k]` for `place` that centres `box` (`[x0, y0, x1, y1]`) in the area `into` (the plate unless given), at `fill` of it or at `scale` exactly: to move a part of a scene, say up to make room |
 | `measure(text, { size, mono })` | width in units, to lay out text |
 | `W`, `H`, `RAIL`, `SAFE`, `SHAPE` | the frame and the colours |
 
@@ -134,6 +138,7 @@ On a stage `s` (every method returns something `show` and `place` accept):
 
 | | |
 |---|---|
+| `s.fit(x0, y0, x1, y1, fill = 0.8)` | call first in `draw`: centres the bounds of all the scene ever shows on the plate and scales them to `fill` of its width or height. Returns the scale |
 | `s.group()` | a stage inside this one, to fade or move several shapes as one |
 | `s.box(x, y, w, h, label, { kind, mono, size, weight, sub, subMono })` | an action or node; (x, y) is the top-left. Returns a Box |
 | `s.file(x, y, w, h, label)` | an input: a lighter box, label in monospace (`mono: false` for words) |
@@ -168,8 +173,17 @@ thin outlines, generous space, no shadows, no gradients, nothing decorative.
 
   Everything else is ink, at full strength, `muted` or `faint`; it follows
   the theme by itself. Fills are light (about 16%), as in the figures.
-- **Text at least 26 units** (30 is the default for labels). Code names in
-  monospace, words in the sans.
+- **Each scene fills the plate.** Draw at any convenient size, then
+  `s.fit(...)` the bounds of everything the scene ever shows: it is centred
+  on the plate and scaled so that it takes 70 to 85% of the plate's width or
+  height, whichever it reaches first (`fill` 0.8 by default; up to 0.85 for
+  a wide diagram). When a second part arrives later (a schedule under a
+  graph), let the first part stand alone in the middle, then move it with
+  `place(part, ...fitted(...))` to make room, so no frame is a small picture
+  in a corner.
+- **Text as drawn, after scaling: node labels at least 32 units** (the
+  default for boxes, files and caches), **other text at least 26**. Code
+  names in monospace, words in the sans.
 - **Draw what the chapter's figures draw**, with the same names and layout
   where they fit; the reader moves between both.
 - **One idea per scene.** Build the picture as the sentences reach it, then
@@ -194,7 +208,10 @@ node films/render.mjs 04                 # the whole MP4: films/out/<name>.mp4
 
 `--check` reports timing that does not fit, text that is too small, leaves
 the plate or the rail, outgrows its box or lies on other text, shapes that
-leave the plate, and frames that depend on more than their second. Look at
+leave the plate, a scene that takes less than 70% of the plate's width or
+height or sits off its middle, and frames that depend on more than their
+second. Every rendering command runs a full Chrome: while something else is
+being measured on the machine, prefix it with `nice -n 19`. Look at
 the sheet and at single frames too, in both themes (`--theme light`): the
 check catches collisions, not a picture that says the wrong thing.
 

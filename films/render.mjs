@@ -7,7 +7,8 @@
 //   node films/render.mjs 01 --check             no pictures: lint the timing, then draw every
 //                                                quarter second and report text that is too small,
 //                                                leaves its place, outgrows its box or lies on other
-//                                                text, shapes that leave the plate, and drawing that
+//                                                text, shapes that leave the plate, scenes that do not
+//                                                fill the plate around its middle, and drawing that
 //                                                depends on more than t
 //   node films/render.mjs 01 --sheet             twelve frames in one PNG, to look the film over
 //   node films/render.mjs 01 --at 12.5,40        one PNG for each second given
@@ -32,6 +33,7 @@ import { basename, dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { chrome } from "./browser.mjs";
+import { H, RAIL } from "./stage.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ENGINE = ["film.js", "stage.js", "player.js"];
@@ -166,13 +168,25 @@ async function check(name, duration) {
   const seen = new Map();
   const note = (complaint, t) => seen.has(complaint) || seen.set(complaint, t);
   for (const complaint of await tab.run("window.film.lint()")) note(complaint, null);
+  const reach = new Map(); // scene → where it has drawn, over all its frames
   for (let t = 0; t <= duration + 1e-9; t += 0.25) {
     try {
       await tab.run(`window.film.draw(${t})`);
       for (const complaint of await tab.run("window.film.inspect()")) note(complaint, t);
+      for (const { scene, ...e } of await tab.run("window.film.extent()")) {
+        const r = reach.get(scene);
+        reach.set(scene, r ? { left: Math.min(r.left, e.left), top: Math.min(r.top, e.top), right: Math.max(r.right, e.right), bottom: Math.max(r.bottom, e.bottom) } : e);
+      }
     } catch (error) {
       note(`drawing fails: ${error.message.split("\n")[0]}`, t);
     }
+  }
+  // A scene fills the plate: 70% of its width or height at least, around its middle.
+  for (const [scene, e] of [...reach].sort((a, b) => a[0] - b[0])) {
+    const share = Math.max((e.right - e.left) / RAIL, (e.bottom - e.top) / H);
+    const dx = (e.left + e.right) / 2 - RAIL / 2, dy = (e.top + e.bottom) / 2 - H / 2;
+    if (share < 0.7) note(`scene ${scene + 1} takes ${Math.round(share * 100)}% of the plate's width or height; aim for 70 to 85% (s.fit)`, "layout");
+    if (Math.abs(dx) > 0.05 * RAIL || Math.abs(dy) > 0.05 * H) note(`scene ${scene + 1} sits off the plate's middle by (${Math.round(dx)}, ${Math.round(dy)}) (s.fit)`, "layout");
   }
   // A frame must depend on its second alone, not on the frames drawn before it.
   for (let i = 0; i < 8; i++) {
@@ -181,7 +195,7 @@ async function check(name, duration) {
     const same = await tab.run(`(() => { const f = window.film; f.draw(${a}); const one = f.shown(); f.draw(${b}); f.draw(${a}); return one === f.shown(); })()`);
     if (!same) note(`the frame at ${a.toFixed(2)} s differs when drawn after ${b.toFixed(2)} s: a scene keeps state between frames`, a);
   }
-  const lines = [...seen].map(([complaint, t]) => `  ${t === null ? "timing" : `at ${t.toFixed(2)} s`}: ${complaint}`);
+  const lines = [...seen].map(([complaint, t]) => `  ${t === null ? "timing" : typeof t === "string" ? t : `at ${t.toFixed(2)} s`}: ${complaint}`);
   console.log(`${name}  ${Math.floor(duration / 60)}:${String(Math.floor(duration % 60)).padStart(2, "0")}  ${lines.length ? `${lines.length} problem${lines.length > 1 ? "s" : ""}` : "nothing found"}`);
   for (const line of lines) console.log(line);
   for (const advice of await tab.run("window.film.notes()")) console.log(`  note: ${advice}`);

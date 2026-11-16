@@ -151,7 +151,7 @@ function setLine(parent, x, y, line, { size, weight = 400 }) {
 
 let films = 0;
 
-// Build the film once. Returns { root, duration, times, draw(t), inspect(), lint(), notes() }.
+// Build the film once. Returns { root, duration, times, draw(t), inspect(), extent(), lint(), notes() }.
 export function build(made) {
   const times = timeline(made);
   const prefix = `fm${++films}-`;
@@ -287,21 +287,27 @@ export function build(made) {
   // What is wrong with the frame as it is drawn now: text that is too small,
   // leaves its part of the frame, outgrows its box, or lies on other text,
   // and shapes that leave the plate. Run in a page, where text is measured.
-  function inspect() {
+  // Where a node is drawn now, in frame units, with its region and the
+  // scale it is drawn at; null if it is hidden or too faint to see.
+  function visible(node) {
     const box = root.getBoundingClientRect();
     const k = W / box.width;
-    const visible = (node) => {
-      let opacity = 1;
-      let region = null;
-      for (let n = node; n && n !== root; n = n.parentNode) {
-        if (n.getAttribute("display") === "none") return null;
-        opacity *= Number(n.getAttribute("opacity") ?? 1);
-        region ??= n.getAttribute("data-region");
-      }
-      if (opacity < 0.15) return null;
-      const r = node.getBoundingClientRect();
-      return { node, region, left: (r.left - box.left) * k, right: (r.right - box.left) * k, top: (r.top - box.top) * k, bottom: (r.bottom - box.top) * k };
-    };
+    let opacity = 1;
+    let region = null;
+    let scale = 1;
+    for (let n = node; n && n !== root; n = n.parentNode) {
+      if (n.getAttribute("display") === "none") return null;
+      opacity *= Number(n.getAttribute("opacity") ?? 1);
+      region ??= n.getAttribute("data-region");
+      const list = n.transform?.baseVal;
+      if (list) for (let i = 0; i < list.numberOfItems; i++) scale *= list.getItem(i).matrix.a;
+    }
+    if (opacity < 0.15) return null;
+    const r = node.getBoundingClientRect();
+    return { node, region, scale, left: (r.left - box.left) * k, right: (r.right - box.left) * k, top: (r.top - box.top) * k, bottom: (r.bottom - box.top) * k };
+  }
+
+  function inspect() {
     const found = [];
     const texts = [];
     for (const node of root.querySelectorAll("text")) {
@@ -310,12 +316,13 @@ export function build(made) {
       if (!v) continue;
       v.string = string;
       texts.push(v);
-      const size = Number(node.getAttribute("font-size"));
-      if (size < 26) found.push(`“${string}” is set at ${size}; the least is 26`);
+      const size = Number(node.getAttribute("font-size")) * v.scale;
+      const least = Number(node.getAttribute("data-least")) || 26;
+      if (size < least - 0.05) found.push(`“${string}” is drawn at ${size.toFixed(1)}; the least is ${least}`);
       const [lo, hi] = v.region === "rail" ? [RAIL + 24, W - 24] : [24, RAIL - 24];
       if (v.left < lo || v.right > hi || v.top < 24 || v.bottom > H - 24) found.push(`“${string}” leaves the ${v.region || "frame"}`);
       const fit = Number(node.getAttribute("data-fit"));
-      if (fit && (v.right - v.left) * 1.06 > fit) found.push(`“${string}” is too wide for its box (${Math.round(v.right - v.left)} of ${fit}, with room for wider fonts)`);
+      if (fit && ((v.right - v.left) / v.scale) * 1.06 > fit) found.push(`“${string}” is too wide for its box (${Math.round((v.right - v.left) / v.scale)} of ${fit}, with room for wider fonts)`);
     }
     for (const [i, a] of texts.entries())
       for (const b of texts.slice(i + 1)) {
@@ -331,6 +338,24 @@ export function build(made) {
     return found;
   }
 
+  // Where each scene on the plate now draws: [{ scene, left, top, right, bottom }],
+  // so that the check can tell whether a scene fills the plate and sits in its middle.
+  function extent() {
+    const out = [];
+    scenes.forEach((scene, i) => {
+      if (scene.stage.g.getAttribute("display") === "none") return;
+      let e = null;
+      for (const node of scene.stage.g.querySelectorAll("text, rect, path, line, circle, ellipse, polygon")) {
+        if (node.tagName === "text" && !node.textContent.trim()) continue;
+        const v = visible(node);
+        if (!v || v.right - v.left < 1e-3 && v.bottom - v.top < 1e-3) continue;
+        e = e ? { left: Math.min(e.left, v.left), top: Math.min(e.top, v.top), right: Math.max(e.right, v.right), bottom: Math.max(e.bottom, v.bottom) } : { left: v.left, top: v.top, right: v.right, bottom: v.bottom };
+      }
+      if (e) out.push({ scene: i, ...e });
+    });
+    return out;
+  }
+
   // What is shown, as a string: two calls give the same string when they show the same frame.
   function shown() {
     const scenes = [...plate.children].filter((g) => g.getAttribute("display") !== "none");
@@ -338,5 +363,5 @@ export function build(made) {
   }
 
   draw(made.poster ?? TITLE - 0.5);
-  return { root, duration: times.duration, times, draw, inspect, lint, notes, shown, made };
+  return { root, duration: times.duration, times, draw, inspect, extent, lint, notes, shown, made };
 }
