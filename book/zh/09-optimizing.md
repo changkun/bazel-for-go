@@ -1,5 +1,5 @@
 # 9. 优化 Bazel Go 构建
-<!-- 译自 9726daa -->
+<!-- 译自 32d4094 -->
 
 第 1 章把一次构建的时间分为四部分：获取图、找出变化、运行动作和传输字节。
 本章在 Bazel 的 Go 构建中逐一降低这四部分。
@@ -14,10 +14,10 @@ Bazel 为每次构建写一份 JSON 格式的追踪剖面（trace profile），�
 动作链，链上每个动作都要等待前一个完成。[^profile]Bazel 9 删除了汇总剖面的命令
 `analyze-profile`；[^analyze-profile]剖面文件是 gzip 压缩的 JSON，关键路径就是其中类别为
 `critical path component` 的事件。[^profile-task]除非设置了 `--noslim_profile`，Bazel
-会合并较短的事件，[^profile-format]因此我们在执行日志（下一节）中而不是在剖面中统计动作。
+会合并较短的事件，[^profile-format]因此附录 A 从 Bazel 最后的汇总行而不是从剖面中统计动作。
 
 图 9.1 画出了 1000 个包的合成仓库（附录 A）的两份剖面。[^bench]冷构建的关键路径共 29.9 s，
-其中 24.2 s 花在 rules_go 自身的准备工作上。一个动作以 `GOMAXPROCS=1` 构建出
+其中 24.2 s 花在 rules_go 自身的准备工作上。一个动作以 `GOMAXPROCS=1`（同一时间至多一个线程运行 Go 代码）构建出
 构建器（builder，运行 rules_go 大部分动作的 Go 程序，见第 7 章），因此该动作中的 `go build`
 命令一次只编译一个包。[^builder-env]另一个动作为工具构建标准库；工具指构建期间运行的程序，
 这里是仓库的代码生成器。两者都不依赖仓库的代码，因此按笔者的理解，从第二台机器起，
@@ -25,7 +25,7 @@ Bazel 为每次构建写一份 JSON 格式的追踪剖面（trace profile），�
 2.32 s 的关键路径中有 2.26 s 是一次链接。
 
 Bazel 的文档建议拆分位于关键路径上的慢动作。[^profile-issues]对 Go 而言，最小的单元是包：
-编译器每次运行只编译一个包，Gazelle 也为每个目录写一个 `go_library`（第 7 章）。[^gazelle-one]
+编译器每次运行只编译一个包，[^go-compile]Gazelle 也为每个目录写一个 `go_library`（第 7 章）。[^gazelle-one]
 因此，更细的粒度只能是更小的包。大包的代价体现在三方面：任何修改都要重新编译整个包；
 它的编译是经过它的每条链上的一个长步骤；它的导出数据（export data，导入者编译时读取的、关于其导出声明的概要）
 只要有任何部分发生变化，每个导入者都要重新编译，即使变化的部分该导入者并不使用（第 7 章）。
@@ -41,27 +41,27 @@ Bazel 的文档建议拆分位于关键路径上的慢动作。[^profile-issues]
 在本地动作缓存（Bazel 为每份检出保存的已运行动作的记录）中找到的动作不会被记录。[^spawn-proto]
 因此，Bazel 的指南在两次构建之前各运行一次 `bazel clean`，用它的 `execlog`
 解析器把两份日志转换为文本，再比较两者的差异。[^compare-logs]不同的那个输入或设置就是原因
-（图 9.2）。在 Go 构建中，它通常是以下几种之一：
+（图 9.2）。在 Go 构建中，笔者会先检查以下几项：
 
 - **写入戳记**。rules_go 的 `x_defs` 在链接时设置字符串变量，变量的值可以引用一个工作区状态键
   （workspace status key，即 `--workspace_status_command` 脚本打印的一行），例如
   `{STABLE_GIT_COMMIT}`，由默认关闭的 `--stamp` 填入实际值。[^stamp]此时，如果某个值引用的是
   稳定键（`STABLE_*`、`BUILD_HOST`、`BUILD_USER` 或 `BUILD_EMBED_LABEL`），`GoLink` 就读取
-  `stable-status.txt`，否则读取 `volatile-status.txt`。[^rg-stamp]稳定文件中总有 `BUILD_HOST`
-  和 `BUILD_USER`，因此读取它的链接动作无法在不同机器或不同用户之间共享结果。Bazel
+  `stable-status.txt`；如果引用的是其他键，就读取 `volatile-status.txt`。[^rg-stamp]稳定文件中总有
+  `BUILD_HOST` 和 `BUILD_USER`，因此读取它的链接动作无法在名字不同的机器或用户之间共享结果。Bazel
   的手册建议为了缓存使用 `--nostamp`。[^status]笔者建议只为发布构建写入戳记。
 - **环境**。rules_go 为自己的动作设置专门的环境，因此调用者的 `PATH` 和 `--action_env`
-  都不会进入它的编译与链接。[^rg-env]`genrule` 使用构建的动作环境（action environment），即少数几个随操作系统而定的变量，
+  都不会进入它的编译与链接。[^rg-env]`genrule`（Bazel 中运行一条 shell 命令的规则）使用构建的动作环境（action environment），即少数几个随操作系统而定的变量，
   加上 `--action_env` 设置的变量。[^genrule-env]自 9.0 起，这个环境中的 `PATH` 是固定的，但
   `--action_env=NAME` 会把调用者的值复制进该动作的键；`--action_env=NAME=value`
   则把值固定下来。[^strict-env]
-- **与机器相关或非确定性的输出**。如果一个动作的输出通过绝对路径、时间戳或构建 ID
+- **与机器相关或非确定性的输出**。如果一个动作的输出通过绝对路径、时间戳或构建 ID（写入二进制的标识符）
   记录了它在哪里或何时运行，那么读取该输出的每个动作的键都会改变。[^hermeticity]rules_go
   的编译会去掉绝对路径，链接则把构建 ID 替换为二进制的哈希。[^rg-determinism]
   写入日期的 `genrule` 则不会这样做。
 - **执行属性**。随动作发送的属性（下一节）是其远程键的一部分，因此把同一个动作路由到两组机器，
   会得到两个缓存条目。[^reapi-platform]
-- **主机上的工具**。Bazel 不追踪在工作区之外找到的工具，例如 cgo 或外部链接所用的系统 C 编译器。
+- **主机上的工具**。Bazel 不追踪在工作区之外找到的工具，例如 cgo（调用 C 的 Go 代码）或外部链接（Go 链接器把最后一步链接交给它）所用的系统 C 编译器。
   于是，装有不同编译器的机器会共享本不该共享的结果。[^cache-issues]这是错误命中，而不是未命中
   （第 1 章「键」一节），而且两份执行日志一致，因此比较它们无法发现这个问题。
 
@@ -120,7 +120,7 @@ Go 把 `GOMAXPROCS`，以及随之而定的编译器默认 `-c`，限制在 cgro
 
 ## 测试与本地开发循环
 
-![图 9.4：修改 `core` 之后，`bazel test //...` 运行了什么。](../figures/09-tests.svg)
+![图 9.4：修改 `core` 之后，`bazel test //...` 运行了什么（示意）。](../figures/09-tests.svg)
 
 `bazel test` 只在以下情况下重新运行一个测试：测试本身或其依赖发生了变化，上次运行失败，
 测试被标记为 `external`，或者要求运行不止一次。[^cache-test]其余结果来自缓存，因此每次修改都测试
@@ -130,13 +130,15 @@ main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-sh
 `--test_sharding_strategy` 默认为 `explicit`：只有设置了 `shard_count` 的目标才会分片。[^shard-strategy]
 笔者建议只对包含许多慢测试函数的包分片。
 
-在笔记本电脑上，服务进程是热的，需要重新运行的动作很少，因此找出变化占了很大一部分时间（第 1 章）。
-默认关闭的 `--watchfs` 从操作系统获取源文件的变化，而不是逐个检查源文件；[^watchfs]
+在笔记本电脑上，服务进程是热的，需要重新运行的动作很少。在笔者的测量中，无事可做的构建在 1000 个包时耗时
+0.16 s，在 3000 个包时耗时 0.20 s；而在一个没有任何库导入的包中修改函数体之后，构建分别耗时 0.88 s
+和 1.91 s。[^bench-loop]默认关闭的 `--watchfs` 从操作系统获取源文件的变化，而不是逐个检查源文件；[^watchfs]
 上次构建的输出仍要检查（第 6 章）。Go 的语言服务器 gopls 通过 `GOPACKAGESDRIVER` 向 Bazel
 查询包的信息（第 2 章）。每个请求都会运行 Bazel 命令，而一个服务进程同一时间只运行一个命令，[^client-server]
 因此一次长时间的构建会拖慢编辑器。rules_go 的驱动程序把 `GOPACKAGESDRIVER_BAZEL_FLAGS`
-放在命令之前，[^gpd-flags]因此在其中加入 `--output_base=<dir>` 可以让编辑器拥有自己的服务进程，
-代价是第二个服务进程占用的内存；笔者没有测试过这种做法。
+放在命令之前，[^gpd-flags]因此在其中，以及在启动器的 `bazel run` 中（第 2 章），加入
+`--output_base=<dir>`，可以让编辑器拥有自己的服务进程和输出目录树，代价是第二个服务进程占用的内存
+和第二次构建；笔者没有测试过这种做法。
 
 ## 规模变大时意味着什么
 
@@ -146,7 +148,7 @@ main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-sh
   指定明确的值。
 - 通过 `go_link` 路由链接，通过 `test` 路由测试运行。共享同一缓存的所有构建要保持相同的路由，
   因为执行属性是键的一部分。
-- 明确设置服务进程的堆大小，固定启动选项，并让 CI 上的服务进程在多个作业之间保持热状态。
+- 明确设置服务进程的堆大小，固定启动选项，并让持续集成（CI）上的服务进程在多个作业之间保持热状态。
 - 只对包含许多慢测试函数的测试分片；其余的交给缓存。
 
 ## 参考文献
@@ -181,6 +183,9 @@ main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-sh
 
 [^profile-issues]: Bazel，「JSON Trace Profile」，「Common performance issues」一节。
     <https://bazel.build/advanced/performance/json-trace-profile#common-performance-issues>
+
+[^go-compile]: Go，`cmd/compile/doc.go`，包文档。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 
 [^gazelle-one]: Gazelle，`language/go/generate.go`，`GenerateRules` 与 `selectPackage`：
     每个目录一个包、一个库。
@@ -371,6 +376,10 @@ main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-sh
 [^shard-strategy]: Bazel，`lib/analysis/test/TestConfiguration.java`，`--test_sharding_strategy`，
     默认值为 `explicit`。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/test/TestConfiguration.java#L243-L258>
+
+[^bench-loop]: 本书的测量，`examples/bench/results/2026-11-16/`，工具 `bazel`，配置 `n1000` 与 `n3000`，
+    场景 `noop` 与 `leaf-body`：第 0 至 2 次重复的中位数（表 A.3）。
+    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
 
 [^watchfs]: Bazel，`lib/skyframe/LocalDiffAwareness.java`，`--watchfs` 选项，默认值为
     `false`。
