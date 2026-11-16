@@ -311,9 +311,13 @@ func (h *harness) goEnv(gocache string) []string {
 		}
 		env = append(env, kv)
 	}
+	// The synthetic repository sits inside the book's git checkout. Without -buildvcs=false
+	// the go command stamps that checkout's commit into every binary, so a commit made during
+	// a run recompiles every main package and relinks every binary. Bazel does not stamp
+	// unless asked (--stamp).
 	return append(env,
 		"PATH="+h.goBin+":"+os.Getenv("PATH"),
-		"GOTOOLCHAIN=local", "GOFLAGS=", "GOPROXY=off", "GOWORK=off", "GOENV=off",
+		"GOTOOLCHAIN=local", "GOFLAGS=-buildvcs=false", "GOPROXY=off", "GOWORK=off", "GOENV=off",
 		"GOCACHE="+gocache,
 		"GOMODCACHE="+filepath.Join(h.root, "gomodcache"),
 	)
