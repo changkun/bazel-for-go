@@ -1,5 +1,5 @@
 # 10. 做出决定
-<!-- 译自 d9d1c21 -->
+<!-- 译自 8f916dd -->
 
 ## 每种工具的适用范围
 
@@ -43,18 +43,19 @@ cgo 包（调用 C 的 Go 代码）还会加入 C 编译器的命令、标志和
 - **许多机器构建同一份代码，并且编译之外的时间花在链接、测试或生成器上**。Bazel
   把每一项都当作动作缓存起来，测试运行也包括在内；[^bazel-test-spawn]每个动作以其声明的输入为键
   （第 6 章），存放在远程缓存（remote cache）中，即所有机器共享的一台服务器。
-- **其他语言或代码生成器共用同一个图**。Bazel 的 BUILD 文件可以声明任何语言的动作
+- **其他语言或代码生成器共用同一个图**。Bazel 声明的图可以容纳任何语言的动作
   （第 6 章和第 8 章）。
 - **一次构建超出了一台机器的能力**。远程执行在一个机器池上运行动作，[^bazel-rbe]
   但任何机器池都无法缩短关键路径（critical path），即相互依赖的动作构成的最长链（第 5 章）。
 - **发布构建必须是封闭的**（hermetic），即无论机器上另外安装了什么，输出都相同。[^bazel-hermetic]
-  对于不使用 cgo 的 Go，笔者预计 `-trimpath`、固定的 Go 版本和 `CGO_ENABLED=0` 就足够了；
+  对于不使用 cgo 的 Go，笔者预计 `-trimpath`、`-buildvcs=true`、[^go-buildvcs]固定的 Go 版本和
+  `CGO_ENABLED=0` 就足够了；
   如果缺少最后一项，导入 `net` 的 Linux 原生构建只要 `PATH` 上有 C 编译器就会使用 cgo。[^go-cgo-default]
   Bazel 可以把生成器和注册的 C 工具链声明为输入，但默认使用主机的 C 编译器，
   而它并不追踪这个编译器（第 3 章）。[^bazel-cache-issues]
 
 Bazel 更细的截断（cutoff，一次修改停止传播的位置）也能省下编译：对一个被广泛导入的包做函数体修改（body edit）之后，
-Bazel 只重新编译这个包，go 命令则重新编译每个直接导入者（第 7 章）。在笔者看来，
+只要其导入者读取的内容都没有改变，Bazel 就只重新编译这个包，go 命令则重新编译每个直接导入者（第 7 章）。在笔者看来，
 仅凭这一点很少能抵消 Bazel 的代价：共享存储让这些编译在整个机群中只运行一次，
 而且两种工具都要重新链接包含该包的每个二进制。
 
@@ -67,14 +68,14 @@ Bazel 的代价（第 3 章和第 6 章）：BUILD 文件，它是对图的第�
 
 | 情形 | 在笔者看来 | 原因 | 先尝试 |
 |---|---|---|---|
-| 一个 Go 模块，一个团队 | go 命令 | 增量构建，缓存以内容哈希为键（第 4 章）；Bazel 会多出第二个图和一个服务进程 | `go build -o <dir>`；在 CI 各次运行之间保留 `<dir>` 和 GOCACHE，并使用 `-trimpath` |
+| 一个 Go 模块，一个团队 | go 命令 | 增量构建，缓存以内容哈希为键（第 4 章）；Bazel 会多出第二个图和一个服务进程 | `go build -o <dir>`；在 CI 各次运行之间保留 `<dir>` 和 GOCACHE，并使用 `-trimpath` 和 `-buildvcs=false`[^go-buildvcs] |
 | 一个 Go 仓库，许多服务，CI 时间花在编译上 | go 命令加共享的 `GOCACHEPROG` 存储 | 动作 ID 一致后，编译即可共享；[^go-actionid]Bazel 更细的截断所省下的编译，共享存储本来就只在机群中运行一次（第 7 章） | 所有地方都用 `-trimpath` 和同一个 Go 版本 |
-| 一个 Go 仓库，CI 时间花在链接或测试上，或在长期存活的运行器上花在加载上 | 带远程缓存的 Bazel | 链接（第 8 章）和测试运行[^bazel-test-spawn]都是被缓存的动作；热的服务进程把图保存在内存中，但新的服务进程要加载并分析所有内容（第 6 章） | 把 `go test` 的包分到多个并行作业中 |
+| 一个 Go 仓库，在许多机器上构建，CI 时间花在重新链接或重新测试未改动的代码上，或在长期存活的运行器上花在加载上 | 带远程缓存的 Bazel | 链接（第 8 章）和测试运行[^bazel-test-spawn]都是被缓存的动作；修改波及的链接和测试在两种工具下都会重新运行，在笔者的测量中 Bazel 更慢（第 5 章和第 8 章）；热的服务进程把图保存在内存中，但新的服务进程要加载并分析所有内容（第 6 章） | 把 `go test` 的包分到多个并行作业中 |
 | 含生成代码的 Go | 生成文件已提交到仓库时用 go 命令；生成很慢或生成结果会过时则用 Bazel | Bazel 把生成器作为被缓存的动作运行（第 3 章） | 把生成文件提交到仓库；在 CI 中重新生成并比较差异 |
 | 使用 cgo 的 Go | 两者皆可，但每台机器使用同一个 C 编译器；在 Bazel 下使用固定的 C 工具链（第 3 章） | C 编译器的版本会进入 go 命令的动作 ID；[^go-actionid-cgo]Bazel 不追踪工作区之外的编译器[^bazel-cache-issues] | 所有机器使用同一个构建镜像 |
 | 同一仓库中 Go 与其他语言并存 | Bazel | 跨语言的同一个声明式的图；go 命令只构建 Go 包[^go-about] | 先在一个服务上使用 Gazelle，以评估维护 BUILD 文件的代价 |
 | 一次构建超出一台机器的能力 | 带远程执行的 Bazel | 并行度受机器池而非单台机器的核心数限制；[^bazel-rbe]关键路径仍然限制构建时间 | 缩短关键路径；让二进制保持较小（第 5 章） |
-| 封闭的发布构建 | 不使用 cgo 的 Go：go 命令；含 C 或生成器：Bazel，并使用固定的 C 工具链 | 没有 `CGO_ENABLED=0` 时，主机上的 C 编译器可能进入构建；[^go-cgo-default]Bazel 把生成器和注册的 C 工具链声明为输入（第 3 章） | `-trimpath`、`CGO_ENABLED=0` 和固定的 Go 版本；构建两次并比较 |
+| 封闭的发布构建 | 不使用 cgo 的 Go：go 命令；含 C 或生成器：Bazel，并使用固定的 C 工具链 | 没有 `CGO_ENABLED=0` 时，主机上的 C 编译器可能进入构建；[^go-cgo-default]没有 `-buildvcs=true` 时，缺少 `git` 会让提交戳记被悄悄丢弃；[^go-buildvcs]Bazel 把生成器和注册的 C 工具链声明为输入（第 3 章） | `-trimpath`、`-buildvcs=true`、`CGO_ENABLED=0` 和固定的 Go 版本；构建两次并比较 |
 
 ## 一条迁移路径
 
@@ -83,31 +84,29 @@ Bazel 的代价（第 3 章和第 6 章）：BUILD 文件，它是对图的第�
 Bazel 的 Maven 迁移指南建议同时运行两个构建工具，直到团队、CI 和其他系统都完成迁移。[^bazel-migrate]
 笔者建议按以下顺序进行：
 
-1. **生成 BUILD 文件**：配置 rules_go 和 Gazelle，并运行 `bazel run //:gazelle`
+1. **生成 BUILD 文件**：配置 rules_go（Bazel 的 Go 规则）和 Gazelle，并运行 `bazel run //:gazelle`
    （第 2 章）。[^rg-gazelle]
 2. **在 CI 中用两种方式构建**：运行 `bazel test //...`，同时对不需要 Bazel 专属输入的包运行
    `go vet` 和 `go test`（第 3 章）。要求 Gazelle 的 diff 为空：遇到过时的 BUILD 文件时，
    它以状态码 1 退出，[^gz-diff]因此每个变更都会带上相应的 BUILD 文件更新。
 3. **在 CI 依赖 Bazel 之前共享缓存**，使 CI 的运行不从冷状态开始。Bazel 的文档建议只让 CI 写入：
    每台机器都设置 `--remote_cache`，CI 之外的机器再加上 `--remote_upload_local_results=false`。[^bazel-cache-rw]
-   如果使用 cgo，或在 macOS 上链接，先固定 C 工具链（第 3 章）。
+   如果使用 cgo、竞态检测器，或在 macOS 上链接，先固定 C 工具链（第 3 章）。
 4. **把 Bazel 设为 CI 的必需检查**，等 Go 的语言服务器 gopls 能通过 Bazel 工作之后，
    再迁移笔记本电脑（第 2 章）。
 5. **最后加入远程执行**（`--remote_executor`），[^bazel-remote-executor]并且只在构建等待的是核心
    而不是关键路径时（第 1 章和第 5 章），或者某些动作需要更大的机器时（第 9 章），才这样做。
 
-在笔者看来，在第 4 步之前，中途停止的代价只是 BUILD 文件、Gazelle 检查和缓存服务器。
+在笔者看来，在第 4 步之前，中途停止的代价只是 BUILD 文件、测试改动、Gazelle 检查和缓存服务器。
 
 ## 规模变大时意味着什么
 
 - 先找出 CI 时间花在哪里：把加载、编译、链接和测试拆成单独的 CI 步骤分别计时；在 Bazel 下，
   读剖面中的关键路径（第 9 章）。
-- 先尝试 `GOCACHEPROG` 存储：这一步可以撤销，对编译也足够。Go 只提供协议，
-  因此要为一个程序和一个存储留出预算。
+- 先尝试 `GOCACHEPROG` 存储：这一步可以撤销，对编译也足够。要为一个程序和一个存储留出预算。
 - 需要在全新检出之间共享链接与测试结果、图中有其他语言，或执行超出一台机器时，选择 Bazel；
   笔记本电脑上的单个模块则不必。
-- 让 CI 运行器及其 Bazel 服务进程长期运行：新的服务进程在第一次缓存命中之前，
-  要加载并分析所有内容（第 6 章）。
+- 让 CI 运行器及其 Bazel 服务进程长期运行：新的服务进程要重新加载并分析所有内容（第 6 章）。
 
 ## 参考文献
 
@@ -163,6 +162,16 @@ Bazel 的 Maven 迁移指南建议同时运行两个构建工具，直到团队�
 [^go-about]: Go，「About the go command」，「Configuration versus convention」一节：go
     命令「除 Go 包之外，不尝试构建任何东西」。
     <https://go.dev/doc/articles/go_command>
+[^go-buildvcs]: Go，`cmd/go/internal/work/build.go`，`-buildvcs` 标志：`false` 总是省略版本控制信息，
+    `true` 则在版本控制信息「因缺少工具而无法写入」时报错；`load/pkg.go`，`setBuildInfo`：在默认的
+    `auto` 下，缺少工具意味着「we should silently drop the VCS metadata」，而这些元数据记录了提交
+    （`vcs.revision`）；`work/exec.go`，`buildActionID`：这些元数据进入 main 包的动作 ID。因此
+    `true` 让缺少 `git` 成为一个错误，而不是产出另一个二进制；`false` 去掉提交戳记，新的提交就不再让
+    每个二进制重新链接。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2577-L2582>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L359>
 [^go-cgo-default]: Go，`cmd/go/internal/cfg/cfg.go`，`defaultContext`：「starting in Go 1.20 …
     if CC is unset and the default C compiler we'd look for is not in the PATH, we automatically
     default cgo to off」，
