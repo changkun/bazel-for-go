@@ -74,7 +74,7 @@ build`,[^go-noexe] while Bazel caches a link like any other action.[^rules-go-ac
 
 GOCACHE, the go command's build cache, belongs to one user on one machine.[^go-defaultdir] Since
 Go 1.24,[^go124] `GOCACHEPROG` can hand it to a program that stores entries anywhere; the keys
-stay the same, so without `-trimpath` a checkout at another path misses, and binaries are not
+stay the same, so without `-trimpath` a checkout at another path misses; binaries are never
 stored.[^go-cacheprog][^go-noexe-prog] Bazel runs every action in the execroot, where every
 input and output has a fixed relative path, so its keys ignore where the checkout lies unless a
 rule writes an absolute path into a command.[^bazel-path-resolver] Its local action cache serves
@@ -96,8 +96,8 @@ and those local actions need.[^bazel-bwob]
 
 ## End to end
 
-Table 8.1: Wall time in seconds, at 1,000, 3,000 and 10,000 packages: medians of three runs; the
-cold build, test and fresh checkout ran once.[^bench]
+Table 8.1: Wall time in seconds: medians of three runs; the cold build, test and fresh checkout
+ran once; tests did not run at 10,000.[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
@@ -132,7 +132,7 @@ its most widely imported package. The builds are `go build -o <dir> ./...` and
   compares file times.
 - **Edits to `core`:** after a body or an API edit, the go command recompiles one level of
   importers more than Bazel; both relink. At 10,000 packages Bazel's one compile and 100 slower
-  links (Chapter 5) outlasted the go command's 2,724 compiles and 100 links.
+  links outlasted the go command's 2,724 compiles and 100 links.[^bench-links]
 - **Test after the body edit:** both rerun every test whose binary contains `core`, since each
   keys a test result by its binary.[^go-testcache][^bazel-cache-tests] In our view, the `.x`
   saves compiles here, not links or test runs. Bazel's first-run links and test runs were slower
@@ -333,7 +333,8 @@ checks every action against the action cache again.
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L519-L533>
 [^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
-    configurations `n1000` and `n3000`; Appendix A describes the repository and the harness.
+    configurations `n1000`, `n3000` and `n10000`; Appendix A describes the repository and the
+    harness.
     [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
 [^go-no-prebuilt-std]: Go 1.20 release notes, "Go command": "The directory `$GOROOT/pkg` no
     longer stores pre-compiled package archives for the standard library".
@@ -346,6 +347,13 @@ checks every action against the action cache again.
     `go build -trimpath`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
+[^bench-links]: This book's measurements at 10,000 packages: in the cold builds a binary's link
+    took a median of 32 s under Bazel and 19 s under the go command; in Bazel's first body edit,
+    41 s. The two tools ran at this size an hour apart, on a machine shared with other work
+    (Appendix A).
+    [n10000-bazel-cold.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz),
+    [n10000-bazel-core-body.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz),
+    [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)
 [^go-testcache]: Go, `cmd/go/internal/test/test.go`, `tryCacheWithID`: the test ID uses the
     link's inputs as a proxy for the test binary.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1882-L1909>
