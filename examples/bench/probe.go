@@ -46,9 +46,9 @@ func cmdToolexec(args []string) error {
 			"config":  os.Getenv("BENCH_CONFIG"),
 			"tool":    name,
 			"target":  target(name, targs),
-			"wall_ms": wall.Milliseconds(),
-			"user_ms": time.Duration(ru.Utime.Nano()).Milliseconds(),
-			"sys_ms":  time.Duration(ru.Stime.Nano()).Milliseconds(),
+			"wall_ms": ms(wall),
+			"user_ms": ms(time.Duration(ru.Utime.Nano())),
+			"sys_ms":  ms(time.Duration(ru.Stime.Nano())),
 			"maxrss":  maxrss,
 			"c":       flagValue(targs, "-c"),
 		}
@@ -61,6 +61,9 @@ func cmdToolexec(args []string) error {
 	}
 	return exitWith(err)
 }
+
+// ms reports d in milliseconds to the microsecond, so short tools do not round to zero.
+func ms(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
 
 func exitWith(err error) error {
 	if ee, ok := err.(*exec.ExitError); ok {
