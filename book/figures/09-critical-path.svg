@@ -86,7 +86,7 @@
   </g>
   <g class="f91-a8">
     <rect class="f91-run" x="59" y="208" width="45.2" height="38" rx="4"/>
-    <text x="116.2" y="224">compile core 0.06 s, then one link 2.26 s</text>
+    <text x="116.2" y="224">compile core 0.05 s, then one link 2.26 s</text>
     <text x="116.2" y="240" class="f91-sm">core's importers hit the action cache</text>
   </g>
 
