@@ -11,8 +11,8 @@ It uses Go 1.27.3, Bazel 9.3.2, rules_go 0.65.0 (Bazel's rules for Go) and Gazel
 Part I names six decisions that shape a build system and models build time. Part II sets up
 Bazel for Go and lists its constraints. Part III explains the two designs and compares them.
 Part IV optimizes and decides. Appendix A holds the measurements. Each chapter opens with a short
-film and figures, ends with "What this means at scale", and links every claim to its source;
-our own views are marked. Short of time, read Chapters 1, 8 and 10.
+film, ends with "What this means at scale", and links every claim to its source; our own views
+are marked. Short of time, read Chapters 1, 8 and 10.
 
 ## The answer on one page
 
@@ -41,7 +41,7 @@ reloading and replanning the build after each server start (Chapters 3 and 6).
 
 In our analysis, the go command's work per run grows with the repository rather than the
 change; Bazel's overheads grow with the graph (Chapter 8). If continuous integration (CI) time goes to
-compiling, we recommend `-trimpath` (dropping file paths from the output), one Go version, and a cache
+compiling, we recommend `-trimpath` (dropping file paths), one Go version, and a cache
 shared through `GOCACHEPROG` (the go command's hook for an external cache), to share compiles,
 not links, across machines (Chapter 10). In our view, Bazel pays off once many machines building
 the same code spend their time on links, tests or generators; long-lived runners spend it
