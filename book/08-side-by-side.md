@@ -1,7 +1,6 @@
 # 8. The designs side by side
 
-This chapter sets the go command's and Bazel's answers to Chapter 1's six decisions side by
-side, with what each costs as the repository grows.
+This chapter compares the go command's and Bazel's answers to Chapter 1's six decisions, with what each costs as the repository grows.
 
 ## Six decisions, two answers
 
@@ -86,10 +85,11 @@ match.[^bazel-reapi][^bazel-cache-issues]
 ### 6. Execution
 
 The go command runs every action as a child process on one machine, `-p` at a time, by default
-one per core.[^go-do] One machine's cores then set the floor of T_exec, the time to run the
-actions that missed the cache. Bazel runs actions locally by default; with remote execution it
-sends them to a pool of machines, uploading the inputs the remote cache
-lacks,[^bazel-reapi-exec] so the pool bounds parallelism. That adds T_transfer, the time to move
+one per core.[^go-do] One machine's cores then set the floor of T_exec, the time to run
+actions that missed the cache. Bazel runs actions locally by default; remote execution sends
+them to a pool of machines, uploading the inputs the remote cache lacks,[^bazel-reapi-exec] so,
+once `--jobs` (by default the local core count) is raised, the pool bounds
+parallelism.[^bazel-jobs] That adds T_transfer, the time to move
 bytes to and from remote machines and caches, which Build without the Bytes (default since
 Bazel 7.0) limits by downloading only the outputs asked for on the command line
 and those local actions need.[^bazel-bwob]
@@ -220,13 +220,13 @@ checks every action against the action cache again.
     `createRegularFileStateValueFromPath`, and `lib/actions/FileContentsProxy.java`: file
     metadata stands in for contents unless the file system offers a fast digest.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L147>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L21-L38>
 [^bazel-watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option (default
     `false`) and `EVERYTHING_MODIFIED`, used when it is off; `lib/skyframe/SkyframeExecutor.java`,
     `handleDiffsWithMissingDiffInformation`, which then checks every known file.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3941-L3958>
 [^bazel-output-check]: Bazel, `lib/pkgcache/PackageOptions.java`,
     `--experimental_check_output_files`, default `true`; `lib/buildtool/ExecutionTool.java`, which
     skips the check only when it is false; `lib/vfs/LocalOutputService.java`, `startBuild`, which
@@ -268,10 +268,10 @@ checks every action against the action cache again.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L391-L404>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/writer.go#L848-L859>
 [^go-export-inline]: Go, `cmd/compile/internal/noder/linker.go`, `exportBody`: a body is
-    exported if the function is inlinable.
+    exported if the function is inlinable and declared in, or inlined into, the package.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L214-L251>
 [^go-export-ext]: Go, `cmd/compile/internal/noder/linker.go`, `relocFuncExt`: the
-    escape-analysis tag of each parameter and the inlining cost of each function.
+    escape-analysis tag of each parameter and the inlining cost of each inlinable function.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/linker.go#L296-L307>
 [^go-export-reloc]: Go, `cmd/compile/internal/noder/linker.go`, the `linker` comment ("a single,
     self-contained export data file") and `relocObj`, which copies an imported object's
@@ -328,6 +328,10 @@ checks every action against the action cache again.
     services `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
+[^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs` (default `auto`) and
+    `JobsConverter`, which turns `auto` into the host's CPU count.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
 [^bazel-bwob]: Bazel 7.0.0 release notes; `lib/remote/options/RemoteOptions.java`,
     `--remote_download_outputs`, default `toplevel`.
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>

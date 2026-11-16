@@ -248,7 +248,7 @@ export default {
         { say: "Change: hash every input again, compare each file's saved metadata, or be told by the operating system." },
         { say: "Key: which part of a dependency enters its dependents' keys: its sources, its whole output, or only the part they read." },
         { say: "Sharing: one process, one machine, or a team and its continuous integration (CI) jobs, if builds are hermetic and keys match across machines." },
-        { say: "Execution: local, or on a remote pool that raises the limit on parallelism and adds time to move bytes.", hold: 1.2 },
+        { say: "Execution: local, or on a remote pool that can raise the limit on parallelism and adds time to move bytes.", hold: 0.9 },
       ],
       draw(s) {
         s.fit(88, 100, 1160, 905, 0.84);

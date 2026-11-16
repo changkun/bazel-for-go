@@ -47,7 +47,7 @@ export default {
   scenes: [
     {
       // The chapter's opening, over Figure 8.1.
-      lines: [{ say: "This chapter sets the go command's and Bazel's answers to Chapter 1's six decisions side by side.", hold: 0.8 }],
+      lines: [{ say: "This chapter compares the go command's and Bazel's answers to Chapter 1's six decisions.", hold: 0.8 }],
       draw(s) {
         s.fit(0, 0, 1000, 808);
         const X0 = 420, X1 = 940;
@@ -524,7 +524,7 @@ export default {
       lines: [
         "Execution: the go command runs actions on one machine, `-p` at a time, by default one per CPU core.",
         "One machine's cores then set the floor of `T_exec`, the time to run what missed the cache.",
-        "With remote execution, Bazel sends actions to a pool of machines, so the pool bounds parallelism.",
+        "With remote execution, Bazel sends actions to a pool of machines; once `--jobs` is raised, the pool bounds parallelism.",
         { say: "That adds `T_transfer`, the time to move bytes, which Build without the Bytes limits by downloading only the outputs asked for and those local actions need.", hold: 0.8 },
       ],
       draw(s) {

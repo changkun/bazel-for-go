@@ -85,8 +85,8 @@ builds are hermetic and keys match across machines.[^bazel-remote-caching]
 ### 6. Execution
 
 Actions can run on the machine that started the build or on a pool of remote machines. Remote
-execution raises the limit on parallelism from one machine's cores to the size of the
-pool,[^bazel-rbe] and adds time to move inputs and outputs over the network.[^bazel-reapi-exec]
+execution raises the limit on parallelism from one machine's cores to the size of the pool (in
+Bazel, once `--jobs`, by default the local core count, is raised),[^bazel-rbe][^bazel-jobs] and adds time to move inputs and outputs over the network.[^bazel-reapi-exec]
 Each action must then declare every input, because the remote machine has nothing
 else.[^bazel-remote-execution][^bazel-reapi-exec]
 
@@ -180,6 +180,10 @@ for a large repository built on many machines; Chapters 4 to 8 show why.
     <https://github.com/snowleopard/build/releases/download/icfp-final/build-systems.pdf>)
 [^bazel-rbe]: Bazel, "Remote Execution Overview".
     <https://bazel.build/remote/rbe>
+[^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs` (default `auto`) and
+    `JobsConverter`, which turns `auto` into the host's CPU count.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
 [^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, service
     `Execution`, `Execute`: "the client must first upload all of the inputs"; message `Action`,
     `input_root_digest`: the input files available on the build machine.
