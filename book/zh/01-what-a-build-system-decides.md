@@ -1,5 +1,5 @@
 # 1. 构建系统决定什么
-<!-- 译自 d9d1c21 -->
+<!-- 译自 b8f649d -->
 
 go 命令与 Bazel 都把 Go 源码变成二进制，但二者在六个地方做出了不同的选择。
 
@@ -13,7 +13,7 @@ go 命令与 Bazel 都把 Go 源码变成二进制，但二者在六个地方做
 - **动作**（action）是一个步骤：一个工具的一次运行，例如编译一个包，其输入与输出都是已知的。[^bazel-actions]
   动作构成一张**图**（graph，图 1.1）：边从每个动作指向读取其输出的那些动作。
 - 动作的**键**（key）是所有可能改变其输出的因素的哈希：它的输入文件、它从先前动作读取的内容、工具、
-  命令行标志以及环境。
+  命令行标志以及环境。[^bazel-actions]
 - **缓存命中**（cache hit）指该键下已经存有输出，因此跳过这个动作。[^bazel-actions]
 - 如果无论机器上还有什么，相同的输入总是给出相同的输出，构建就是**封闭的**（hermetic）。[^bazel-hermetic]
   只有这样，已存储的输出才能代替动作的运行。[^bazel-remote-caching]
@@ -47,7 +47,7 @@ go 命令和 rules_go（Bazel 对 Go 的支持）也都为每个包生成一个�
 图可以从源码推导出来，go 命令就是根据导入语句推导的；[^go-command]
 也可以在构建文件中声明，Bazel 要求这样做。[^bazel-build-files]
 推导出的图无需维护，但只能描述语言本身能表达的内容；[^go-command]
-go 命令每次运行都会重新推导它（第 4 章）。声明式的图可以描述任何东西，例如代码生成器或 C 库，
+go 命令每次运行都会重新推导它（第 4 章）。声明式的图可以描述任何东西，例如代码生成器或 C 库，[^bazel-build-files]
 并且可以由长期运行的进程保存在内存中。[^bazel-server]代价是必须有人让它与代码保持同步。
 
 ### 3. 变化
@@ -62,7 +62,7 @@ go 命令每次运行都会重新推导它（第 4 章）。声明式的图可�
 键若遗漏了某个输入，就会放过过时的输出，造成错误命中。[^bazel-cache-issues]
 键若包含了不影响输出的东西，例如在不同机器上取值不同的环境变量，就会造成未命中。[^bazel-cache-issues]
 一个更微妙的选择是：依赖的哪一部分进入其依赖者的键。若是依赖的源码，就不存在提前截断。[^alacarte-traces]
-若是依赖的全部输出，该输出的任何变化都会让每个依赖者重新运行。若只是依赖者读取的那一部分，
+若是依赖的全部输出，该输出的任何变化都会让每个直接依赖者重新运行。若只是依赖者读取的那一部分，
 其他部分的变化不会让任何依赖者重新运行（第 7 章）。
 
 ### 5. 共享
@@ -74,12 +74,12 @@ go 命令每次运行都会重新推导它（第 4 章）。声明式的图可�
 
 动作可以在发起构建的机器上运行，也可以在一个远程机器池上运行。
 远程执行把并行度的上限从一台机器的核心数提高到机器池的规模，[^bazel-rbe]
-同时也增加了通过网络传输输入与输出的时间。此时每个动作都必须声明全部输入，
-因为远程机器上除此之外一无所有。[^bazel-remote-execution]
+同时也增加了通过网络传输输入与输出的时间。[^bazel-reapi-exec]此时每个动作都必须声明全部输入，
+因为远程机器上除此之外一无所有。[^bazel-remote-execution][^bazel-reapi-exec]
 
 ## 成本模型
 
-![图 1.4：一次构建中各部分时间占比的示意：在有长期运行进程的笔记本电脑上做一次修改，以及一台全新的 CI 运行器。](../figures/01-cost.svg)
+![图 1.4：一次构建中各部分时间占比的示意：在没有长期运行进程的笔记本电脑上做一次修改，以及一台全新的 CI 运行器。](../figures/01-cost.svg)
 
 我们用四项为一次构建的时间建模：
 
@@ -106,7 +106,7 @@ T ≤ T_graph + T_detect + T_exec + T_transfer
 | 多种语言与生成的代码 | 图之外未被缓存的步骤，不计入 T | 能声明任何动作的图 |
 
 图 1.4 描绘了笔者的预期。在缓存中保有上次构建结果的笔记本电脑上，一次修改只会重新运行少数动作，
-因此找出变化占了很大比重；如果没有长期运行的进程保存图，获取图也占很大比重。
+因此在没有长期运行的进程时，获取图与找出变化占主导；有这样的进程时，占主导的是运行动作。
 没有共享缓存的全新 CI 运行器要从头获取图，[^bazel-cache-issues]并运行每个动作，因此 T_exec 占主导；
 在机群范围内，共享结果可以降低这一项。[^bazel-remote-caching]在笔者看来，go 命令是为这样的场景设计的：
 单个工程师、单台机器、仓库小到每次运行都能重新扫描；Bazel 则是为在许多机器上构建的大型仓库设计的。
@@ -163,5 +163,10 @@ T ≤ T_graph + T_detect + T_exec + T_transfer
     <https://github.com/snowleopard/build/releases/download/icfp-final/build-systems.pdf>）
 [^bazel-rbe]: Bazel，「Remote Execution Overview」。
     <https://bazel.build/remote/rbe>
+[^bazel-reapi-exec]: Remote Execution API，Bazel 中收录的 `remote_execution.proto`，服务
+    `Execution` 的 `Execute`：「客户端必须先上传全部输入」；消息 `Action` 的
+    `input_root_digest`：在构建机器上可用的输入文件。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L614-L621>
 [^bazel-remote-execution]: Bazel，「Distributed Builds」，「Remote execution」一节。
     <https://bazel.build/basics/distributed-builds#remote-execution>
