@@ -9,7 +9,7 @@ wrapper (`-toolexec` and `-exec`) that recorded each process's wall time, CPU ti
 system) and peak RSS (resident set size: the most physical memory it held at once). The
 synthetic repository has 1,000 packages of about 690 lines each in 12 layers (Appendix A), built
 on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta] Figure 5.3 and the timings of whole
-actions come instead from the benchmark's cold builds, run without the wrapper.[^m-results]
+actions come instead from the benchmark's own runs, without the wrapper.[^m-graph][^m-profile]
 
 ## compile: one process per package
 
