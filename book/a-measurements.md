@@ -6,7 +6,7 @@ records each command.[^a-main]
 
 ## The synthetic repository
 
-![Figure A.1: The generated import graph at 1,000 packages. Packages import only from lower layers, binaries from the top one.](figures/a-repository.svg)
+![Figure A.1: The generated import graph at 1,000 packages. Packages import only from lower layers, or `core`; binaries from the top one.](figures/a-repository.svg)
 
 `bench gen` writes one Go module with the BUILD files Gazelle would write, so both
 tools build the same tree; a given shape always produces the same bytes.[^a-gen]
@@ -226,8 +226,8 @@ compiles and 100 links in both runs (Table A.7).
 ## Limits
 
 - **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6,[^a-meta] shared with other work, such as `go test -race`. Table A.5's variants were
-  rerun under less load.[^a-results]
+  26.6,[^a-meta] shared with our other work, such as `go test -race`.[^a-second] Table A.5's
+  variants were rerun under less load.[^a-results]
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
   nothing and one code generator. We expect the results' shape, more than their numbers, to
   carry over to real repositories.
@@ -238,8 +238,8 @@ compiles and 100 links in both runs (Table A.7).
 - **Whole milliseconds:** the first run's probe truncated each process's times to whole
   milliseconds, so the shortest processes read low; it now keeps microseconds.[^a-probe]
 - **Few runs:** at most three per scenario. A second run of `n1000` and `n10000` (Table A.7)
-  moved three-run medians by up to 1.25 times and other cells by up to 1.7, except the go
-  command's no-op and leaf edit at 10,000 packages: 2.4 and 3.7 times.[^a-second]
+  moved three-run medians by up to 1.25 times, except the go command's no-op and leaf edit at
+  10,000 packages (2.4 and 3.7), and other cells by up to 1.7.[^a-second]
 
 ## Reproduce
 
@@ -251,18 +251,23 @@ GOBIN="$PWD/.tools/bin" go install github.com/bazelbuild/bazelisk@v1.30.0
 cd examples/bench
 go build -o ../../.tools/bin/bench .
 ../../.tools/bin/bench gen -pkgs 1000 -o /tmp/synth    # one repository, to inspect
+out=results/new    # bench run appends to -out's records; the book's are in results/2026-11-16*
+flags=(-reps 3 -work work -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)"
+       -bazel "$PWD/../../.tools/bin/bazelisk")
 ../../.tools/bin/bench run -configs n1000,n100,n3000,n1000-wide,n1000-deep,n1000-local,n10000 \
-    -reps 3 -work work -out results/2026-11-16 \
-    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+    "${flags[@]}" -out $out
 ../../.tools/bin/bench run -configs n1000-wide,n1000-deep,n1000-local \
-    -reps 3 -work work -out results/2026-11-16-variants \
-    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
-for c in n1000 n10000; do   # the second run
-  ../../.tools/bin/bench run -configs $c -reps 3 -work work -out results/2026-11-16-$c-check \
-      -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+    "${flags[@]}" -out $out-variants
+for c in n1000 n10000; do   # the second run, sampling the machine's load every 30 s
+  mkdir -p $out-$c-check
+  while :; do
+    echo "$(date +%T) $(sysctl -n vm.loadavg) cpu%=$(ps -Ao pcpu= | awk '{s+=$1} END {printf "%.0f", s}')"
+    sleep 30
+  done > $out-$c-check/load.log &
+  ../../.tools/bin/bench run -configs $c "${flags[@]}" -out $out-$c-check
+  kill $!
 done
-uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants \
-    --second results/2026-11-16-n1000-check results/2026-11-16-n10000-check
+uv run analyze.py --appendix $out $out-variants --second $out-n1000-check $out-n10000-check
 ```
 
 `bench run` writes the records, action graphs and profiles to the `-out` directory, and each
@@ -312,9 +317,11 @@ tables and redraws its figures.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/toolchain/select.go#L271-L277>
 [^rg-from-file]: rules_go, `go/private/go_mod.bzl`, `_version_from_go_file`, which
     `version_from_go_mod` calls; `examples/bench/gen.go`, `Repo.write`, writes `go.mod` and
-    `MODULE.bazel`.
+    `MODULE.bazel`, and `examples/bench/templates.go`, `moduleBazel`, which calls
+    `go_sdk.from_file`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_mod.bzl#L76-L79>
-    [gen.go](../examples/bench/gen.go#L194-L197)
+    [gen.go](../examples/bench/gen.go#L194-L197),
+    [templates.go](../examples/bench/templates.go#L244-L250)
 [^a-bazel]: This book's harness, `examples/bench/run.go`, `bazelCmd.args` and
     `harness.runBazel`, and `examples/bench/templates.go`, `bazelrc`.
     [run.go](../examples/bench/run.go#L474-L522),
@@ -360,7 +367,8 @@ tables and redraws its figures.
     [`2026-11-16-n10000-check/results.jsonl`](../examples/bench/results/2026-11-16-n10000-check/results.jsonl),
     [`load.log`](../examples/bench/results/2026-11-16-n10000-check/load.log).
     The `System load average` counter of Bazel's cold-build profiles averaged 21.4 and 36.5 at
-    1,000 packages, 38.6 and 29.6 at 10,000, in the first and second runs.
+    1,000 packages, 38.6 and 29.6 at 10,000, in the first and second runs. In both runs, at both
+    sizes, the go command ran before Bazel.
 [^a-meta]: This book's measurements, the machine and Go version:
     [`examples/bench/results/2026-11-16/meta.json`](../examples/bench/results/2026-11-16/meta.json).
 [^apple-xprotect]: Apple, *Apple Platform Security*, "Protecting against malware in macOS",

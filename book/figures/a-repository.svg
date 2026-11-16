@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" role="img" aria-labelledby="fa1-title" class="fa1">
-  <title id="fa1-title">The generated repository at 1,000 packages: binaries import three packages of the top layer; each package imports three packages from the layer below and one from any lower layer; some packages also import core, a package in layer 0.</title>
+  <title id="fa1-title">The generated repository at 1,000 packages: binaries import three packages of the top layer; each package above layer 0 imports up to three packages from the layer below and one from any lower layer; some packages also import core, a package in layer 0.</title>
   <style>
     .fa1 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .fa1 .fa1-sm { font-size: 13px; opacity: 0.8; }
