@@ -599,7 +599,7 @@ export default {
         // Figure 8.2.
         s.fit(0, 0, 1048, 640);
         const COLX = [206, 488, 770], CW = 268, CH = 124, ROWY = [104, 244, 384];
-        const terms = [["T_graph", "find the graph"], ["T_detect", "find what changed"], ["T_exec", "run what missed"]];
+        const terms = [["T_graph", "obtain the graph"], ["T_detect", "find what changed"], ["T_exec", "run what missed"]];
         const heads = terms.map(([term, words], c) => {
           const g = s.group();
           g.text(COLX[c] + CW / 2, 34, `\`${term}\``, { size: 32, weight: 600, anchor: "middle" });
