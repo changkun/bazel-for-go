@@ -53,10 +53,15 @@ output) is set, it also hashes the package's absolute directory, because the obj
 record that directory in its debug information.[^go-actionid-dir]
 
 So a cache filled at one checkout path gives no hits at another. In our measurements on 1,000
-packages, a second checkout with a warm GOCACHE recompiled all 891 of its own packages in the
-build; when both checkouts built with `-trimpath`, it recompiled none.[^bench] And every
-process hashes file contents afresh, remembering hashes only until it exits,[^go-filehash] so
-even a build with nothing to do reads every source file in full.
+packages (Appendix A), a second checkout with a warm GOCACHE recompiled all 891 of its own
+packages in the build; when both checkouts built with `-trimpath`, it recompiled none.[^bench]
+And every process hashes file contents afresh, remembering hashes only until it
+exits,[^go-filehash] so even a build with nothing to do reads every source file in full.
+
+A main package's action ID also covers the build information stamped into its
+binary,[^go-modinfo] which by default includes the commit and whether the checkout has
+uncommitted changes (`-buildvcs`).[^go-buildvcs] So each commit recompiles every main package
+and relinks every binary.
 
 ## Content IDs and early cutoff
 
@@ -72,10 +77,9 @@ in `bin/` whose build ID starts with the action ID it just computed, it skips th
 link.[^go-usecache] For `go build`, that is the only way to skip a link, because GOCACHE does
 not store binaries: they are large and seldom reused.[^go-noexe] Go 1.24 made one exception, for
 binaries built by `go run` and `go tool`.[^go124] Without `-o`, `go build ./...` links every
-main package into a temporary directory and discards the result.[^go-discard] In our
-measurements, a `go build ./...` with nothing to do on 1,000 packages (the synthetic
-repository of Appendix A) compiled nothing and
-relinked all 11 binaries.[^bench]
+main package into a temporary directory and discards the result.[^go-discard] On 1,000
+packages, a `go build ./...` with nothing to do compiled nothing and relinked all 11
+binaries.[^bench]
 
 The content ID gives an early cutoff: a step that reruns with the same output does not rerun its
 dependents. The cutoff is coarse, because the content ID covers the whole archive, export data
@@ -88,11 +92,10 @@ importer's object code records only a fingerprint, a hash, of each import's expo
 data,[^go-fingerprint] so the packages above them hit the cache. Every binary that contains
 `core` relinks, because a link's action ID includes the content ID of every package in the
 binary.[^go-linkactionid] On 1,000 packages, such an edit to the most widely imported package
-recompiled 299 packages, the package and its direct importers, and relinked all 10 binaries that
-contain it. Adding an exported function recompiled 712: the new fingerprint changes the direct
-importers' archives too, so their importers recompile, and the change stops there because the
-direct importers' export data did not change.[^bench] rules_go stops the body edit at `core`
-(Chapter 7).
+recompiled 299 packages and relinked all 10 binaries that contain it. Adding an exported
+function recompiled 712: the new fingerprint changes the direct importers' archives too, so
+their importers recompile, and it stops there, since the direct importers' export data did not
+change.[^bench] rules_go stops the body edit at `core` (Chapter 7).
 
 ## The cache
 
@@ -143,6 +146,7 @@ module, or depends on the time is cached anyway.
 | Graph derived from imports | No build files; the graph is never stale | Every command lists and checks every package it loads |
 | No persistent process | Nothing to start, size or restart | Every run hashes every source file again |
 | Directory in the action ID | Correct paths in debug information | Caches do not carry across checkout paths |
+| Commit stamped into binaries | Each binary names the commit it came from | Each commit recompiles every main package and relinks every binary |
 | Content ID of the whole archive | One cheap key per dependency | Any edit recompiles all direct importers; an export-data change, their importers too |
 | Links not cached | A smaller cache | Every binary that contains a change relinks, on every machine |
 | One machine, `-p` processes | No coordination | Throughput capped by one machine |
@@ -158,10 +162,6 @@ module, or depends on the time is cached anyway.
   different path misses on every package in the repository.
 - We recommend `go build -o <dir>`, keeping the directory. Without it, every binary is relinked
   on every build.
-- An edit to a widely imported package recompiles all its direct importers, and their importers
-  too if it changes the package's export data; either way every binary that contains it relinks.
-- A `GOCACHEPROG` program can share compiled packages across machines, but not binaries, and not
-  across checkout paths without `-trimpath`.
 
 ## References
 
@@ -185,6 +185,14 @@ module, or depends on the time is cached anyway.
 [^go-filehash]: Go, `cmd/go/internal/cache/hash.go`, `FileHash`: hashes the whole file and
     remembers the result in a map that lives as long as the process.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L158>
+
+[^go-modinfo]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`, the `modinfo` line.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
+
+[^go-buildvcs]: Go, `cmd/go/internal/work/build.go`, the `-buildvcs` flag's help; `load/pkg.go`,
+    `setBuildInfo`, the `vcs.revision`, `vcs.time` and `vcs.modified` settings.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>,
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
 
 [^go-load]: Go, `cmd/go/internal/load/pkg.go`, `PackagesAndErrors`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2937>
