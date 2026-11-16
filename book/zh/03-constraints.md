@@ -174,7 +174,7 @@ $ bazel test //golden:golden_test
 `go_deps` 是第 2 章介绍的模块扩展，它复现了 go 命令模块处理的一部分。它应用根 `go.mod` 中的
 `replace` 指令，无论这些指令指向另一个模块版本还是本地目录；它忽略 `exclude` 指令，
 也无法把依赖固定到某个 Git 提交。[^gz-replace]它用 `go mod download` 下载每个模块，
-并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及调用者的 Git 与 SSH 设置，借助这些设置克隆私有模块；
+并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及调用者用于克隆私有模块的 Git 与 SSH 设置；
 调用者的值优先于 `MODULE.bazel` 中的 `go_deps.config(go_env = ...)`。[^gz-fetch-env]`go_env`
 不影响构建动作。[^rg-go-env]`go_deps` 忽略 `vendor/` 并获取每个模块；Gazelle 则可以改为在
 `vendor/` 中写入 BUILD 文件，并把导入解析到它们。[^gz-vendor]当某个依赖无法用 Gazelle
@@ -216,10 +216,10 @@ $ bazel test //golden:golden_test
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L74-L75>，
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1673>
 [^bazel-test-encyclopedia]: Bazel，「Test encyclopedia」：测试通过 runfiles 访问输入，
-    并从 `$TEST_SRCDIR/$TEST_WORKSPACE` 开始运行。
+    并在 `$TEST_SRCDIR/$TEST_WORKSPACE` 中启动。
     <https://bazel.build/reference/test-encyclopedia>
 [^rg-chdir]: rules_go，`go/tools/bzltestutil/chdir/init.go`，包注释与 `init`；
-    `go/private/rules/test.bzl`，`_go_test_impl`，它把目录设为测试所在的包。
+    `go/private/rules/test.bzl`，`_go_test_impl`，它把目录设为测试所在包的目录。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/bzltestutil/chdir/init.go#L19-L24>，
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/bzltestutil/chdir/init.go#L77-L106>，
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L112-L163>
