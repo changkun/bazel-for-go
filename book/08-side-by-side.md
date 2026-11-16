@@ -96,8 +96,8 @@ and those local actions need.[^bazel-bwob]
 
 ## End to end
 
-Table 8.1: Wall time in seconds: medians of three repetitions (cold build, test and fresh
-checkout: one; no tests at 10,000); ranges span two runs.[^bench]
+Table 8.1: Wall time in seconds: three-repetition medians (cold build, test, fresh checkout: one;
+no tests at 10,000); at 1,000 and 10,000, ranges span two runs.[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
@@ -330,10 +330,12 @@ checks every action against the action cache again.
     <https://bazel.build/remote/rbe>
 [^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs`, "the number of
     concurrent jobs to run", from 1 to 5,000, default `auto`, and `JobsConverter`, which turns
-    `auto` into `HOST_CPUS_SUPPLIER`; `lib/util/ResourceConverter.java`, `HOST_CPUS_SUPPLIER`, the
-    host's CPU count.
+    `auto` into `HOST_CPUS_SUPPLIER`, and `--experimental_async_execution`, under which "the number
+    of actions in flight is still capped with `--jobs`"; `lib/util/ResourceConverter.java`,
+    `HOST_CPUS_SUPPLIER`, the host's CPU count.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel,
     services `Execution` (`Execute`) and `ContentAddressableStorage` (`FindMissingBlobs`).

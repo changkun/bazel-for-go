@@ -208,6 +208,7 @@ Table A.7: Configurations measured twice, median seconds, first run / second run
 | `noop-cold-server` | — | 3.32 / 4.13 | — | 13.8 / 12.5 |
 | `analysis-cold-server` | — | 2.76 / 3.43 | — | 6.35 / 5.59 |
 | `clone-diskcache` | — | 9.45 / 5.92 | — | 11.5 / 12.0 |
+
 <!-- END -->
 
 The first `noop-discard` also
@@ -226,7 +227,7 @@ compiles and 100 links in both runs (Table A.7).
 ## Limits
 
 - **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6,[^a-meta] shared with our other work, such as `go test -race`.[^a-second] Table A.5's
+  26.6,[^a-meta] shared with our other work,[^a-second] such as `go test -race`. Table A.5's
   variants were rerun under less load.[^a-results]
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
   nothing and one code generator. We expect the results' shape, more than their numbers, to

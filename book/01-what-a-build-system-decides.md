@@ -86,7 +86,7 @@ builds are hermetic and keys match across machines.[^bazel-remote-caching]
 
 Actions can run on the machine that started the build or on a pool of remote machines. Remote
 execution raises the limit on parallelism from one machine's cores to the size of the pool (in
-Bazel, once `--jobs`, the limit on jobs run at once, by default the local core count, is raised),[^bazel-rbe][^bazel-jobs] and adds time to move inputs and outputs over the network.[^bazel-reapi-exec]
+Bazel, once `--jobs`, the limit on actions run at once, by default the local core count, is raised),[^bazel-rbe][^bazel-jobs] and adds time to move inputs and outputs over the network.[^bazel-reapi-exec]
 Each action must then declare every input, because the remote machine has nothing
 else.[^bazel-remote-execution][^bazel-reapi-exec]
 
@@ -182,10 +182,12 @@ for a large repository built on many machines; Chapters 4 to 8 show why.
     <https://bazel.build/remote/rbe>
 [^bazel-jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs`, "the number of
     concurrent jobs to run", from 1 to 5,000, default `auto`, and `JobsConverter`, which turns
-    `auto` into `HOST_CPUS_SUPPLIER`; `lib/util/ResourceConverter.java`, `HOST_CPUS_SUPPLIER`, the
-    host's CPU count.
+    `auto` into `HOST_CPUS_SUPPLIER`, and `--experimental_async_execution`, under which "the number
+    of actions in flight is still capped with `--jobs`"; `lib/util/ResourceConverter.java`,
+    `HOST_CPUS_SUPPLIER`, the host's CPU count.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 [^bazel-reapi-exec]: Remote Execution API, `remote_execution.proto` as vendored in Bazel, service
     `Execution`, `Execute`: "the client must first upload all of the inputs"; message `Action`,

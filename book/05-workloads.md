@@ -35,10 +35,11 @@ scheduler books each rules_go action, which declares no resources, as one CPU an
 most 108 under the go command; we did not measure the effect.
 
 A compile of one of our packages used a median of 61 ms of CPU and 45 MB, with `-c` between 4
-and 18.[^m-workload] Across them, CPU time was 1.0 to 1.3 times wall time.[^m-workload][^m-check] In our reading, the serial
+and 18.[^m-workload][^m-check] Their total CPU time was 1.0 to 1.3 times their total wall
+time.[^m-workload][^m-check] In our reading, the serial
 front end dominates small packages, and on a busy machine extra workers find no free core.
 With cores free, the back end does help: the runtime, the costliest compile, ran early with
-`-c=18`: its action used 2.05 s of CPU in 0.67 s,[^m-graph] and 302 MB.[^m-workload]
+`-c=18`: its action used 2.05 s of CPU in 0.67 s,[^m-graph][^m-check] and 302 MB.[^m-workload][^m-check]
 
 ## link: one process per binary
 
@@ -79,7 +80,7 @@ action.[^rules-go-cgo] Our repository has no cgo.
 ## Test binaries: a link plus a run
 
 Each package's tests are compiled, linked into a binary of their own and run. Our tests do
-little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload] The first
+little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload][^m-check] The first
 18 runs to finish, as many as run at once, each took about 0.22 s longer than the one
 before,[^m-workload][^m-check] and the timed `go test ./...` took 279 s for 1,000 binaries, 0.28 s
 each,[^m-results][^m-check] as if the runs waited in one queue outside the processes. macOS checks an app
@@ -110,7 +111,7 @@ wait for the one before, nor than its total CPU work divided by the cores. In th
 (Figure 5.3), the actions used 59 s of CPU, 3.3 s on 18 cores, and the critical path was 3.6 s,
 yet they spanned 5.7 s.[^m-graph][^m-check] The path starts in the standard library, where the runtime's
 compile action alone took 0.67 s, passes through `core`, one package in each of the 12 layers
-and a main package, and ends in a 0.91 s link. We read the gaps in the bar as waits while work
+and a main package, and ends in a 0.91 s link.[^m-graph][^m-check] We read the gaps in the bar as waits while work
 off the path held all 18 of the go command's action slots.
 
 Bazel's cold build had a longer path, 29.9 s, of which 24.2 s built rules_go's builder and the

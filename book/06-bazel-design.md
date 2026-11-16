@@ -194,8 +194,8 @@ results of the actions it runs.[^remote-caching] With remote execution it sends 
 an execution service instead: it uploads the inputs the CAS lacks, and an executor from the
 service's pool runs the command and stores the outputs in the CAS.[^rbe][^reapi-exec] An
 executor gets no file of the checkout outside the input root, which is why every input must be
-declared.[^reapi] Parallelism is then bounded by the pool, once `--jobs` (by default the local
-core count) is raised.[^jobs]
+declared.[^reapi] Parallelism is then bounded by the pool, once `--jobs`, the limit on actions
+run at once, by default the local core count, is raised.[^jobs]
 
 Since 7.0, Bazel by default downloads only the outputs of top-level targets and those that
 local actions need, and knows the rest by hash alone ("Build without the Bytes").[^bwob] The
@@ -397,12 +397,14 @@ incremental builds slower.[^memory]
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L198-L200>
 
 [^jobs]: Bazel, `lib/buildtool/BuildRequestOptions.java`, `--jobs` (default `auto`) and
-    `JobsConverter`, which turns `auto` into the host's CPU count; and
+    `JobsConverter`, which turns `auto` into `HOST_CPUS_SUPPLIER`, the host's CPU count
+    (`lib/util/ResourceConverter.java`); and
     `--experimental_async_execution` (default `false`), under which "the number of actions in
     flight is still capped with `--jobs`".
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/util/ResourceConverter.java#L51-L52>
 
 [^bwob]: Bazel 7.0.0 release notes, which also name `--remote_download_regex`;
     `lib/remote/options/RemoteOptions.java`, `--remote_download_outputs`, default `toplevel`.
