@@ -1,5 +1,5 @@
 # 4. go 命令的设计
-<!-- 译自 00c7717 -->
+<!-- 译自 375360f -->
 
 go 命令从导入语句推导构建图，以每个步骤输入的哈希作为该步骤的键，
 并把结果保存在每个用户各自的缓存中。第 8 章把其中的每个机制与 Bazel 的对应机制逐一比较。
@@ -50,7 +50,7 @@ go 命令首先把 `./...` 这样的模式转换为包。[^go-load]对每个目�
 它一个包也没有重新编译。[^bench]而且每个进程都会重新哈希文件内容，只在退出之前记住哈希值，[^go-filehash]
 因此即使是空构建（什么都不需要做的构建），也要完整读取每个源文件。
 
-main 包的动作 ID 还涵盖作为戳记写入其二进制的构建信息，[^go-modinfo]默认情况下，
+main 包的动作 ID 还涵盖作为戳记写入其二进制的构建信息，[^go-modinfo]在仓库中时，默认情况下，
 其中包括当前提交，以及检出中是否有未提交的修改（`-buildvcs`）。[^go-buildvcs]
 因此每个提交都会重新编译每个 main 包，并重新链接每个二进制。
 
@@ -59,13 +59,13 @@ main 包的动作 ID 还涵盖作为戳记写入其二进制的构建信息，[^
 ![图 4.3：对 `core` 中一个函数体的修改。它的直接导入者重新编译，更上层的包命中缓存，每个二进制都重新链接。](../figures/04-cutoff.svg)
 
 一个依赖通过它的内容 ID（content ID，即其输出的哈希）进入其依赖者的动作 ID。[^go-buildid]
-每个归档和二进制都有一个写入文件中的构建 ID（build ID），形式为 `actionID/contentID`。
+每个归档和二进制都有一个写入文件中的构建 ID（build ID），形式为 `actionID/…/contentID`。
 内容 ID 是把构建 ID 替换为零之后，对文件求出的截断的 SHA-256 哈希。[^go-findandhash]
 
 动作 ID 这一半使每个输出成为一个只有一个条目的缓存。当 `go build -o bin/` 在 `bin/`
 中找到一个二进制，而它的构建 ID 以刚刚算出的动作 ID 开头时，就跳过链接。[^go-usecache]
-对 `go build` 来说，这是跳过链接的唯一途径，因为 GOCACHE 不存储二进制：
-它们体积大，又很少被重用。[^go-noexe]Go 1.24 设了一个例外，针对 `go run` 与 `go tool`
+对 `go build` 来说，已在原位的二进制是跳过链接的唯一途径，因为 GOCACHE 不存储二进制：
+它们比包更大，被重用的次数也比包少。[^go-noexe]Go 1.24 设了一个例外，针对 `go run` 与 `go tool`
 构建的二进制。[^go124]不带 `-o` 时，`go build ./...` 会把每个 main 包链接到一个临时目录中，
 然后丢弃结果。[^go-discard]在 1000 个包上，一次空构建 `go build ./...` 没有编译任何包，
 却重新链接了全部 11 个二进制。[^bench]
@@ -74,9 +74,9 @@ main 包的动作 ID 还涵盖作为戳记写入其二进制的构建信息，[^
 就不会重新运行依赖它的步骤。这种截断的粒度较粗，因为内容 ID 覆盖整个归档，
 即导出数据与目标代码二者。[^go-archive]
 图 4.3 展示了对 `core` 中一个编译器不会内联的函数的函数体修改（body edit）。导出数据保持不变：
-该函数仍然不可内联，没有任何声明移动位置，逃逸到堆上的参数也相同；[^go-exportfunc]但目标代码变了，所以 `core` 的内容 ID 改变，
+该函数仍然不可内联，没有任何声明移动位置，比调用存活更久（逃逸到堆上）的参数也相同；[^go-exportfunc]但目标代码变了，所以 `core` 的内容 ID 改变，
 每个直接导入者都要重新编译。在笔者的测量中，这些导入者的归档结果完全相同，
-因为导入者的目标代码只记录每个导入包导出数据的指纹（fingerprint，即一个哈希），[^go-fingerprint]
+因为导入者的编译只读取每个导入包的导出数据，并记录其指纹（fingerprint，即一个哈希），[^go-fingerprint]
 所以更上层的包命中缓存。每个包含 `core` 的二进制都要重新链接，
 因为链接动作的动作 ID 包含二进制中每个包的内容 ID。[^go-linkactionid]在 1000 个包上，
 对被导入最广的包做这样的修改，重新编译了 299 个包，并重新链接了包含它的全部 10 个二进制。
@@ -94,7 +94,7 @@ GOCACHE 在 macOS 上默认为 `~/Library/Caches/go-build`，在 Linux 上默认
 - `<actionID>-a`，一个条目，把动作 ID 映射到其输出的哈希与大小；
 - `<outputID>-d`，输出本身，以其内容的哈希命名。
 
-Bazel 的缓存也按同样的方式划分（第 6 章），但 GOCACHE 属于一台机器上的一个用户。
+Bazel 的缓存也按同样的方式划分（第 6 章），但 GOCACHE 属于一台机器上的一个用户。[^go-defaultdir][^go-cachefiles]
 go 命令每天至多查找一次旧条目，并删除已有五天未被使用的条目。[^go-trim]
 
 从 Go 1.24 起，[^go124]把 `GOCACHEPROG` 设为一个程序，就会用该程序取代磁盘缓存，
@@ -129,7 +129,7 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
 | 没有持久进程 | 无需启动、设定大小或重启 | 每次运行都重新哈希每个源文件 |
 | 动作 ID 中包含目录 | 调试信息中的路径正确 | 缓存无法跨检出路径复用 |
 | 提交作为戳记写入二进制 | 每个二进制都标明它来自哪个提交 | 每个提交都重新编译每个 main 包、重新链接每个二进制 |
-| 整个归档的内容 ID | 每个依赖只需一个廉价的键 | 任何修改都会重新编译所有直接导入者；若导出数据改变，还要重新编译它们的导入者 |
+| 整个归档的内容 ID | 每个依赖只需一个廉价的键 | 任何目标代码的改动都会重新编译所有直接导入者；若导出数据改变，还要重新编译它们的导入者 |
 | 不缓存链接 | 缓存更小 | 每个包含改动的二进制都要重新链接，在每台机器上都是如此 |
 | 单台机器、`-p` 个进程 | 无需协调 | 吞吐量以单台机器为上限 |
 | 只有 Go | 一个自洽的工具 | 生成的代码与其他语言留在图之外[^go-generate] |
@@ -165,7 +165,7 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
 
 [^go-filehash]: Go，`cmd/go/internal/cache/hash.go`，`FileHash`：对整个文件求哈希，
     并把结果记在一个与进程同生命周期的 map 中。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L158>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
 
 [^go-modinfo]: Go，`cmd/go/internal/work/exec.go`，`buildActionID` 中的 `modinfo` 一行。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
@@ -226,9 +226,12 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/internal/buildid/buildid.go#L320-L331>
 
 [^go-usecache]: Go，`cmd/go/internal/work/buildid.go`，`useCache`，
-    它读取已存在的目标的构建 ID；`cmd/go/internal/work/exec.go`，链接动作对它的调用。
+    它读取已存在的目标的构建 ID；`cmd/go/internal/work/exec.go`，链接动作对它的调用；
+    `cmd/go/internal/load/pkg.go`，`Package.load`，
+    它把 main 包的目标设为其安装路径（GOBIN，或 GOPATH 下的 `bin`）。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L484-L494>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1630>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L1875-L1880>
 
 [^go-noexe]: Go，`cmd/go/internal/work/buildid.go`，`updateBuildID`：「Executables are not
     cached by default because they are not reused nearly as often as individual packages, and
@@ -292,10 +295,12 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
     <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L495-L498>
 
 [^go-cachefiles]: Go，`cmd/go/internal/cache/cache.go`，`fileName`、`putIndexEntry` 与
-    `OutputFile`。
+    `OutputFile`；`Open`，其注释说「NOT safe for multiple processes on different machines to
+    share a cache directory」。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L116-L119>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L469-L470>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L318-L320>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L84-L94>
 
 [^go-trim]: Go，`cmd/go/internal/cache/cache.go`，`mtimeInterval`、`trimInterval` 与
     `trimLimit`。
@@ -335,4 +340,4 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
 
 [^go-generate]: Go，`cmd/go/internal/generate/generate.go`：
     「go build、go test 等命令从不自动运行 Go generate。」
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/generate/generate.go#L43>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/generate/generate.go#L43-L44>
