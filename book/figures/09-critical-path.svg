@@ -80,7 +80,7 @@
   </g>
 
   <!-- After an edit -->
-  <text x="56" y="196" class="f91-a7"><tspan class="f91-head">After an edit to a function body in core</tspan><tspan class="f91-sm" dx="8">critical path 2.3 s</tspan></text>
+  <text x="56" y="196" class="f91-a7"><tspan class="f91-head">After the first edit to a function body in core</tspan><tspan class="f91-sm" dx="8">critical path 2.3 s</tspan></text>
   <g class="f91-a7">
     <rect class="f91-run" x="56" y="208" width="3" height="38" rx="1"/>
   </g>
