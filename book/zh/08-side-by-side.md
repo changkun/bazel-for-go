@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 b9f0c39 -->
+<!-- 译自 78f8ba8 -->
 
 本章把 go 命令与 Bazel 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，各自要付出什么
 代价。
@@ -65,7 +65,7 @@ rules_go 按照编译器源码针对「a distributed build setting」的建议�
 
 go 命令的构建缓存 GOCACHE 属于一台机器上的一个用户。[^go-defaultdir]自 Go 1.24 起，[^go124]
 `GOCACHEPROG` 可以把缓存交给一个程序，由它把条目存放在任何地方；键保持不变，因此没有 `-trimpath` 时，
-位于另一路径的检出会未命中；二进制也不会被存储。[^go-cacheprog][^go-noexe-prog]Bazel 在
+位于另一路径的检出会未命中；二进制则从不被存储。[^go-cacheprog][^go-noexe-prog]Bazel 在
 execroot（动作运行的根目录）中运行每个动作，其中每个输入和输出都有固定的相对路径，因此它的键与
 检出所在的位置无关，除非某条规则把绝对路径写进了命令。[^bazel-path-resolver]它的本地动作缓存服务于
 单个检出，[^bazel-output-dirs]但磁盘缓存（disk cache，一个本地目录）服务于一台机器上的所有检出，远程缓存则服务
@@ -83,7 +83,7 @@ go 命令在一台机器上以子进程的形式运行每个动作，同时运�
 
 ## 端到端
 
-表 8.1：墙钟时间（秒），包数为 1000、3000 和 10000：取三次运行的中位数；冷构建、测试与全新检出只运行一次。[^bench]
+表 8.1：墙钟时间（秒）：取三次运行的中位数；冷构建、测试与全新检出只运行一次；10000 个包时未运行测试。[^bench]
 
 <!--
 Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
@@ -113,8 +113,8 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
   启动服务进程、加载、分析、构建 rules_go 的构建器，[^rules-go-builder-exec]并付出每个动作的开销。
 - **空构建**：go 命令加载整棵源码树并对其求哈希；Bazel 正在运行的服务进程比较文件时间。
 - **对 `core` 的修改**：无论是函数体修改还是 API 修改，go 命令都比 Bazel 多重新编译一层导入者；
-  两者都要重新链接。在 10000 个包时，Bazel 的一次编译加 100 次更慢的链接（第 5 章），耗时超过了
-  go 命令的 2724 次编译加 100 次链接。
+  两者都要重新链接。在 10000 个包时，Bazel 的一次编译加 100 次更慢的链接，耗时超过了
+  go 命令的 2724 次编译加 100 次链接。[^bench-links]
 - **函数体修改后的测试**：两者都会重新运行二进制中包含 `core` 的每个测试，因为两者都以测试的二进制
   为键记录测试结果。[^go-testcache][^bazel-cache-tests]在笔者看来，`.x` 在这里省下的是编译，而不是
   链接或测试运行。Bazel 首次运行时的链接和测试运行更慢（第 5 章）。
@@ -301,8 +301,8 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     `--remote_download_outputs`，默认值为 `toplevel`。
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L519-L533>
-[^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`，配置 `n1000` 与
-    `n3000`；附录 A 介绍了仓库与测量框架。
+[^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`，配置 `n1000`、`n3000`
+    与 `n10000`；附录 A 介绍了仓库与测量框架。
     [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
 [^go-no-prebuilt-std]: Go 1.20 发布说明，「Go command」：「`$GOROOT/pkg` 目录不再存放标准库的
     预编译包归档」。
@@ -314,6 +314,12 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     属性；`go/private/rules/binary_wrapper.sh`，它用 `go build -trimpath` 从源码构建构建器。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
+[^bench-links]: 本书在 10000 个包时的测量：冷构建中，一个二进制的链接在 Bazel 下耗时的中位数为 32 s，
+    在 go 命令下为 19 s；在 Bazel 的第一次函数体修改中为 41 s。两个工具在这一规模下的运行相隔一小时，
+    所用机器同时运行着其他工作（附录 A）。
+    [n10000-bazel-cold.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz)，
+    [n10000-bazel-core-body.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz)，
+    [n10000-go-cold-actiongraph.json.gz](../../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)
 [^go-testcache]: Go，`cmd/go/internal/test/test.go`，`tryCacheWithID`：测试 ID 以链接的输入作为
     测试二进制的替代。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1882-L1909>

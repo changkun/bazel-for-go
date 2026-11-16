@@ -1,7 +1,7 @@
 # A. 测量
-<!-- 译自 9cdd829 -->
+<!-- 译自 c49811e -->
 
-本书的每一项测量都来自 `examples/bench`。这是一个测量框架（harness），它生成一个合成 Go 仓库，在一组
+本书的基准测量来自 `examples/bench`。这是一个测量框架（harness），它生成一个合成 Go 仓库，在一组
 固定的场景中用两种工具构建并测试它，并记录每一条命令。[^a-main]
 
 ## 合成仓库
@@ -25,15 +25,15 @@
 各个配置以包数命名：`n100`、`n1000`、`n3000` 和 `n10000`，分别有 8、12、14 和 16 层。[^a-configs-run]
 另有两个配置在 1000 个包上改变形状：`n1000-wide` 有 4 层，扇入为 8；`n1000-deep` 有 40 层，扇入为 3。
 `n1000-local` 只用 Bazel 构建 `n1000`，并使用 `--spawn_strategy=local`，它把每个动作作为普通的本地进程
-运行，[^bazel-spawn]不在沙箱（sandbox，只含一个动作所声明输入的目录）中。表 A.1 给出了每个仓库的规模。
+运行，[^bazel-spawn]不在沙箱（sandbox，只含一个动作所声明输入的目录）中。
 
 ## 测量框架
 
-`bench run` 依次测量每个配置，每种工具都从一棵新生成的源码树开始。[^a-run]两种工具构建相同的包。当
+`bench run` 依次测量每个配置，每种工具都从一棵新生成的源码树开始。[^a-run]当
 `-o` 指定一个目录时，`go build` 只构建 main 包及其导入的包；Bazel 则构建 `build_targets.txt` 列出的
 目标，即各个二进制和生成器。[^a-targets]
 
-两者都使用 Go 1.27.3：go 命令来自 `-goroot` 指定的 SDK（软件开发包），设置 `GOTOOLCHAIN=local`，其余
+两者都使用 Go 1.27.3：go 命令来自 `-goroot` 指定的 SDK（软件开发包），设置 `GOTOOLCHAIN=local`（不切换到其他 Go 版本），其余
 每个 `GO` 变量都由测量框架清除或设定；[^a-goenv][^go-toolchain-local]rules_go 则下载生成的 `go.mod`
 所指定的版本（第 2 章）。[^rg-from-file]
 
@@ -62,21 +62,21 @@
 | `codegen-generate` | 在一个 `table.txt` 末尾追加一行，然后运行 `go generate ./...` | — |
 | `codegen-build` | 接着构建 | 做同样的修改，然后构建 |
 | `clone-warmcache` | 把源码树复制到新路径；用同一个 GOCACHE 构建副本 | — |
-| `clone-warmcache-trimpath` | 用 `-trimpath`（它从输出中去除文件系统路径）构建原树，不计时；然后用同样的标志构建副本 | — |
+| `clone-warmcache-trimpath` | 用 `-trimpath`（它从输出中去除文件系统路径）构建原树，不计时；然后同样用 `-trimpath` 构建副本 | — |
 | `clone-diskcache` | — | 在 `bazel clean` 之后，用新的磁盘缓存（`--disk_cache`，存放动作结果的本地目录）构建原树，不计时；然后用新的输出根目录和这个缓存构建副本 |
 | `server-heap-after-build`、`-test` | — | 在构建场景之后和测试之后运行 `bazel info used-heap-size-after-gc` |
 
 两种工具的先后顺序在配置之间交替，因此没有哪一种总在温度更高的机器上运行。[^a-order]一次测量是一条命令
 从启动到退出的墙钟时间。测量框架统计 go 命令 `-x` 输出中的 compile、link、asm 和测试进程，并读取 Bazel
 的汇总行，其中给出运行的进程数和由缓存应答的动作数。[^a-time]热场景重复 `-reps` 次，此处为三次；Bazel
-的第四次 `noop` 只用于让服务进程重新变热，不计入结果。修改在各次运行之间累积。go 命令的冷构建还写出它的
+的第四次 `noop` 用于让服务进程重新变热，不计入结果。修改在各次运行之间累积。go 命令的冷构建还写出它的
 动作图（`-debug-actiongraph`：其中的动作及其耗时）；Bazel 的冷构建、第一次 `core-body` 构建和第一次测试
 则写出追踪剖面（trace profile，`--profile`）；第 5 章和第 9 章分析了这些文件。
 
 对 `n1000` 和 `n3000`，在两种工具都测完之后，测量框架再从空的 GOCACHE 开始构建并测试一次，此时 go 命令
-运行一个包装程序 `bench toolexec`，代替每个工具（`-toolexec`）和每个测试二进制（`-exec`）。[^go-toolexec][^go-exec]
-包装程序把每个进程的墙钟时间、用户态与内核态 CPU 时间以及峰值 RSS（常驻内存集，即进程在同一时刻占用的
-最多物理内存）追加到 `workload.jsonl`。[^a-probe]它为每个工具多加了一个进程，因此笔者不把这些运行的耗时
+运行一个包装程序 `bench toolexec`（即探针），代替每个工具（`-toolexec`）和每个测试二进制（`-exec`）。[^go-toolexec][^go-exec]
+包装程序把每个进程的墙钟时间、用户态与内核态 CPU 时间以及峰值 RSS（resident set size，常驻内存集：进程在
+同一时刻占用的最多物理内存）追加到 `workload.jsonl`。[^a-probe]它为每个工具多加了一个进程，因此笔者不把这些运行的耗时
 与其他运行相比较。
 
 ## 结果
@@ -145,9 +145,9 @@
 | `n1000` | 84 | 130 |
 | `n3000` | 119 | 229 |
 | `n10000` | 214 | — |
-| `n1000-wide` | 77 | — |
-| `n1000-deep` | 82 | — |
-| `n1000-local` | 80 | — |
+| `n1000-wide` | 79 | — |
+| `n1000-deep` | 84 | — |
+| `n1000-local` | 82 | — |
 
 表 A.5：包数为 1000 时的图形状与沙箱，耗时中位数，单位为秒；括号内为运行的进程数与命中数。[^a-results]
 
@@ -155,11 +155,11 @@
 |---|---|---|---|---|---|
 | `n1000`，go | 6.86 (1,023) | 0.86 (0) | 1.28 (3) | 2.97 (309) | 5.31 (722) |
 | `n1000`，Bazel | 37.4 (999) | 0.16 | 0.88 (2; 1 次命中) | 1.71 (11; 298 次命中) | 5.05 (309; 423 次命中) |
-| `n1000-wide`，go | 12.0 (813) | 1.87 (0) | — | 3.15 (212) | 4.55 (498) |
-| `n1000-wide`，Bazel | 70.0 (766) | 0.60 | — | 3.87 (11; 201 次命中) | 7.15 (212; 296 次命中) |
-| `n1000-deep`，go | 14.1 (1,055) | 2.87 (0) | — | 10.3 (295) | 13.5 (716) |
-| `n1000-deep`，Bazel | 85.9 (1,030) | 0.45 | — | 2.91 (11; 284 次命中) | 9.04 (295; 431 次命中) |
-| `n1000-local`，Bazel | 49.9 (999) | 1.69 | 2.03 (2; 1 次命中) | 3.45 (11; 298 次命中) | — |
+| `n1000-wide`，go | 5.03 (813) | 0.80 (0) | — | 1.78 (212) | 2.80 (498) |
+| `n1000-wide`，Bazel | 30.6 (766) | 0.14 (0) | — | 1.39 (11; 201 次命中) | 2.65 (212; 296 次命中) |
+| `n1000-deep`，go | 6.48 (1,055) | 0.80 (0) | — | 2.56 (295) | 4.42 (716) |
+| `n1000-deep`，Bazel | 36.9 (1,030) | 0.16 (0) | — | 1.83 (11; 284 次命中) | 4.71 (295; 431 次命中) |
+| `n1000-local`，Bazel | 32.3 (999) | 0.18 (0) | 0.97 (2; 1 次命中) | 1.62 (11; 298 次命中) | — |
 
 表 A.6：一次冷构建与测试中 go 命令的进程，由探针（probe）记录。[^a-workload]
 
@@ -177,11 +177,11 @@
 | `n3000` | 测试运行 | 3,000 | 7,731 | 7 | 10 | 17 | 22.3 |
 <!-- END -->
 
-重复运行所做的工作不同时，表中给出范围。第一次 `noop-discard` 还会编译没有被任何二进制导入的包。另有
+第一次 `noop-discard` 还会编译没有被任何二进制导入的包。另有
 一些 go 命令的运行重新链接了每个二进制，其中一些还先重新编译了每个 main 包：go 命令把本书的 git 提交
 作为戳记写入每个二进制（第 4 章），而笔者在测量期间做了提交；测量框架现在会设置
-`-buildvcs=false`。[^a-goenv]Bazel 的空构建和只做分析的运行没有给出计数，因为测量框架的匹配模式没有
-匹配到它们的汇总行。[^a-time]
+`-buildvcs=false`。[^a-goenv]第一次运行的匹配模式没有匹配到 Bazel 空构建和只做分析的运行的
+汇总行，因此这些运行没有给出计数。[^a-time]
 
 在笔者的测量中，从 100 个包到 10000 个包，go 命令的空构建没有运行任何工具，却耗时 0.20 s 至 13.6 s，
 因为每次运行都要加载整棵源码树并对其求哈希（第 4 章）。服务进程已在运行时，Bazel 的空构建耗时 0.14 s 至
@@ -193,7 +193,8 @@
 ## 局限
 
 - **一台机器，且并不空闲**：一台 18 核、64 GB 内存的 Apple M5 Pro，运行 macOS 26.6，[^a-meta]在测量的
-  部分时段与其他工作共用，例如一次 `go test -race`。
+  部分时段与其他工作共用，例如 `go test -race`。这三个变体之后单独重新运行过；它们第一次
+  运行的耗时最多是重新运行的九倍。[^a-results]
 - **合成仓库**：包的结构都相同，没有 cgo，没有外部模块，测试几乎什么都不做，代码生成器只有一个。笔者
   预计，与具体的数字相比，结果的形态更能推广到真实仓库。
 - **只有本地 Bazel**：没有远程缓存或远程执行。本地磁盘缓存代替了共享缓存，不含网络时间。
@@ -216,7 +217,10 @@ go build -o ../../.tools/bin/bench .
 ../../.tools/bin/bench run -configs n1000,n100,n3000,n1000-wide,n1000-deep,n1000-local,n10000 \
     -reps 3 -work work -out results/2026-11-16 \
     -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
-uv run analyze.py --appendix results/2026-11-16
+../../.tools/bin/bench run -configs n1000-wide,n1000-deep,n1000-local \
+    -reps 3 -work work -out results/2026-11-16-variants \
+    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants
 ```
 
 `bench run` 把 `meta.json`（机器与版本）、`configs.jsonl`、`results.jsonl`、`workload.jsonl`、动作图和
@@ -279,7 +283,7 @@ uv run analyze.py --appendix results/2026-11-16
 [^a-order]: 本书的测量框架，`examples/bench/run.go`，`cmdRun`。
     [run.go](../../examples/bench/run.go#L121-L136)
 [^a-time]: 本书的测量框架，`examples/bench/run.go`，`harness.timeCmd`、`goCounts`、`bazelCounts` 与
-    `bzProcRE`。
+    `bzProcRE`，后者自本次运行之后也能匹配 Bazel 的「1 process」一行。
     [run.go](../../examples/bench/run.go#L300-L355)，
     [run.go](../../examples/bench/run.go#L444-L465)
 [^go-toolexec]: Go，`cmd/go/internal/work/build.go`，`-toolexec` 的文档。
@@ -296,7 +300,9 @@ uv run analyze.py --appendix results/2026-11-16
 [^a-configs]: 本书的测量，生成的各个仓库：
     [`examples/bench/results/2026-11-16/configs.jsonl`](../../examples/bench/results/2026-11-16/configs.jsonl)。
 [^a-results]: 本书的测量，每条命令一条记录：
-    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)。
+    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)；
+    `n1000-wide`、`n1000-deep` 与 `n1000-local` 取自重新运行的结果，其匹配模式也统计 Bazel 的空构建：
+    [`examples/bench/results/2026-11-16-variants/results.jsonl`](../../examples/bench/results/2026-11-16-variants/results.jsonl)。
 [^a-workload]: 本书的测量，每个进程一条记录：
     [`examples/bench/results/2026-11-16/workload.jsonl`](../../examples/bench/results/2026-11-16/workload.jsonl)。
 [^a-meta]: 本书的测量，机器与 Go 版本：

@@ -1,5 +1,5 @@
 # 3. 这套搭建带来的约束
-<!-- 译自 00c7717 -->
+<!-- 译自 24c120f -->
 
 一个能用 `go build` 构建的仓库，不加修改无法在 Bazel 下构建。需要做的改动几乎都源自
 Bazel 设计中的四条规则：每个输入都要声明；每个动作（action，即一次工具运行，例如一次编译）
@@ -174,7 +174,7 @@ $ bazel test //golden:golden_test
 `go_deps` 是第 2 章介绍的模块扩展，它复现了 go 命令模块处理的一部分。它应用根 `go.mod` 中的
 `replace` 指令，无论这些指令指向另一个模块版本还是本地目录；它忽略 `exclude` 指令，
 也无法把依赖固定到某个 Git 提交。[^gz-replace]它用 `go mod download` 下载每个模块，
-并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及调用者用于克隆私有模块的 Git 与 SSH 设置；
+并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及调用者的 Git、SSH 与代理设置；
 调用者的值优先于 `MODULE.bazel` 中的 `go_deps.config(go_env = ...)`。[^gz-fetch-env]`go_env`
 不影响构建动作。[^rg-go-env]`go_deps` 忽略 `vendor/` 并获取每个模块；Gazelle 则可以改为在
 `vendor/` 中写入 BUILD 文件，并把导入解析到它们。[^gz-vendor]当某个依赖无法用 Gazelle
