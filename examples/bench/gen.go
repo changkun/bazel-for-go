@@ -257,7 +257,7 @@ func (r *Repo) writePkg(p *pkg, putGo func(string, []byte) error, put func(strin
 	name, d := p.name(), p.dir()
 	var srcs []string
 
-	// types.go: exported types, including a generic one whose methods importers instantiate.
+	// types.go: exported types, including a generic one whose methods the package itself instantiates.
 	if err := putGo(d+"/types.go", []byte(fmt.Sprintf(typesTmpl, name, name))); err != nil {
 		return err
 	}

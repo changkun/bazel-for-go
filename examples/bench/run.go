@@ -37,7 +37,7 @@ var configs = map[string]config{
 	"n1000-local": {Shape: Shape{Pkgs: 1000, Layers: 12}, Tools: []string{"bazel"}, BazelFlags: []string{"--spawn_strategy=local"}, Scenarios: []string{"cold", "noop", "leaf-body", "core-body"}},
 }
 
-// Record is one measurement. Every number in Chapters 5 and 9 is one of these, or a median
+// Record is one measurement. Every number in the book and Appendix A is one of these, or a median
 // of several, computed by analyze.py.
 type Record struct {
 	Config   string         `json:"config"`
@@ -437,7 +437,7 @@ func (h *harness) runGo(c config, repo *Repo, dir, src string) error {
 
 // ---- Bazel ----------------------------------------------------------------------------------
 
-var bzProcRE = regexp.MustCompile(`INFO: (\d+) processes?: ([^\n]*)\.`)
+var bzProcRE = regexp.MustCompile(`INFO: (\d+) process(?:es)?: ([^\n]*)\.`)
 var bzKindRE = regexp.MustCompile(`(\d+) ([a-z][a-z -]*[a-z])`)
 var bzCritRE = regexp.MustCompile(`Critical Path: ([\d.]+)s`)
 

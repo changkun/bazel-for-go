@@ -16,3 +16,4 @@ bazel-*
 /.cache/
 # Films rendered by films/render.mjs: videos, frames and contact sheets.
 /films/out/
+/examples/bench/__pycache__/
