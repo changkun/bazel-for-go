@@ -10,8 +10,7 @@ system) and peak RSS (resident set size: the most physical memory it held at onc
 synthetic repository has 1,000 packages of about 690 lines each in 12 layers (Appendix A), built
 on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta] Figure 5.3 and the timings of whole
 actions (build steps, such as one compile) come instead from the timed runs of Appendix A,
-without the wrapper.[^m-graph][^m-profile] The wrapped build took 13.4 s, the timed one
-6.9 s.[^m-results]
+without the wrapper.[^m-graph][^m-profile]
 
 ## compile: one process per package
 
@@ -36,7 +35,7 @@ scheduler books each rules_go action, which declares no resources, as one CPU an
 most 108 under the go command; we did not measure the effect.
 
 A compile of one of our packages used a median of 61 ms of CPU and 45 MB, with `-c` between 4
-and 18.[^m-workload] Across them, CPU time about equalled wall time. In our reading, the serial
+and 18.[^m-workload] Across them, CPU time was at most 1.3 times wall time.[^m-check] In our reading, the serial
 front end dominates small packages, and on a busy machine extra workers find no free core.
 With cores free, the back end does help: the runtime, the costliest compile, ran early with
 `-c=18`: its action used 2.05 s of CPU in 0.67 s,[^m-graph] and 302 MB.[^m-workload]
@@ -52,8 +51,8 @@ The linker loads them all, drops unreachable code and writes the binary; only a 
 as writing the output, use several goroutines.[^go-link-phases]
 
 The go build's 11 links, ten of them of about 730 repository packages each,[^m-graph] peaked at
-a median of 450 MB: ten times a compile's memory, with CPU time 1.1 times wall
-time.[^m-workload] Test binaries, linked without debug information,[^go-test-strip] show how a
+a median of 450 MB: ten times a compile's memory, with CPU time 1.1 to 1.2 times wall
+time.[^m-workload][^m-check] Test binaries, linked without debug information,[^go-test-strip] show how a
 link grows (Figure 5.2, right): a median of 96 MB and 59 ms at 10 or fewer of the repository's
 packages, 282 MB and 172 ms at more than 300.[^m-workload][^m-graph] A link reruns whenever any
 package in the binary changes:[^go-linkactionid] a body edit to `core`, the most widely imported
@@ -82,7 +81,7 @@ action.[^rules-go-cgo] Our repository has no cgo.
 Each package's tests are compiled, linked into a binary of their own and run. Our tests do
 little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload] The first
 18 runs to finish, as many as run at once, each took about 0.22 s longer than the one
-before,[^m-workload] and the timed `go test ./...` took 279 s for 1,000 binaries, 0.28 s
+before,[^m-workload][^m-check] and the timed `go test ./...` took 279 s for 1,000 binaries, 0.28 s
 each,[^m-results] as if the runs waited in one queue outside the processes. macOS checks an app
 for known malware on its first launch;[^apple-xprotect] we infer that this check, made on each
 new test binary in turn, is the queue, and expect Linux machines not to pay it. Bazel's first
@@ -99,7 +98,7 @@ off. nogo, rules_go's counterpart, when configured, is a separate action per pac
 the sources and its direct imports' export data and facts.[^rules-go-nogo]
 
 `go generate` is never run by `go build`, and it has no cache;[^go-generate] rerunning the
-repository's 100 `go:generate` directives took 6.1 s.[^m-results] Under Bazel, a generator runs
+repository's 100 `go:generate` directives took 6 to 10 s.[^m-results][^m-check] Under Bazel, a generator runs
 as an action,[^bazel-genrule] cached like any other.[^bazel-actions]
 
 ## The shape of a build
@@ -154,8 +153,6 @@ standard library.[^m-profile]
     edit:
     [`examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz),
     [`n1000-bazel-core-body.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-core-body.profile.gz).
-[^m-results]: Measurements, one record per command:
-    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
 [^go-compile-doc]: Go, `cmd/compile/doc.go`, package documentation.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 [^go-parse]: Go, `cmd/compile/internal/noder/noder.go`, `LoadPackage`, which parses each file in
@@ -192,6 +189,17 @@ standard library.[^m-profile]
     `n3000`:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl),
     summarized by [`examples/bench/analyze.py`](../examples/bench/analyze.py).
+[^m-check]: Measurements, a second run of `n1000`, to check the first:
+    [`examples/bench/results/2026-11-16-n1000-check/`](../examples/bench/results/2026-11-16-n1000-check/). Per process: a
+    repository compile used a median of 55 ms of CPU and 45 MB, its CPU 1.3 times its wall time
+    over all of them; the runtime's compile 293 MB; the build's links 446 MB, CPU 1.2 times wall;
+    a test run 5.7 ms of CPU and 4.9 s, the first 18 to finish 0.22 s apart. As whole actions:
+    59 s of CPU, a 3.8 s critical path and a 5.9 s span in the cold go build; the runtime's
+    action 2.09 s of CPU in 0.68 s; links 0.59 s under the go command and 2.24 s under Bazel.
+    Commands: `go generate` 9.9 s; `go test ./...` 305 s; Bazel's first test run 615 s, its
+    critical path 22.2 s, its test links 0.93 s and test runs 8.25 s; Bazel's cold build a
+    critical path of 38.2 s, 32.1 s of it the builder and the standard library. Appendix A
+    compares the two runs' commands.
 [^go-link-deps]: Go, `cmd/go/internal/work/action.go`, `addTransitiveLinkDeps`, and
     `exec.go`, `writeLinkImportcfg`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>,
@@ -208,6 +216,8 @@ standard library.[^m-profile]
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
 [^go-linkactionid]: Go, `cmd/go/internal/work/exec.go`, `linkActionID`, the `packagefile`
     line. <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
+[^m-results]: Measurements, one record per command:
+    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
 [^go-internal-pie]: Go, `internal/platform/supported.go`, `InternalLinkPIESupported` and
     `DefaultPIE`.
     <https://github.com/golang/go/blob/go1.27.3/src/internal/platform/supported.go#L217-L243>
