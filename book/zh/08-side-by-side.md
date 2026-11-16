@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 34bd9c5 -->
+<!-- 译自 b9f0c39 -->
 
 本章把 go 命令与 Bazel 配合 rules_go 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，
 各自要付出什么代价。
@@ -74,7 +74,7 @@ execroot（动作运行的根目录）中运行每个动作，其中每个输入
 
 ### 6. 执行
 
-go 命令在一台机器上以子进程的形式运行每个动作，同时运行 `-p` 个，默认每个 CPU 核心一个。[^go-do]
+go 命令在一台机器上以子进程的形式运行每个动作，同时运行 `-p` 个，默认每个核心一个。[^go-do]
 于是，一台机器的核心数决定了 T_exec 的下限；T_exec 是运行未命中缓存的动作所需的时间。Bazel 默认在
 本地运行动作；启用远程执行时，它把动作发往一个机器池，并上传远程缓存中缺少的
 输入，[^bazel-reapi-exec]因此并行度的上限由机器池决定。这会增加 T_transfer，即与远程机器和缓存之间
@@ -83,10 +83,10 @@ go 命令在一台机器上以子进程的形式运行每个动作，同时运�
 
 ## 端到端
 
-表 8.1：墙钟时间（秒），包数为 1000 和 3000：取三次运行的中位数；冷构建、测试与全新检出只运行一次。[^bench]
+表 8.1：墙钟时间（秒），包数为 1000、3000 和 10000：取三次运行的中位数；冷构建、测试与全新检出只运行一次。[^bench]
 
 <!--
-Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000 and n3000.
+Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
 Row                         go scenario       bazel scenario
 Cold build                  cold              cold
 No-op build                 noop (reps 0-2)   noop (reps 0-2; rep 3 only re-warms the server)
@@ -97,24 +97,24 @@ Fresh checkout, warm cache  clone-warmcache   clone-diskcache
 go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build with it.
 -->
 
-| 场景 | go，1000 | Bazel，1000 | go，3000 | Bazel，3000 |
-|---|---|---|---|---|
-| 冷构建 | 6.9 | 37 | 28 | 84 |
-| 空构建 | 0.86 | 0.16 | 2.5 | 0.20 |
-| 对 `core` 的函数体修改 | 3.0 | 1.7 | 14 | 12 |
-| 对 `core` 的 API 修改 | 5.3 | 5.1 | 24 | 21 |
-| 函数体修改后的测试 | 260 | 460 | 1200 | 2300 |
-| 全新检出，热缓存 | 5.0 | 9.4 | 22 | 6.4 |
+| 场景 | go，1000 | Bazel，1000 | go，3000 | Bazel，3000 | go，10000 | Bazel，10000 |
+|---|---|---|---|---|---|---|
+| 冷构建 | 6.9 | 37 | 28 | 84 | 230 | 320 |
+| 空构建 | 0.86 | 0.16 | 2.5 | 0.20 | 14 | 0.36 |
+| 对 `core` 的函数体修改 | 3.0 | 1.7 | 14 | 12 | 130 | 180 |
+| 对 `core` 的 API 修改 | 5.3 | 5.1 | 24 | 21 | 200 | 210 |
+| 函数体修改后的测试 | 260 | 460 | 1200 | 2300 | — | — |
+| 全新检出，热缓存 | 5.0 | 9.4 | 22 | 6.4 | 200 | 11 |
 
-仓库是包含 1000 个包的合成仓库（附录 A），另外也生成了 3000 个包的版本，`core` 是其中被导入最广的
-包。构建分别是 `go build -o <dir> ./...` 和对同样二进制的 `bazel build`；测试一行运行的是
+仓库是附录 A 的合成仓库，包数为 1000、3000 和 10000，`core` 是其中被导入最广的包。构建分别是 `go build -o <dir> ./...` 和对同样二进制的 `bazel build`；测试一行运行的是
 `go test -vet=off ./...` 和 `bazel test //...`：
 
 - **冷构建**：两者都编译全部代码，包括标准库。[^go-no-prebuilt-std][^rules-go-stdlib]Bazel 还要
   启动服务进程、加载、分析、构建 rules_go 的构建器，[^rules-go-builder-exec]并付出每个动作的开销。
 - **空构建**：go 命令加载整棵源码树并对其求哈希；Bazel 正在运行的服务进程比较文件时间。
 - **对 `core` 的修改**：无论是函数体修改还是 API 修改，go 命令都比 Bazel 多重新编译一层导入者；
-  两者都要重新链接。
+  两者都要重新链接。在 10000 个包时，Bazel 的一次编译加 100 次更慢的链接（第 5 章），耗时超过了
+  go 命令的 2724 次编译加 100 次链接。
 - **函数体修改后的测试**：两者都会重新运行二进制中包含 `core` 的每个测试，因为两者都以测试的二进制
   为键记录测试结果。[^go-testcache][^bazel-cache-tests]在笔者看来，`.x` 在这里省下的是编译，而不是
   链接或测试运行。Bazel 首次运行时的链接和测试运行更慢（第 5 章）。
@@ -138,8 +138,7 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 
 ## 规模变大时意味着什么
 
-- 随着仓库增长，测量空构建的耗时。如果它随源码树增长，限制就在于 T_graph 和 T_detect。热的 Bazel
-  服务进程保留着图，`--watchfs` 使它不再重新扫描源文件，但它仍会检查上次构建的每个输出。
+- 随着仓库增长，测量空构建的耗时。如果它随源码树增长，限制就在于 T_graph 和 T_detect。
 - 在跨机器共享缓存之前，先让各机器上的键一致：`-trimpath` 配合 `GOCACHEPROG`；在 Bazel 下，环境和
   平台一致。只有 Bazel 的共享缓存保存链接的结果。
 - 在 go 命令下，对被广泛导入的包的任何修改都会使每个直接导入者重新编译，改变其导出数据的修改还会
