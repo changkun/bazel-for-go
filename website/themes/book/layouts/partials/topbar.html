@@ -1,7 +1,7 @@
 {{/*
   Top bar: sidebar toggle, book title, breadcrumb, theme switch (driven by
-  dark.js through #theme-switch / .theme-option / setTheme), and the
-  "on this page" toggle (reading.js).
+  dark.js through #theme-switch / .theme-option / setTheme), language switch,
+  and the "on this page" toggle (reading.js).
 */}}
 <header class="reading-topbar">
   <button type="button" class="reading-iconbtn" id="fold-sidebar" title="{{ i18n "CollapseSidebar" }}" aria-label="{{ i18n "CollapseSidebar" }}">
@@ -38,8 +38,9 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
     </button>
   </div>
+  {{- partial "language-switch" . -}}
 
-  {{ if strings.TrimSpace (plainify .TableOfContents) }}
+  {{ if strings.TrimSpace (plainify .TableOfContents) -}}
   <button type="button" class="reading-iconbtn" id="fold-toc" title="{{ i18n "TocHead" }}" aria-label="{{ i18n "TocHead" }}">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
   </button>

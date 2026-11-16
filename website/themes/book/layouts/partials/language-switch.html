@@ -1,0 +1,15 @@
+{{- /* Language switch in the top bar: the other language's name, linking to
+       this page in that language (make.go gives a translation the same
+       content path, which is how Hugo pairs them), or to that language's
+       home page when this page has no translation yet. */ -}}
+{{- $page := . -}}
+{{- range .Site.Home.AllTranslations -}}
+  {{- if ne .Language.Lang $page.Language.Lang -}}
+    {{- $to := . -}}
+    {{- range $page.Translations -}}
+      {{- if eq .Language.Lang $to.Language.Lang }}{{ $to = . }}{{ end -}}
+    {{- end -}}
+    {{- $lang := partial "lang" $to -}}
+    <a class="reading-lang" href="{{ $to.RelPermalink }}" hreflang="{{ $lang }}" lang="{{ $lang }}">{{ .Language.Label }}</a>
+  {{- end -}}
+{{- end -}}

@@ -28,6 +28,9 @@
   translation: Search the book…
 - id: AuthorHome
   translation: Author
+# Footer line; .URL is the repository.
+- id: FooterSource
+  translation: 'The source of this book and its runnable examples are on <a href="{{ .URL }}">GitHub</a>.'
 
 - id: bookSearchConfig
   translation: '{ cache: true }'

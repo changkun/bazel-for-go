@@ -3,6 +3,6 @@
 <p>{{ . | markdownify }}</p>
 {{- end }}
 {{- with .Site.Params.repo }}
-<p>The source of this book and its runnable examples are on <a href="{{ . }}">GitHub</a>.</p>
+<p>{{ i18n "FooterSource" (dict "URL" .) | safeHTML }}</p>
 {{- end }}
 </div>

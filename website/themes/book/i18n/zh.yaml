@@ -1,0 +1,39 @@
+# Chinese strings for the zh edition: one entry per id in en.yaml.
+- id: Search
+  translation: 搜索
+
+# Header theme switcher (light / auto / dark segmented control).
+- id: Theme
+  translation: 主题
+
+- id: ThemeLight
+  translation: 浅色
+
+- id: ThemeAuto
+  translation: 跟随系统
+
+- id: ThemeDark
+  translation: 深色
+
+# Reading chrome (top bar, table of contents, page navigation, menu).
+- id: PrevSection
+  translation: 上一页
+- id: NextSection
+  translation: 下一页
+- id: TocHead
+  translation: 本页目录
+- id: CollapseSidebar
+  translation: 折叠侧栏
+- id: SearchPlaceholder
+  translation: 搜索全书…
+- id: AuthorHome
+  translation: 作者主页
+# Footer line; .URL is the repository.
+- id: FooterSource
+  translation: '本书的源码及可运行的示例都在 <a href="{{ .URL }}">GitHub</a> 上。'
+
+# FlexSearch splits text at spaces, which Chinese does not have: index each
+# Chinese character as a token and Latin words and numbers whole, so both
+# 「缓存」 and 「Bazel」 find pages.
+- id: bookSearchConfig
+  translation: "{ cache: true, encode: false, tokenize: function(s) { return s.toLowerCase().match(/[\\u3400-\\u9fff\\uf900-\\ufaff]|[0-9a-z_]+/g) || []; } }"

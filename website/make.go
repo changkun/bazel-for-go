@@ -1,36 +1,48 @@
 // Command make generates the Hugo content tree (content/) for the book's
-// website from the repository's Markdown:
+// website from the repository's Markdown. The book has two editions, each
+// with its own content directory, which config.toml gives its language:
 //
-//   - ../README.md is the single source of truth for the book's structure. Its
-//     "## Contents" section lists the parts as bold lines (**Part I. ...**) and
-//     under each part the chapters as list items linking to book/*.md.
-//   - ../book/*.md are the chapters, each beginning with a "# Title" heading.
+//   - English, content/en/, served at the site root: ../README.md is the
+//     single source of truth for the book's structure. Its "## Contents"
+//     section lists the parts as bold lines (**Part I. ...**) and under each
+//     part the chapters as list items linking to book/*.md, which are the
+//     chapters, each beginning with a "# Title" heading.
+//   - Chinese, content/zh/, served at /zh/: ../book/zh/README.md, whose
+//     "## 目录" section lists the parts and the chapters in book/zh/*.md (the
+//     same file names) in the same way. A Chinese part takes its URL from the
+//     English part that holds the same chapters, so every page has the same
+//     path in both trees, which is how Hugo pairs a page with its translation.
+//     Without book/zh/README.md there is no Chinese edition.
 //
-// It writes:
+// For each edition it writes, under content/<lang>/:
 //
-//   - content/_index.md: the home page, the README's title and introduction
-//     followed by its Contents section with links rewritten to site URLs;
-//   - content/<part>/_index.md: one page per part (part1, part2, ...,
-//     appendix) listing its chapters;
-//   - content/<part>/<chapter>/index.md: one page per chapter, served at
-//     /<chapter>/ (the file name without .md), so a chapter's URL does not
-//     change when it moves to another part.
+//   - _index.md: the home page, the README's title and introduction followed
+//     by its Contents section with links rewritten to site URLs;
+//   - <part>/_index.md: one page per part (part1, part2, ..., appendix)
+//     listing its chapters;
+//   - <part>/<chapter>/index.md: one page per chapter, served at /<chapter>/
+//     (the file name without .md) below the edition's home, so a chapter's
+//     URL does not change when it moves to another part.
 //
 // Chapters whose file does not exist yet are skipped with a warning; they are
 // listed as plain text, not links, on the home and part pages. A part without
-// any existing chapter is skipped as well.
+// any existing chapter is skipped as well. A line break between two Chinese
+// characters is removed from the Markdown (see joinWide), so that the wrapped
+// Chinese text shows no spaces; text without Chinese is unchanged.
 //
 // Links are rewritten so the site works under any baseURL: links to chapters
-// (book/x.md, x.md, ./x.md#anchor) become page-relative site URLs, links to
-// other repository files become links to the file on GitHub, local images
+// of the same edition (book/x.md, x.md, ./x.md#anchor) become page-relative
+// site URLs, links to other repository files become links to the file on
+// GitHub, local images
 // are copied next to the page that shows them, and an SVG figure on a line of
 // its own (![Figure 4.2: caption](figures/04-x.svg)) is inlined into the page
 // with its alt text as the caption (see inlineSVG). External URLs and
 // footnotes are left as they are.
 //
 // A chapter with a film, ../films/<chapter>.js (see films/README.md), shows
-// it under its title: a figure that films/player.js fills, and a link to the
-// MP4 that `make films` renders. config.toml publishes ../films at /films/.
+// it under its title in both editions: a figure that films/player.js fills,
+// and a link to the MP4 that `make films` renders. config.toml publishes
+// ../films at /films/, at the site root for both languages.
 //
 // Usage:
 //
@@ -58,6 +70,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 const (
@@ -67,9 +81,25 @@ const (
 
 var (
 	rootDir = flag.String("root", "..", "repository root")
-	outDir  = flag.String("out", "content", "output directory (replaced entirely)")
+	outDir  = flag.String("out", "content", "output directory (replaced entirely); each edition goes to <out>/<lang>")
 	watch   = flag.Bool("watch", false, "regenerate whenever README.md, book/ or films/ changes; with arguments, run them as a command and stop when it exits")
 )
+
+// An edition is the book in one language. The first is the original, which
+// the others follow page for page.
+type edition struct {
+	lang       string // Hugo language key, also the output directory
+	readme     string // repository path of the README that gives the structure
+	chapterDir string // repository directory of the chapters the README lists
+	contentsH2 string // heading of the README's Contents section
+	download   string // text of a film's download link
+	home       string // URL path of the edition's home below the site root, as Hugo serves it
+}
+
+var editions = []edition{
+	{lang: "en", readme: "README.md", chapterDir: "book", contentsH2: "Contents", download: "Download MP4", home: ""},
+	{lang: "zh", readme: "book/zh/README.md", chapterDir: "book/zh", contentsH2: "目录", download: "下载 MP4", home: "zh/"},
+}
 
 func main() {
 	log.SetFlags(0)
@@ -84,23 +114,39 @@ func main() {
 	os.Exit(watchLoop(flag.Args()))
 }
 
-// generate builds the whole content tree in memory and syncs it to outDir.
+// generate builds the whole content tree, every edition, in memory and syncs
+// it to outDir.
 func generate() error {
-	b, err := parseBook()
-	if err != nil {
-		return err
+	all := map[string][]byte{}
+	var orig *book
+	for _, ed := range editions {
+		b, err := parseBook(ed, orig)
+		if orig != nil && errors.Is(err, fs.ErrNotExist) {
+			log.Printf("warning: %s does not exist; no %q edition", ed.readme, ed.lang)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if orig == nil {
+			orig = b
+		}
+		g := &generator{book: b, files: map[string][]byte{}}
+		if err := g.run(); err != nil {
+			return err
+		}
+		for name, data := range g.files {
+			all[ed.lang+"/"+name] = data
+		}
 	}
-	g := &generator{book: b, files: map[string][]byte{}}
-	if err := g.run(); err != nil {
-		return err
-	}
-	return syncDir(*outDir, g.files)
+	return syncDir(*outDir, all)
 }
 
 // ---------------------------------------------------------------------------
-// The book's structure, from README.md.
+// The book's structure, from an edition's README.
 
 type book struct {
+	edition
 	title    string // the README's "# " heading
 	intro    string // the README between the title and the first "## " heading
 	contents string // the body of the "## Contents" section
@@ -141,13 +187,15 @@ var (
 	rePartRoman = regexp.MustCompile(`^(?i)part\s+([ivxlcdm]+|\d+)\b`)
 )
 
-func parseBook() (*book, error) {
-	readme, err := os.ReadFile(filepath.Join(*rootDir, "README.md"))
+// parseBook reads edition ed's README and chapters. orig is the original
+// edition, which a translation follows, or nil when ed is the original.
+func parseBook(ed edition, orig *book) (*book, error) {
+	readme, err := os.ReadFile(filepath.Join(*rootDir, filepath.FromSlash(ed.readme)))
 	if err != nil {
 		return nil, err
 	}
-	b := &book{chapters: map[string]*chapter{}}
-	lines := strings.Split(strings.ReplaceAll(string(readme), "\r\n", "\n"), "\n")
+	b := &book{edition: ed, chapters: map[string]*chapter{}}
+	lines := strings.Split(joinWide(strings.ReplaceAll(string(readme), "\r\n", "\n")), "\n")
 
 	// Title, introduction and the Contents section. Fenced code is skipped so
 	// a "# comment" in a shell block is not taken for a heading.
@@ -170,7 +218,7 @@ func parseBook() (*book, error) {
 			b.title = reH1.FindStringSubmatch(l)[1]
 			state = "intro"
 		case reH2.MatchString(l):
-			if strings.EqualFold(strings.TrimSpace(reH2.ReplaceAllString(l, "")), "Contents") {
+			if strings.EqualFold(strings.TrimSpace(reH2.ReplaceAllString(l, "")), ed.contentsH2) {
 				state = "contents"
 			} else {
 				state = "other"
@@ -182,10 +230,10 @@ func parseBook() (*book, error) {
 		}
 	}
 	if b.title == "" {
-		return nil, errors.New("README.md: no \"# \" title")
+		return nil, fmt.Errorf("%s: no \"# \" title", ed.readme)
 	}
 	if contents == nil {
-		return nil, errors.New("README.md: no \"## Contents\" section")
+		return nil, fmt.Errorf("%s: no \"## %s\" section", ed.readme, ed.contentsH2)
 	}
 	b.intro = strings.TrimSpace(strings.Join(intro, "\n"))
 	b.contents = strings.TrimSpace(strings.Join(contents, "\n"))
@@ -204,17 +252,17 @@ func parseBook() (*book, error) {
 		m := reItemLink.FindStringSubmatch(l)
 		if m == nil {
 			if reListItem.MatchString(l) {
-				log.Printf("warning: README.md: Contents item without a link: %q", strings.TrimSpace(l))
+				log.Printf("warning: %s: Contents item without a link: %q", ed.readme, strings.TrimSpace(l))
 			}
 			continue
 		}
 		dest, _, _ := strings.Cut(m[2], "#")
-		file := path.Clean(dest)
-		if !strings.HasPrefix(file, "book/") || path.Ext(file) != ".md" {
+		file := path.Join(path.Dir(ed.readme), dest)
+		if path.Dir(file) != ed.chapterDir || path.Ext(file) != ".md" {
 			continue
 		}
 		if b.chapters[file] != nil {
-			return nil, fmt.Errorf("README.md: %s is listed twice in Contents", file)
+			return nil, fmt.Errorf("%s: %s is listed twice in Contents", ed.readme, file)
 		}
 		c := &chapter{
 			label: strings.TrimSpace(m[1]),
@@ -225,7 +273,7 @@ func parseBook() (*book, error) {
 		src, err := os.ReadFile(filepath.Join(*rootDir, filepath.FromSlash(file)))
 		switch {
 		case err == nil:
-			c.src = bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n"))
+			c.src = []byte(joinWide(strings.ReplaceAll(string(src), "\r\n", "\n")))
 		case errors.Is(err, fs.ErrNotExist):
 			log.Printf("warning: %s does not exist yet; skipping %q", file, c.label)
 		default:
@@ -233,6 +281,11 @@ func parseBook() (*book, error) {
 		}
 		cur.chapters = append(cur.chapters, c)
 		b.chapters[file] = c
+	}
+	if orig != nil {
+		if err := b.follow(orig); err != nil {
+			return nil, err
+		}
 	}
 
 	// URLs must not collide: parts and chapters all live at /<slug>/.
@@ -257,6 +310,34 @@ func parseBook() (*book, error) {
 		}
 	}
 	return b, nil
+}
+
+// follow gives each part of a translation the slug of the original's part
+// that holds the same chapters, so that every page has the same path in both
+// content trees: Hugo pairs a page with its translation by that path, and the
+// language switch links the two.
+func (b *book) follow(orig *book) error {
+	partOf := map[string]*part{} // original chapter slug -> its part
+	for _, p := range orig.parts {
+		for _, c := range p.chapters {
+			partOf[c.slug] = p
+		}
+	}
+	for _, p := range b.parts {
+		for i, c := range p.chapters {
+			op := partOf[c.slug]
+			if op == nil {
+				return fmt.Errorf("%s: %s has no counterpart in %s", b.readme, c.file, orig.readme)
+			}
+			if i == 0 && p.title != "" {
+				p.slug = op.slug
+			}
+			if op.slug != p.slug {
+				return fmt.Errorf("%s: %s is in part %q, but its counterpart is in part %q of %s", b.readme, c.file, p.title, op.title, orig.readme)
+			}
+		}
+	}
+	return nil
 }
 
 // partSlug turns "Part III. Internals" into "part3", "Appendix" into
@@ -317,7 +398,7 @@ type generator struct {
 // are written.
 type page struct {
 	srcDir   string         // repository directory the source's links are relative to
-	depth    int            // URL depth below the site root: 0 home, 1 part or chapter
+	depth    int            // URL depth below the edition's home: 0 home, 1 part or chapter
 	assetDir string         // output directory for copied images; "" means none
 	name     string         // for warnings
 	figures  map[string]int // figure ids used so far on the page
@@ -378,7 +459,7 @@ func (g *generator) run() error {
 
 func (g *generator) homePage() error {
 	b := g.book
-	pg := page{srcDir: ".", depth: 0, assetDir: ".", name: "README.md", figures: map[string]int{}}
+	pg := page{srcDir: path.Dir(b.readme), depth: 0, assetDir: ".", name: b.readme, figures: map[string]int{}}
 
 	// Bold part lines in Contents link to their part page. The links are
 	// added after rewriting, which would take them for repository paths.
@@ -401,7 +482,7 @@ func (g *generator) homePage() error {
 	if b.intro != "" {
 		body.WriteString(g.rewrite(b.intro, pg) + "\n\n")
 	}
-	body.WriteString("## Contents\n\n" + strings.Join(contents, "\n") + "\n")
+	body.WriteString("## " + b.contentsH2 + "\n\n" + strings.Join(contents, "\n") + "\n")
 
 	fm := frontMatter{{"title", b.title}}
 	if d := firstParagraph(b.intro); d != "" {
@@ -412,7 +493,7 @@ func (g *generator) homePage() error {
 }
 
 func (g *generator) partPage(p *part, weight int, prev, next string) error {
-	pg := page{srcDir: ".", depth: 1, name: "README.md (" + p.title + ")", figures: map[string]int{}}
+	pg := page{srcDir: path.Dir(g.book.readme), depth: 1, name: g.book.readme + " (" + p.title + ")", figures: map[string]int{}}
 	body := fmt.Sprintf("# %s\n\n%s\n", p.title, g.rewrite(strings.TrimSpace(p.items), pg))
 	fm := frontMatter{
 		{"title", p.title},
@@ -437,14 +518,16 @@ func (g *generator) chapterPage(c *chapter, weight int, prev, next string) error
 	}
 	title := chapterTitle(src)
 	if title == "" {
-		log.Printf("warning: %s: no \"# \" heading; using the README's %q", c.file, c.label)
+		log.Printf("warning: %s: no \"# \" heading; using %s's %q", c.file, g.book.readme, c.label)
 		title = c.label
 	}
 	fm := frontMatter{
 		{"title", title},
 		{"linkTitle", c.label},
 		{"weight", weight},
-		{"url", "/" + c.slug + "/"},
+		// Hugo takes a url that starts with "/" as is, without the
+		// language's path, which the edition adds itself.
+		{"url", "/" + g.book.home + c.slug + "/"},
 		{"prev", prev},
 		{"next", next},
 	}
@@ -452,7 +535,7 @@ func (g *generator) chapterPage(c *chapter, weight int, prev, next string) error
 		fm = append(fm[:1], fm[2:]...)
 	}
 	body := g.rewrite(src, pg)
-	if film := filmHTML(c.slug, pg.depth); film != "" {
+	if film := filmHTML(c.slug, pg.depth+strings.Count(g.book.home, "/"), g.book.download); film != "" {
 		body = afterTitle(body, film)
 	}
 	g.files[dir+"/index.md"] = fm.wrap(body)
@@ -461,14 +544,14 @@ func (g *generator) chapterPage(c *chapter, weight int, prev, next string) error
 
 // filmHTML returns the HTML that plays the chapter's film at the top of its
 // page, or "" if the chapter has none. The links are relative to a page
-// depth levels below the site root.
-func filmHTML(slug string, depth int) string {
+// depth levels below the site root; download is the download link's text.
+func filmHTML(slug string, depth int, download string) string {
 	if _, err := os.Stat(filepath.Join(*rootDir, "films", slug+".js")); err != nil {
 		return ""
 	}
 	films := strings.Repeat("../", depth) + "films/"
 	return `<figure class="film" data-film="` + slug + `"><div class="film-frame"></div>` +
-		`<figcaption class="film-bar"><a class="film-download" href="` + films + slug + `.mp4" download>Download MP4</a></figcaption></figure>` + "\n" +
+		`<figcaption class="film-bar"><a class="film-download" href="` + films + slug + `.mp4" download>` + download + `</a></figcaption></figure>` + "\n" +
 		`<script type="module" src="` + films + `player.js"></script>`
 }
 
@@ -520,6 +603,112 @@ func plainInline(s string) string {
 func firstParagraph(md string) string {
 	para, _, _ := strings.Cut(strings.TrimSpace(md), "\n\n")
 	return plainInline(strings.ReplaceAll(para, "\n", " "))
+}
+
+// ---------------------------------------------------------------------------
+// Chinese line breaks.
+//
+// The Chinese chapters are wrapped like the English ones, and a browser shows
+// a line break inside a paragraph as a space, which Chinese text does not
+// have between its characters. (Goldmark's CJK extension would do this, but
+// it also drops a break next to code, emphasis or a link outright, which
+// joins English words; see config.toml.)
+
+var (
+	reTrailNote   = regexp.MustCompile(`\[\^[^\]\s]+\]$`) // a footnote reference
+	reTrailDest   = regexp.MustCompile(`\]\([^()\s]*\)$`) // "](dest)" closing a link
+	reRefDefStart = regexp.MustCompile(`^\[[^\]]*\]:`)    // a link reference definition
+)
+
+// joinWide removes each line break in md that has a Chinese character or
+// punctuation mark (see wide) on both sides. Markup at the break is looked
+// through: a footnote reference, emphasis markers or a link's destination at
+// the end of a line, emphasis markers or a link's opening bracket at the
+// start of the next. Fenced code, a line that is a heading, table row, HTML
+// or image, and a hard break are left alone, and so is a break next to Latin
+// text or code, which stays a space. Text without Chinese is unchanged.
+func joinWide(md string) string {
+	lines := strings.Split(md, "\n")
+	out := make([]string, 0, len(lines))
+	fence := ""
+	open := false // the last line in out may take the next one
+	for _, l := range lines {
+		if f := fenceMarker(l); f != "" || fence != "" {
+			fence = nextFence(fence, f)
+			out = append(out, l)
+			open = false
+			continue
+		}
+		if open {
+			if rest, ok := joinable(out[len(out)-1], l); ok {
+				out[len(out)-1] += rest
+				continue
+			}
+		}
+		out = append(out, l)
+		t := strings.TrimSpace(l)
+		open = t != "" && !strings.HasPrefix(t, "#") && !strings.HasPrefix(t, "|") &&
+			!strings.HasPrefix(t, "<") && !strings.HasPrefix(t, "![")
+	}
+	return strings.Join(out, "\n")
+}
+
+// joinable reports whether line b continues line a with no space between
+// them, and returns what of b to append to a.
+func joinable(a, b string) (string, bool) {
+	if strings.HasSuffix(a, "  ") || strings.HasSuffix(a, "\\") {
+		return "", false // a hard line break
+	}
+	ta, tb := strings.TrimSpace(a), strings.TrimSpace(b)
+	if strings.HasPrefix(tb, ">") { // a blockquote's next line
+		if !strings.HasPrefix(ta, ">") {
+			return "", false
+		}
+		tb = strings.TrimSpace(tb[1:])
+	}
+	if reRefDefStart.MatchString(tb) || !wide(lastVisible(ta)) || !wide(firstVisible(tb)) {
+		return "", false
+	}
+	return tb, true
+}
+
+// lastVisible returns the last character of line s that a reader sees.
+func lastVisible(s string) rune {
+	for {
+		switch {
+		case reTrailNote.MatchString(s):
+			s = reTrailNote.ReplaceAllString(s, "")
+		case reTrailDest.MatchString(s):
+			s = reTrailDest.ReplaceAllString(s, "")
+		case strings.HasSuffix(s, "*") || strings.HasSuffix(s, "_"):
+			s = s[:len(s)-1]
+		default:
+			r, _ := utf8.DecodeLastRuneInString(s)
+			return r
+		}
+	}
+}
+
+// firstVisible returns the first character of line s that a reader sees.
+func firstVisible(s string) rune {
+	for {
+		switch {
+		case strings.HasPrefix(s, "[") && !strings.HasPrefix(s, "[^"):
+			s = s[1:]
+		case (strings.HasPrefix(s, "*") || strings.HasPrefix(s, "_")) && len(s) > 1 && s[1] != ' ':
+			s = s[1:] // emphasis, not a list bullet
+		default:
+			r, _ := utf8.DecodeRuneInString(s)
+			return r
+		}
+	}
+}
+
+// wide reports whether r is a Chinese character or punctuation mark.
+func wide(r rune) bool {
+	return unicode.Is(unicode.Han, r) ||
+		r >= 0x3000 && r <= 0x303f || // CJK symbols and punctuation, 「」
+		r >= 0xff00 && r <= 0xffef // full-width forms: ，：；（）
 }
 
 // ---------------------------------------------------------------------------
@@ -719,7 +908,9 @@ func (g *generator) resolve(dest string, image bool, pg page) (string, bool) {
 		}
 		return up + c.slug + "/" + frag, true
 	}
-	if repo == "README.md" || repo == "." {
+	// The edition's README is its home page; so is the repository's front
+	// page, from a translation, whose home is its counterpart.
+	if repo == g.book.readme || repo == path.Dir(g.book.readme) || repo == "README.md" || repo == "." {
 		if up == "" {
 			return "./" + frag, true
 		}
