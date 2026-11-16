@@ -1,0 +1,13 @@
+{
+  "bazel": "9.3.2 (pinned in .bazelversion)",
+  "cpu": "Apple M5 Pro",
+  "date": "2026-11-16T08:03:34+01:00",
+  "go": "go version go1.27.3 darwin/arm64",
+  "goarch": "arm64",
+  "goos": "darwin",
+  "memsize": "68719476736",
+  "ncpu": "18",
+  "os": "26.6",
+  "reps": 3,
+  "rules_go": "0.65.0"
+}
