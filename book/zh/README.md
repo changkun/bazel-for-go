@@ -43,18 +43,18 @@
 
 **附录**
 
-- [A. 测量](a-measurements.md)：合成仓库、测量工具、完整结果，以及复现的方法
+- [A. 测量](a-measurements.md)：合成仓库、测量框架、完整结果，以及复现的方法
 
 ## 仓库结构
 
 - `book/`：英文版各章；`book/zh/`：中文版各章。
 - `examples/minimal/`：第 2 章搭建的仓库。
 - `examples/constraints/`：第 3 章的演示。
-- `examples/bench/`：合成仓库的生成器、基准测试工具，以及附录 A 所报告的原始结果。
+- `examples/bench/`：合成仓库的生成器、测量框架，以及附录 A 所报告的原始结果。
 
 ## 运行示例
 
-Bazelisk 读取 `.bazelversion` 并下载固定版本的 Bazel。附录 A 介绍基准测试工具。
+Bazelisk 读取 `.bazelversion` 并下载固定版本的 Bazel。附录 A 介绍测量框架。
 
 ```bash
 cd examples/minimal

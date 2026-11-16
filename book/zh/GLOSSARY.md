@@ -157,3 +157,19 @@
 | default `X` (in references) | 默认值为 `X` |
 | as vendored in Bazel | Bazel 中收录的 |
 | release notes / package comment / help text | 发布说明／包注释／帮助文本 |
+
+## 附录 A 与引用格式
+
+| English | 中文 |
+|---|---|
+| harness | 测量框架 |
+| fan-in | 扇入 |
+| leaf (package) | 叶子包 |
+| probe | 探针 |
+| summary line | 汇总行 |
+| truncate (a time) | 向下取整 |
+
+- 脚注标记放在中文标点之后，其后紧接正文，不加空格：`……编译。[^x]下一句`。
+- 参考文献中，文档与章节标题保留英文，置于「」中；引用的原文译为中文，置于「」中；代码、代码注释、
+  错误信息与标识符保留英文。
+- 一条脚注有多个链接时，每个 `<url>` 占一行；英文在其间用逗号处，中文用「，」。
