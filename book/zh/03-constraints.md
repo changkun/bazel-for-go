@@ -1,5 +1,5 @@
 # 3. 这套搭建带来的约束
-<!-- 译自 9fad404 -->
+<!-- 译自 d48ff37 -->
 
 一个能用 `go build` 构建的仓库，不加修改无法在 Bazel 下构建。需要做的改动几乎都源自
 Bazel 设计中的四条规则：每个输入都要声明；每个动作（action，即一次工具运行，例如一次编译）
@@ -14,13 +14,14 @@ Bazel 用每个动作声明的输入计算它的键，并在*沙箱*（sandbox�
 沙箱是一个只包含这些输入的工作目录；但借助绝对路径，动作仍能访问机器上的其余部分。[^bazel-sandbox]
 动作读取了却没有声明的文件，要么读不到，要么不计入缓存键。Go 有两个习惯依赖未声明的文件。
 
-第一个是 `//go:embed`。编译动作的源文件输入是 `srcs` 与 `embedsrcs`，而 rules_go 的构建器（builder）
-只用 `embedsrcs` 匹配嵌入模式，因此未列出的文件会以 `could not embed` 报错。[^rg-embedcfg]
+第一个是 `//go:embed`。编译动作的源文件输入是 `srcs` 与 `embedsrcs`，而 rules_go 的构建器（builder，
+即包装 Go 各工具的程序）只用 `embedsrcs` 匹配嵌入模式，
+因此未列出的文件会以 `could not embed` 报错。[^rg-embedcfg]
 Gazelle（第 2 章介绍的 BUILD 文件生成器）会代为列出被嵌入的文件。[^gz-embedsrcs]
 
 第二个是测试数据。`go test` 在包的源码目录中运行测试，而 go 命令会忽略 `testdata/`，
 测试因此可以把文件放在那里。[^go-test-dir]`bazel test` 则在 *runfiles 目录树*（runfiles tree）
-中运行测试：这是一个由链接组成的目录，链接指向测试二进制，以及测试和它的依赖在 `data`
+中运行测试：这个目录存放测试二进制，以及测试和它的依赖在 `data`
 中列出的文件。[^bazel-test-encyclopedia]rules_go 会切换到该目录树中对应包的目录，因此只要声明了
 `testdata/report.golden`，这个路径仍然能够解析。[^rg-chdir]从 `golden/BUILD.bazel` 中删掉
 `data` 这一行，无论是否使用沙箱，测试都会失败：
@@ -113,7 +114,7 @@ version/version.go:7:31: undefined: generated
 
 ### cgo 需要 C 工具链
 
-使用 `go` 时，cgo 运行 `CC` 所指定的任何编译器。在 Bazel 下，rules_go 用 Bazel 中注册的
+使用 `go` 时，cgo 运行 `CC` 所指定的任何编译器。[^go-cgo-cc]在 Bazel 下，rules_go 用 Bazel 中注册的
 C/C++ *工具链*（toolchain，即编译器、链接器及其标志）编译 cgo 代码；当没有与目标平台匹配的
 C 工具链，或者平台标记为 `cgo_off` 时，它会关闭 cgo（即 *pure* 模式）。[^rg-cgo]默认情况下，
 rules_cc 根据主机的编译器配置一个 C 工具链，[^bazel-cc]因此 cgo 在笔记本电脑上可以工作；
@@ -148,14 +149,14 @@ bazel-bin/cmd/version/version_/version: ELF 64-bit LSB executable, x86-64, ... s
 
 这个二进制是静态链接的，因为 rules_go 的 `linux_amd64` 平台带有 `cgo_off` 约束，从而选择了
 pure 模式；`linux_amd64_cgo` 则需要 C 交叉工具链。[^rg-cross]那条警告体现了显式配置的代价：
-配置一旦改变，服务进程就要重新分析每个目标。
+配置一旦改变，服务进程就要重新分析构建所需的每个目标。[^bazel-analysis-cache]
 
 ### `go vet` 变成 nogo
 
 `go test` 会运行 `go vet` 中一个高置信度的子集，并在发现问题时失败。[^go-test-vet]
 rules_go 用自己的动作构建和运行测试，而不是用 `go test`，因此这一步不复存在。[^rg-test-actions]
 与之对应的是 nogo：一个由所选分析器（analyzer，即与 vet 中类似的单项检查）构建而成的二进制。
-用 `go_sdk.nogo` 注册之后，它作为一个动作在主仓库中每个编译动作旁边运行，
+用 `go_sdk.nogo` 注册之后，它作为一个动作在每个编译动作旁边运行（默认在主仓库中），
 另一个动作则在发现任何问题时使构建失败。[^rg-nogo]默认的 nogo 什么也不分析，[^rg-default-nogo]
 而 `vet = True` 只加入了 `go test` 所运行的十二个分析器中的五个，[^rg-nogo-vet]
 因此在逐一列出这些分析器之前，Bazel 所做的检查比 `go test` 少。
@@ -173,10 +174,10 @@ $ bazel test //golden:golden_test
 
 `go_deps` 是第 2 章介绍的模块扩展，它复现了 go 命令模块处理的一部分。它应用根 `go.mod` 中的
 `replace` 指令，无论这些指令指向另一个模块版本还是本地目录；它忽略 `exclude` 指令，
-也无法把依赖固定到某个 Git 提交。[^gz-replace]它用 `go mod download` 下载每个模块，
-并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及调用者的 Git、SSH 与代理设置；
-调用者的值优先于 `MODULE.bazel` 中的 `go_deps.config(go_env = ...)`。[^gz-fetch-env]`go_env`
-不影响构建动作。[^rg-go-env]`go_deps` 忽略 `vendor/` 并获取每个模块；Gazelle 则可以改为在
+也无法让模块指向某个 Git 远程仓库。[^gz-replace]它用 `go mod download` 下载每个模块，
+并传入 `GOPRIVATE`、`GOPROXY`、`GOAUTH` 以及运行 Bazel 的 shell 中的 Git、SSH 与代理设置；
+shell 中的值优先于 `MODULE.bazel` 中的 `go_deps.config(go_env = ...)`。[^gz-fetch-env]`go_env`
+不影响构建动作。[^rg-go-env]`go_deps` 忽略 `vendor/` 并下载模块；Gazelle 则可以改为在
 `vendor/` 中写入 BUILD 文件，并把导入解析到它们。[^gz-vendor]当某个依赖无法用 Gazelle
 为它生成的 BUILD 文件构建时，`go_deps.gazelle_override` 为该模块传入指令，
 `go_deps.module_override` 应用补丁，`go_deps.archive_override` 则从一个 URL 获取它。[^gz-overrides]
@@ -257,8 +258,12 @@ $ bazel test //golden:golden_test
 [^rg-proto]: rules_go，`proto/core.rst`，`go_proto_library`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/core.rst?plain=1#L39-L40>
 [^gz-genfiles]: Gazelle，`v2/walk/walk.go`，`findGenFiles`，它读取 BUILD 文件中各条规则的
-    `out` 与 `outs` 属性。
-    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/walk/walk.go#L564-L570>
+    `out` 与 `outs` 属性；`language/go/generate.go`，`GenerateRules`，
+    除非这些文件已被另一条规则使用，它会把它们加入包中。
+    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/walk/walk.go#L564-L570>，
+    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/language/go/generate.go#L327-L335>
+[^go-cgo-cc]: Go，`cmd/cgo/doc.go`，包文档中关于 `CC` 与 `CXX` 环境变量的说明。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/cgo/doc.go#L110-L112>
 [^rg-cgo]: rules_go，`docs/go/core/rules.md`，`go_library` 的 `cgo` 属性与 `go_binary` 的 `pure`
     属性；`go/private/context.bzl`，`go_context`，
     它在 `cgo_off` 平台上或无法解析出 C 工具链时禁用 cgo。
@@ -299,6 +304,12 @@ $ bazel test //golden:golden_test
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/go/core/cross_compilation.md?plain=1#L19-L27>，
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L185>，
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L206>
+[^bazel-analysis-cache]: Bazel，「Optimize Iteration Speed」，「Running Bazel Iteratively」一节：
+    许多标志会丢弃分析缓存，下一次运行要重新分析；
+    `src/main/java/com/google/devtools/build/lib/skyframe/SkyframeBuildView.java`，
+    `shouldDiscardAnalysisCache`，它在构建选项不同时丢弃分析缓存。
+    <https://bazel.build/advanced/performance/iteration-speed#run-iteratively>，
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeBuildView.java#L321-L342>
 [^go-test-vet]: Go，`cmd/go/internal/test/test.go`：帮助文本，以及 `defaultVetFlags`，
     它启用十二个分析器；帮助文本未列出 `slog`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L77-L82>，
