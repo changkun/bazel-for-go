@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 78f8ba8 -->
+<!-- 译自 63c8f46 -->
 
 本章把 go 命令与 Bazel 对第 1 章六项决策的回答并排放在一起，并说明随着仓库增长，各自要付出什么
 代价。
@@ -315,7 +315,7 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
 [^bench-links]: 本书在 10000 个包时的测量：冷构建中，一个二进制的链接在 Bazel 下耗时的中位数为 32 s，
-    在 go 命令下为 19 s；在 Bazel 的第一次函数体修改中为 41 s。两个工具在这一规模下的运行相隔一小时，
+    在 go 命令下为 19 s；在 Bazel 的第一次函数体修改中为 41 s；go 命令的修改没有记录链接耗时。两个工具在这一规模下的运行相隔一小时，
     所用机器同时运行着其他工作（附录 A）。
     [n10000-bazel-cold.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz)，
     [n10000-bazel-core-body.profile.gz](../../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz)，
