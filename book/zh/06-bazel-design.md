@@ -1,5 +1,5 @@
 # 6. Bazel 的设计
-<!-- 译自 23e87eb -->
+<!-- 译自 3951d18 -->
 
 Bazel 构建一个包含多种语言的仓库，在多台机器上构建并测试它，并力求给出与干净构建相同的结果。
 
@@ -292,8 +292,10 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
 [^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`：配置 `n1000`（1000 个包），
     工具 `bazel`，场景 `noop`（第 0 至 2 次重复）、`noop-cold-server`、`analysis-cold-server`（在新的
     服务进程上运行 `bazel build --nobuild`）、`cold` 和 `clone-diskcache`（999 次磁盘缓存命中，没有
-    沙箱进程）。
-    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
+    沙箱进程）。第二次运行（附录 A，表 A.7）：`noop` 0.13 s，`noop-cold-server` 4.1 s，
+    `analysis-cold-server` 3.4 s，`cold` 48.2 s，`clone-diskcache` 5.9 s，命中同样是 999 次。
+    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)，
+    [第二次运行](../../examples/bench/results/2026-11-16-n1000-check/results.jsonl)
 
 [^output-dirs]: Bazel，「Output Directory Layout」，「Current layout」与「Layout diagram」两节。
     <https://bazel.build/remote/output-directories#layout-diagram>
