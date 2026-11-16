@@ -22,8 +22,8 @@ export default {
       // Loading: patterns become packages; each run lists and checks every file, and parses only what changed.
       section: "One build, step by step",
       lines: [
-        { say: "The go command turns patterns such as `./...` into packages, reading only each file's header (package clause, imports) unless it imports `embed`.", hold: 1 },
-        { say: "Every run lists every directory and checks each file's size and modification time, but parses only the directories that changed.", hold: 1.2 },
+        { say: "The go command turns patterns such as `./...` into packages, reading only each file's header (package clause, imports) unless it imports `embed`.", hold: 0.8 },
+        { say: "Every run lists every directory and checks each file's size and modification time, but parses only the directories that changed.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(-4, -58, 1012, 708);
@@ -83,8 +83,8 @@ export default {
       // The action graph, run by -p goroutines.
       section: "One build, step by step",
       lines: [
-        { say: "The packages become an action graph: one compile per package, depending on the compiles of its direct imports, and one link per main package.", hold: 1 },
-        { say: "`Builder.Do` starts `-p` goroutines, one per CPU by default; each runs the next action whose dependencies are done, unless its output is cached.", hold: 1.4 },
+        { say: "The packages become an action graph: one compile per package, depending on the compiles of its direct imports, and one link per main package.", hold: 0.8 },
+        { say: "`Builder.Do` starts `-p` goroutines, one per CPU by default; each runs the next action whose dependencies are done, unless its output is cached.", hold: 1.2 },
       ],
       draw(s) {
         s.fit(10, -4, 1004, 656);
@@ -146,7 +146,7 @@ export default {
         { say: "An action ID is a SHA-256 hash of everything that could change an action's output.", hold: 0.8 },
         { say: "For a compile: the compiler's version and flags, the platform and `GOEXPERIMENT`, the import path, every input file's contents, and each direct import's content ID.", hold: 0.8 },
         { say: "Unless `-trimpath` is set, it also hashes the package's absolute directory, which debug information may record.", hold: 0.8 },
-        { say: "So a cache filled at one checkout path gives no hits at another, unless both build with `-trimpath`.", hold: 2 },
+        { say: "So a cache filled at one checkout path misses the repository's packages at another, unless both use `-trimpath`.", hold: 1.4 },
       ],
       draw(s) {
         s.fit(0, 0, 940, 556);
@@ -215,7 +215,7 @@ export default {
       section: "Content IDs and early cutoff",
       lines: [
         { say: "A dependency enters its dependents' action IDs through its content ID, a hash of its whole archive: export data and object code together.", hold: 1 },
-        { say: "Every archive and binary has a build ID, `actionID/contentID`, written into the file.", hold: 1 },
+        { say: "Every archive and binary has a build ID, `actionID/…/contentID`, written into the file.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(0, 0, 950, 400);
@@ -255,13 +255,13 @@ export default {
       section: "Content IDs and early cutoff",
       lines: [
         { say: "The content ID gives an early cutoff: a step that reruns with the same output does not rerun its dependents.", hold: 0.8 },
-        { say: "Edit the body of a function in `core` that is not inlined, moving no declaration and changing no escapes: the object code changes, the export data does not.", hold: 0.8 },
-        { say: "So `core`'s content ID changes, and every direct importer recompiles.", hold: 1 },
-        { say: "We found their archives identical: object code records only a fingerprint, a hash, of each import's export data.", hold: 0.8 },
-        { say: "So the packages above them hit the cache.", hold: 1 },
+        { say: "Edit a non-inlined function's body in `core`, moving no declaration and keeping which parameters outlive the call: the object code changes, the export data does not.", hold: 0.8 },
+        { say: "So `core`'s content ID changes, and every direct importer recompiles.", hold: 0.8 },
+        { say: "We found their archives identical: a compile reads only its imports' export data, and records a fingerprint, a hash, of it.", hold: 0.8 },
+        { say: "So the packages above them hit the cache.", hold: 0.8 },
         { say: "Every binary that contains `core` relinks: its link's action ID includes every package's content ID.", hold: 0.8 },
-        { say: "Adding an exported function changes the fingerprint, so the direct importers' archives change too, and their importers recompile.", hold: 1.2 },
-        { say: "The change stops there, since the direct importers' export data did not change.", hold: 1.4 },
+        { say: "Adding an exported function changes the fingerprint, so the direct importers' archives change too, and their importers recompile.", hold: 0.8 },
+        { say: "The change stops there, since the direct importers' export data did not change.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(-10, 0, 920, 674);
@@ -348,10 +348,10 @@ export default {
       section: "The cache",
       lines: [
         { say: "An entry, `<actionID>-a`, maps an action ID to its output's hash and size; the output, `<outputID>-d`, is named by its hash.", hold: 0.8 },
-        { say: "A link has no entry: GOCACHE stores no `go build` binaries, which are large and seldom reused.", hold: 0.8 },
-        { say: "`go build -o bin/` skips a link only if the binary in `bin/` has a build ID starting with the link's action ID.", hold: 1 },
-        { say: "Without `-o`, `go build ./...` links every main package into a temporary directory and discards the result.", hold: 1 },
-        { say: "Entries unused for five days are deleted, at most once a day.", hold: 1 },
+        { say: "A link has no entry: `go build` binaries, larger and reused less often than packages, are not stored.", hold: 0.8 },
+        { say: "`go build -o bin/` skips a link only if the binary in `bin/` has a build ID starting with the link's action ID.", hold: 0.8 },
+        { say: "Without `-o`, `go build ./...` links every main package into a temporary directory and discards the result.", hold: 0.8 },
+        { say: "Entries unused for five days are deleted, at most once a day.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(0, 0, 992, 540);
@@ -369,7 +369,7 @@ export default {
         right.text(570, 30, "link `app00`", { size: 30, weight: 600 });
         right.text(744, 30, "action ID `7b10…`", { size: 28, tone: "muted" });
         const none = s.box(570, 60, 420, 110, "no entry", { kind: "run", sub: "links are not stored" });
-        const bin = s.file(570, 270, 420, 110, "bin/app00", { sub: "build ID `7b10…/e5d2…`" });
+        const bin = s.file(570, 270, 420, 110, "bin/app00", { sub: "build ID `7b10…/…/e5d2…`" });
         const temp = s.file(570, 430, 420, 110, "temporary directory", { mono: false, sub: "linked, then discarded" });
         return (t, cue) => {
           const [c0, c1, c2, c3, c4] = cue;
@@ -400,9 +400,9 @@ export default {
         { say: "Each test run is watched: its `os` package logs every `Getenv`, `Stat`, `Open` and `Chdir` call.", hold: 0.8 },
         { say: "Level 1: the test ID hashes the test binary and flags, and finds the log of the last run.", hold: 0.8 },
         { say: "Level 2: the inputs ID hashes each logged variable's current value and each file's path, size and modification time.", hold: 0.8 },
-        { say: "A result is reused only if both match.", hold: 1 },
-        { say: "Since the test ID covers the whole binary, a body edit to `core` reruns its tests and those of every package that depends on it.", hold: 1 },
-        { say: "A test that uses the network, reads outside the module, or depends on the time is cached anyway.", hold: 1.4 },
+        { say: "A result is reused only if both match.", hold: 0.8 },
+        { say: "Since the test ID covers the whole binary, a body edit to `core` reruns its tests and those of every package that depends on it.", hold: 0.8 },
+        { say: "A test that uses the network, reads outside the module, or depends on the time is cached anyway.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(0, 0, 1000, 462);

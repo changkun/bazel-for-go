@@ -59,37 +59,37 @@ And every process hashes file contents afresh, remembering hashes only until it
 exits,[^go-filehash] so even a build with nothing to do reads every source file in full.
 
 A main package's action ID also covers the build information stamped into its
-binary,[^go-modinfo] which by default includes the commit and whether the checkout has
-uncommitted changes (`-buildvcs`).[^go-buildvcs] So each commit recompiles every main package
-and relinks every binary.
+binary,[^go-modinfo] which by default, inside a repository, includes the commit and whether
+the checkout has uncommitted changes (`-buildvcs`).[^go-buildvcs] So each commit recompiles
+every main package and relinks every binary.
 
 ## Content IDs and early cutoff
 
 ![Figure 4.3: An edit to a function body in `core`. Its direct importers recompile, the packages above them hit the cache, and every binary relinks.](figures/04-cutoff.svg)
 
 A dependency enters its dependents' action IDs through its content ID, a hash of its
-output.[^go-buildid] Every archive and binary has a build ID, `actionID/contentID`, written into
+output.[^go-buildid] Every archive and binary has a build ID, `actionID/…/contentID`, written into
 the file. The content ID is a truncated SHA-256 of the file with the build ID replaced by
 zeros.[^go-findandhash]
 
 The action ID half makes each output a one-element cache. When `go build -o bin/` finds a binary
 in `bin/` whose build ID starts with the action ID it just computed, it skips the
-link.[^go-usecache] For `go build`, that is the only way to skip a link, because GOCACHE does
-not store binaries: they are large and seldom reused.[^go-noexe] Go 1.24 made one exception, for
-binaries built by `go run` and `go tool`.[^go124] Without `-o`, `go build ./...` links every
-main package into a temporary directory and discards the result.[^go-discard] On 1,000
-packages, a `go build ./...` with nothing to do compiled nothing and relinked all 11
-binaries.[^bench]
+link.[^go-usecache] For `go build`, a binary already in place is the only way to skip a link,
+because GOCACHE does not store binaries: they are larger and reused less often than
+packages.[^go-noexe] Go 1.24 made one exception, for binaries built by `go run` and
+`go tool`.[^go124] Without `-o`, `go build ./...` links every main package into a temporary
+directory and discards the result.[^go-discard] On 1,000 packages, a `go build ./...` with
+nothing to do compiled nothing and relinked all 11 binaries.[^bench]
 
 The content ID gives an early cutoff: a step that reruns with the same output does not rerun its
 dependents. The cutoff is coarse, because the content ID covers the whole archive, export data
 and object code together.[^go-archive] Figure 4.3 shows an edit to the body of a function in
 `core` that the compiler does not inline. The export data stays the same: the function stays
-non-inlinable, no declaration moves, and the same parameters escape to the
-heap,[^go-exportfunc] but the object code changes, so `core`'s content ID changes and every
+non-inlinable, no declaration moves, and the same parameters outlive the
+call,[^go-exportfunc] but the object code changes, so `core`'s content ID changes and every
 direct importer recompiles. In our measurements their archives came out identical, since an
-importer's object code records only a fingerprint, a hash, of each import's export
-data,[^go-fingerprint] so the packages above them hit the cache. Every binary that contains
+importer's compile reads only each import's export data and records a fingerprint, a hash, of
+it,[^go-fingerprint] so the packages above them hit the cache. Every binary that contains
 `core` relinks, because a link's action ID includes the content ID of every package in the
 binary.[^go-linkactionid] On 1,000 packages, such an edit to the most widely imported package
 recompiled 299 packages and relinked all 10 binaries that contain it. Adding an exported
@@ -109,8 +109,8 @@ kinds of file:[^go-cachefiles]
 - `<outputID>-d`, the output itself, named by the hash of its content.
 
 Bazel splits its cache the same way (Chapter 6), but GOCACHE belongs to one user on one
-machine. The go command looks for old entries at most once a day and deletes those unused for
-five days.[^go-trim]
+machine.[^go-defaultdir][^go-cachefiles] The go command looks for old entries at most once a
+day and deletes those unused for five days.[^go-trim]
 
 Since Go 1.24,[^go124] setting `GOCACHEPROG` to a program replaces the disk cache with that
 program, which speaks JSON over standard input and output.[^go-cacheprog] It can keep entries
@@ -147,7 +147,7 @@ module, or depends on the time is cached anyway.
 | No persistent process | Nothing to start, size or restart | Every run hashes every source file again |
 | Directory in the action ID | Correct paths in debug information | Caches do not carry across checkout paths |
 | Commit stamped into binaries | Each binary names the commit it came from | Each commit recompiles every main package and relinks every binary |
-| Content ID of the whole archive | One cheap key per dependency | Any edit recompiles all direct importers; an export-data change, their importers too |
+| Content ID of the whole archive | One cheap key per dependency | Any object-code change recompiles all direct importers; an export-data change, their importers too |
 | Links not cached | A smaller cache | Every binary that contains a change relinks, on every machine |
 | One machine, `-p` processes | No coordination | Throughput capped by one machine |
 | Go only | One coherent tool | Generated code and other languages stay outside the graph[^go-generate] |
@@ -184,7 +184,7 @@ module, or depends on the time is cached anyway.
 
 [^go-filehash]: Go, `cmd/go/internal/cache/hash.go`, `FileHash`: hashes the whole file and
     remembers the result in a map that lives as long as the process.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L158>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
 
 [^go-modinfo]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`, the `modinfo` line.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
@@ -245,9 +245,12 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/internal/buildid/buildid.go#L320-L331>
 
 [^go-usecache]: Go, `cmd/go/internal/work/buildid.go`, `useCache`, which reads the build ID of
-    the existing target; `cmd/go/internal/work/exec.go`, the link's call to it.
+    the existing target; `cmd/go/internal/work/exec.go`, the link's call to it;
+    `cmd/go/internal/load/pkg.go`, `Package.load`, which sets a main package's target to its
+    install path (GOBIN, or `bin` under GOPATH).
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L484-L494>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1630>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L1875-L1880>
 
 [^go-noexe]: Go, `cmd/go/internal/work/buildid.go`, `updateBuildID`: "Executables are not
     cached by default because they are not reused nearly as often as individual packages, and
@@ -314,10 +317,12 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L495-L498>
 
 [^go-cachefiles]: Go, `cmd/go/internal/cache/cache.go`, `fileName`, `putIndexEntry` and
-    `OutputFile`.
+    `OutputFile`; `Open`, whose comment says it is "NOT safe for multiple processes on different
+    machines to share a cache directory".
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L116-L119>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L469-L470>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L318-L320>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/cache.go#L84-L94>
 
 [^go-trim]: Go, `cmd/go/internal/cache/cache.go`, `mtimeInterval`, `trimInterval` and
     `trimLimit`.
@@ -357,4 +362,4 @@ module, or depends on the time is cached anyway.
 
 [^go-generate]: Go, `cmd/go/internal/generate/generate.go`: "Go generate is never run
     automatically by go build, go test, and so on."
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/generate/generate.go#L43>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/generate/generate.go#L43-L44>
