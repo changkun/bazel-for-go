@@ -4,7 +4,7 @@
 # ///
 """Tables and figures from one run of the benchmark harness (see run.go and probe.go).
 
-    uv run examples/bench/analyze.py examples/bench/results/2026-11-15
+    uv run examples/bench/analyze.py examples/bench/results/2026-11-16
     uv run examples/bench/analyze.py --appendix examples/bench/results/2026-11-16 [later-run ...]
 
 It prints Markdown tables to stdout, ending with every number Chapter 5 cites, and writes
