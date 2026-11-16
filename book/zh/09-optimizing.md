@@ -10,15 +10,15 @@
 
 Bazel 为每次构建写一份 JSON 格式的追踪剖面（trace profile），放在输出根目录（output base，
 存放一份检出的输出与状态的目录）中，或者写到 `--profile` 指定的文件。在 `chrome://tracing`
-中打开后，其中的 `Critical Path` 一行为关键路径（critical path）上的每个动作显示一个色块；关键路径是最长的一条
+中打开剖面，在 `Critical Path` 一行里，关键路径（critical path）上的每个动作各显示为一个色块；关键路径是最长的一条
 动作链，链上每个动作都要等待前一个完成。[^profile]Bazel 9 删除了汇总剖面的命令
 `analyze-profile`；[^analyze-profile]剖面文件是 gzip 压缩的 JSON，关键路径就是其中类别为
 `critical path component` 的事件。[^profile-task]除非设置了 `--noslim_profile`，Bazel
 会合并较短的事件，[^profile-format]因此我们在执行日志（下一节）中而不是在剖面中统计动作。
 
-图 9.1 画出了 1000 个包的合成仓库（附录 A）的两份剖面：冷构建的关键路径共 29.9 s，
-其中 24.2 s 花在 rules_go 自身的准备工作上。[^bench]一个动作以 `GOMAXPROCS=1` 构建出
-构建器（builder，运行 rules_go 大部分动作的 Go 程序，见第 7 章），因此其中的 `go build`
+图 9.1 画出了 1000 个包的合成仓库（附录 A）的两份剖面。[^bench]冷构建的关键路径共 29.9 s，
+其中 24.2 s 花在 rules_go 自身的准备工作上。一个动作以 `GOMAXPROCS=1` 构建出
+构建器（builder，运行 rules_go 大部分动作的 Go 程序，见第 7 章），因此该动作中的 `go build`
 命令一次只编译一个包。[^builder-env]另一个动作为工具构建标准库；工具指构建期间运行的程序，
 这里是仓库的代码生成器。两者都不依赖仓库的代码，因此按笔者的理解，从第二台机器起，
 共享缓存可以为同一平台的每台机器提供这两个动作的结果。在 `core` 中第一次修改函数体之后，
@@ -55,7 +55,7 @@ Bazel 的文档建议拆分位于关键路径上的慢动作。[^profile-issues]
   加上 `--action_env` 设置的变量。[^genrule-env]自 9.0 起，这个环境中的 `PATH` 是固定的，但
   `--action_env=NAME` 会把调用者的值复制进该动作的键；`--action_env=NAME=value`
   则把值固定下来。[^strict-env]
-- **依赖机器或不确定的输出**。如果一个动作的输出通过绝对路径、时间戳或构建 ID
+- **与机器相关或非确定性的输出**。如果一个动作的输出通过绝对路径、时间戳或构建 ID
   记录了它在哪里或何时运行，那么读取该输出的每个动作的键都会改变。[^hermeticity]rules_go
   的编译会去掉绝对路径，链接则把构建 ID 替换为二进制的哈希。[^rg-determinism]
   写入日期的 `genrule` 则不会这样做。
@@ -127,7 +127,7 @@ Go 把 `GOMAXPROCS`，以及随之而定的编译器默认 `-c`，限制在 cgro
 测试被标记为 `external`，或者要求运行不止一次。[^cache-test]其余结果来自缓存，因此每次修改都测试
 `//...`，除了加载和分析图之外，只需付出该修改所波及的测试的代价。`shard_count = N`
 把一个测试作为 N 个进程运行，这些进程可能位于 N 台机器上。[^test-sharding]rules_go 生成的测试
-main 包给每个分片分配每第 N 个顶层 `Test` 函数，[^rg-shard]因此单个慢函数无法拆分。
+main 包给每个分片分配每 N 个顶层 `Test` 函数中的一个，[^rg-shard]因此单个慢函数无法拆分。
 `--test_sharding_strategy` 默认为 `explicit`：只有设置了 `shard_count` 的目标才会分片。[^shard-strategy]
 笔者建议只对包含许多慢测试函数的包分片。
 
