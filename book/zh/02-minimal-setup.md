@@ -110,7 +110,7 @@ go_test(
 test --test_output=errors
 ```
 
-`.bazelrc` 中以 `test` 开头的行为 `bazel test` 设置默认选项；[^bazel-rc]
+`.bazelrc` 中以 `test` 开头的行用于为 `bazel test` 设置默认选项；[^bazel-rc]
 这一行让失败测试的日志被打印出来，而不是只打印概要。[^bazel-test-output]
 
 ## 构建、测试与运行
@@ -226,8 +226,8 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
 
 - `go.mod` 仍然是唯一需要手动编辑的 Go 版本列表，SDK 与每个模块的版本都在其中。
   笔者建议设置 `go_deps.config(check_direct_dependencies = "error")`，
-  使其他 Bazel 模块抬高某个版本时构建直接失败，而不只是发出警告。[^gz-mvs]
-  有了 `.bazelversion` 和纳入版本控制的 `MODULE.bazel.lock`，每台机器解析出的构建都相同。
+  使其他 Bazel 模块抬高某个版本时构建直接失败，而不是发出警告。[^gz-mvs]
+  有了 `.bazelversion` 和提交到仓库的 `MODULE.bazel.lock`，每台机器解析出的构建都相同。
 - 这里的一次干净构建在 18 秒中有 16 秒花在编译标准库和 rules_go 的构建器上，而不是代码上。
   除非有共享缓存提供这些结果，否则每台新机器都要再付出一次这项开销，
   因此笔者建议从一开始就使用共享缓存（第 9 章）。
@@ -251,8 +251,8 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
 [^rg-from-file]: rules_go，`go/private/go_mod.bzl`，`_version_from_go_file`，由
     `version_from_go_mod` 调用。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_mod.bzl#L76-L79>
-[^go-toolchain]: Go，`cmd/go/internal/toolchain/select.go`，`Select`：只有在目标版本更新时，
-    才会从本地工具链切换出去。
+[^go-toolchain]: Go，`cmd/go/internal/toolchain/select.go`，`Select`：只会从本地工具链切换到
+    较新的版本。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/toolchain/select.go#L202-L217>
 [^gz-go-deps]: Gazelle，`internal/bzlmod/go_deps.bzl`，`go_deps_impl`：为每个模块声明一个
     `go_repository`，附带其版本与校验和；`cmd/fetch_repo/module.go`，`fetchModule`：
