@@ -153,7 +153,7 @@ export default {
       section: "Every input is declared",
       lines: [
         "`go test` runs a test in its package's source directory, where tests keep files in `testdata/`.",
-        "`bazel test` runs it in a runfiles tree: links to the test binary and the files listed in `data`.",
+        "`bazel test` runs it in a runfiles tree holding the test binary and the files listed in `data`.",
         { say: "rules_go changes into the package's directory there, so `testdata/report.golden` still resolves if it is declared.", hold: 1 },
         { say: "Without the `data` line, the test fails, with or without the sandbox.", hold: 1.2 },
       ],
@@ -446,7 +446,7 @@ export default {
       lines: [
         "`GOOS`, `GOARCH` and `-tags` belong to one invocation of the go command.",
         { say: "In Bazel they are part of the configuration, the settings that shape every action; `--platforms` selects the target platform.", hold: 1.2 },
-        { say: "Changing the configuration makes the server analyze every target again.", hold: 1.6 },
+        { say: "Changing the configuration makes the server analyze every target the build needs again.", hold: 0.8 },
       ],
       draw(s) {
         s.fit(0, 0, 1000, 510);
@@ -494,7 +494,7 @@ export default {
       section: "Habits that change",
       lines: [
         { say: "`go test` runs a subset of `go vet` and fails on its findings; rules_go runs tests with its own actions, so that step is gone.", hold: 1 },
-        "nogo runs the analyzers you choose beside each compile in the main repository; a second action fails the build on any finding.",
+        "nogo runs the analyzers you choose beside each compile, by default in the main repository; a second action fails the build on any finding.",
         { say: "The default nogo analyzes nothing, and `vet = True` adds only five of the twelve that `go test` runs.", hold: 1.2 },
       ],
       draw(s) {
@@ -565,7 +565,7 @@ export default {
       lines: [
         "Plain `go` keeps working while `go.mod` holds the versions and every Go file is in the tree.",
         "It stops where Bazel holds what `go` cannot see: generated files not checked in, files found through runfiles, non-Go dependencies.",
-        { say: "We recommend that CI also run `go vet` and `go test` on the packages that need no Bazel-only input.", hold: 1.6 },
+        { say: "We recommend that CI also run `go vet` and `go test` on the packages that need no Bazel-only input.", hold: 1 },
       ],
       draw(s) {
         s.fit(0, 0, 1040, 550);

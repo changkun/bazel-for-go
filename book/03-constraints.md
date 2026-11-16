@@ -16,13 +16,13 @@ machine.[^bazel-sandbox] A file the action reads without declaring it is either 
 invisible to the cache key. Two Go habits depend on undeclared files.
 
 The first is `//go:embed`. A compile action's source inputs are `srcs` and `embedsrcs`, and
-rules_go's builder matches embed patterns against `embedsrcs` alone, so an unlisted file fails
-with `could not embed`.[^rg-embedcfg] Gazelle, Chapter 2's BUILD file generator, lists embedded
-files for you.[^gz-embedsrcs]
+rules_go's builder (the program that wraps the Go tools) matches embed patterns against
+`embedsrcs` alone, so an unlisted file fails with `could not embed`.[^rg-embedcfg] Gazelle,
+Chapter 2's BUILD file generator, lists embedded files for you.[^gz-embedsrcs]
 
 The second is test data. `go test` runs a test in its package's source directory, and the go
 tool ignores `testdata/` so tests can keep files there.[^go-test-dir] `bazel test` runs it in a
-*runfiles tree*, a directory of links to the test binary and to the files that it and its
+*runfiles tree*, a directory holding the test binary and the files that it and its
 dependencies list in `data`.[^bazel-test-encyclopedia] rules_go changes into the package's
 directory inside that tree, so `testdata/report.golden` still resolves if it is
 declared.[^rg-chdir] Remove the `data` line from `golden/BUILD.bazel` and the test fails, with
@@ -120,9 +120,9 @@ version/version.go:7:31: undefined: generated
 
 ### cgo needs a C toolchain
 
-With `go`, cgo runs whatever compiler `CC` names. Under Bazel, rules_go compiles cgo code with the
-C/C++ *toolchain* (compiler, linker and their flags) registered in Bazel, and turns cgo off
-(*pure* mode) when no C toolchain matches the target platform or the platform is marked
+With `go`, cgo runs whatever compiler `CC` names.[^go-cgo-cc] Under Bazel, rules_go compiles cgo
+code with the C/C++ *toolchain* (compiler, linker and their flags) registered in Bazel, and turns
+cgo off (*pure* mode) when no C toolchain matches the target platform or the platform is marked
 `cgo_off`.[^rg-cgo] By default rules_cc configures one from the host's compiler,[^bazel-cc] so cgo
 works on a laptop, but Bazel does not track tools outside the workspace, such as that compiler
 (Chapter 9).[^bazel-cache-issues] On macOS even code without cgo goes through it: rules_go builds
@@ -158,7 +158,7 @@ bazel-bin/cmd/version/version_/version: ELF 64-bit LSB executable, x86-64, ... s
 The binary is statically linked because rules_go's `linux_amd64` platform carries a `cgo_off`
 constraint, which selects pure mode; `linux_amd64_cgo` would need a C cross-toolchain.[^rg-cross]
 The warning shows the cost of explicit configuration: changing it makes the server analyze every
-target again.
+target the build needs again.[^bazel-analysis-cache]
 
 ### `go vet` becomes nogo
 
@@ -166,10 +166,10 @@ target again.
 rules_go builds and runs tests with its own actions, not with `go test`, so that step is
 gone.[^rg-test-actions] Its counterpart is nogo, a binary built from analyzers (individual
 checks, like vet's) you choose. Registered with `go_sdk.nogo`, it runs as an action beside each
-compile in the main repository, and a second action fails the build on any finding.[^rg-nogo]
-The default nogo analyzes nothing,[^rg-default-nogo] and `vet = True` adds only five of the
-twelve that `go test` runs,[^rg-nogo-vet] so until you list them, Bazel checks less than
-`go test` does. With `t.Logf("%d bytes", "want")` added to the test:
+compile, by default in the main repository, and a second action fails the build on any
+finding.[^rg-nogo] The default nogo analyzes nothing,[^rg-default-nogo] and `vet = True` adds
+only five of the twelve that `go test` runs,[^rg-nogo-vet] so until you list them, Bazel checks
+less than `go test` does. With `t.Logf("%d bytes", "want")` added to the test:
 
 ```console
 $ go test ./golden
@@ -183,15 +183,15 @@ $ bazel test //golden:golden_test
 
 `go_deps`, Chapter 2's module extension, reproduces part of the go command's module handling. It
 applies the root `go.mod`'s `replace` directives, whether they point at another module version
-or at a local directory, ignores `exclude` directives, and cannot pin a dependency to a Git
-commit.[^gz-replace] It downloads each module with `go mod download`, passing through
-`GOPRIVATE`, `GOPROXY`, `GOAUTH` and the caller's Git, SSH and proxy settings; the caller's
+or at a local directory, ignores `exclude` directives, and cannot point a module at a Git
+remote.[^gz-replace] It downloads each module with `go mod download`, passing through
+`GOPRIVATE`, `GOPROXY`, `GOAUTH` and your shell's Git, SSH and proxy settings; your shell's
 values win over `go_deps.config(go_env = ...)` in `MODULE.bazel`.[^gz-fetch-env] `go_env` does
-not affect build actions.[^rg-go-env] `go_deps` ignores `vendor/` and fetches every module; Gazelle can instead write BUILD files inside
-`vendor/` and resolve imports to them.[^gz-vendor] When a dependency does not build with the
-BUILD files Gazelle generates for it, `go_deps.gazelle_override` passes directives for that
-module, `go_deps.module_override` applies patches, and `go_deps.archive_override` fetches it
-from a URL.[^gz-overrides]
+not affect build actions.[^rg-go-env] `go_deps` ignores `vendor/` and downloads modules; Gazelle
+can instead write BUILD files inside `vendor/` and resolve imports to them.[^gz-vendor] When a
+dependency does not build with the BUILD files Gazelle generates for it,
+`go_deps.gazelle_override` passes directives for that module, `go_deps.module_override` applies
+patches, and `go_deps.archive_override` fetches it from a URL.[^gz-overrides]
 
 ### Two front ends
 
@@ -274,8 +274,13 @@ that the second front end keeps working.
 [^rg-proto]: rules_go, `proto/core.rst`, `go_proto_library`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/proto/core.rst?plain=1#L39-L40>
 [^gz-genfiles]: Gazelle, `v2/walk/walk.go`, `findGenFiles`, which reads the `out` and `outs`
-    attributes of rules in a BUILD file.
-    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/walk/walk.go#L564-L570>
+    attributes of rules in a BUILD file; `language/go/generate.go`, `GenerateRules`, which adds
+    those files to the package unless another rule consumes them.
+    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/walk/walk.go#L564-L570>,
+    <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/language/go/generate.go#L327-L335>
+[^go-cgo-cc]: Go, `cmd/cgo/doc.go`, the package documentation on the `CC` and `CXX` environment
+    variables.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/cgo/doc.go#L110-L112>
 [^rg-cgo]: rules_go, `docs/go/core/rules.md`, the `cgo` attribute of `go_library` and the `pure`
     attribute of `go_binary`; `go/private/context.bzl`, `go_context`, which disables cgo on a
     `cgo_off` platform or when no C toolchain resolves.
@@ -317,6 +322,12 @@ that the second front end keeps working.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/go/core/cross_compilation.md?plain=1#L19-L27>,
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L185>,
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/platforms.bzl#L206>
+[^bazel-analysis-cache]: Bazel, "Optimize Iteration Speed", "Running Bazel Iteratively": many flags
+    discard the analysis cache, and the next run analyzes again;
+    `src/main/java/com/google/devtools/build/lib/skyframe/SkyframeBuildView.java`,
+    `shouldDiscardAnalysisCache`, which discards it when the build options differ.
+    <https://bazel.build/advanced/performance/iteration-speed#run-iteratively>,
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeBuildView.java#L321-L342>
 [^go-test-vet]: Go, `cmd/go/internal/test/test.go`: the help text, and `defaultVetFlags`, which
     enables twelve analyzers; the help text omits `slog`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L77-L82>,
