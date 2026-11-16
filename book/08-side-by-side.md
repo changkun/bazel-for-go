@@ -349,8 +349,8 @@ checks every action against the action cache again.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
 [^bench-links]: This book's measurements at 10,000 packages: in the cold builds a binary's link
     took a median of 32 s under Bazel and 19 s under the go command; in Bazel's first body edit,
-    41 s. The two tools ran at this size an hour apart, on a machine shared with other work
-    (Appendix A).
+    41 s; the go command's edits record no link times. The two tools ran at this size an hour
+    apart, on a machine shared with other work (Appendix A).
     [n10000-bazel-cold.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz),
     [n10000-bazel-core-body.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz),
     [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)
