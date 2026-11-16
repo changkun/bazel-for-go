@@ -161,7 +161,7 @@ module, or depends on the time is cached anyway.
 - We recommend `-trimpath` in continuous integration. Without it, a cache restored at a
   different path misses on every package in the repository.
 - We recommend `go build -o <dir>`, keeping the directory. Without it, every binary is relinked
-  on every build.
+  on every build; with it, a commit still relinks every binary unless `-buildvcs=false`.
 
 ## References
 
