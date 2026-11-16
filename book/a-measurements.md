@@ -10,7 +10,7 @@ records each command.[^a-main]
 
 `bench gen` writes one Go module together with the BUILD files Gazelle would write for it, so
 both tools build the same source tree; a given shape always produces the same bytes.[^a-gen]
-Packages are spread evenly over a number of layers (Figure A.1). Each package above layer 0
+Packages are spread evenly over layers (Figure A.1). Each package above layer 0
 imports up to three packages chosen at random from the layer directly below and one from any
 lower layer: a fan-in of four.[^a-plan] Package 0, `core`, sits in layer 0, and every other
 package also imports it directly with probability 0.3, so an edit to `core` reaches most of the
@@ -39,15 +39,14 @@ tree.[^a-run] Both tools build the same packages. With `-o` naming a directory, 
 only the main packages and what they import, and Bazel builds the targets that
 `build_targets.txt` lists: the binaries and the generator.[^a-targets]
 
-Both use Go 1.27.3. The go command is the Go SDK (software development kit) that `-goroot` names,
-run with `GOTOOLCHAIN=local`, so it never switches to another toolchain, and with every other
-`GO` variable cleared or set by the harness;[^a-goenv][^go-toolchain-local] rules_go downloads
-the version that the generated `go.mod` names (Chapter 2).[^rg-from-file]
+Both use Go 1.27.3: the go command from the SDK (software development kit) that `-goroot` names,
+with `GOTOOLCHAIN=local`, so it never switches toolchains, and every other `GO` variable cleared
+or set by the harness;[^a-goenv][^go-toolchain-local] rules_go downloads the version the
+generated `go.mod` names (Chapter 2).[^rg-from-file]
 
-The caches are separate. Each configuration has its own GOCACHE (the go command's build cache).
-Bazel keeps its output base (its outputs and state for one checkout) under an
-`--output_user_root` in the harness's work directory, and `--nohome_rc` and `--nosystem_rc` keep
-the user's and the system's `.bazelrc` files out.[^a-bazel][^bazel-rc] Bazel's cold build follows
+Each configuration has its own GOCACHE (the go command's build cache), and Bazel its own output
+base (its outputs and state for one checkout) in the harness's work directory; `--nohome_rc` and
+`--nosystem_rc` keep the user's and the system's `.bazelrc` files out.[^a-bazel][^bazel-rc] Bazel's cold build follows
 a fetch of rules_go and the Go SDK, so it downloads nothing.
 
 In the table, a go build is `go build -x -o <dir> ./...`, where `-x` prints each command it runs,
@@ -80,18 +79,18 @@ neither always runs on a hotter machine.[^a-order] A measurement is the wall tim
 command, from start to exit. The harness counts the compile, link, asm and test processes in the
 go command's `-x` output, and reads Bazel's summary line, which counts the processes it ran and
 the actions it answered from a cache instead.[^a-time] Warm scenarios repeat `-reps` times, three
-here; Bazel's fourth `noop`, which only warms the server again after the restarts, is left out.
+here; Bazel's fourth `noop`, which only rewarms the server, is left out.
 Edits accumulate: each run edits the tree again. The go command's cold build also writes its
-action graph (`-debug-actiongraph`, its plan of actions with their times), and Bazel's cold and
-first `core-body` builds write a trace profile (`--profile`); Chapters 5 and 9 analyze them.
+action graph (`-debug-actiongraph`, its plan of actions with their times), and Bazel's cold build,
+first `core-body` build and first test write a trace profile (`--profile`); Chapters 5 and 9
+analyze them.
 
 For `n1000` and `n3000`, after both tools, the harness builds and tests once more from an empty
-GOCACHE, with the go command running a wrapper in place of each tool (`-toolexec`) and each test
-binary (`-exec`).[^go-toolexec][^go-exec] The wrapper, `bench toolexec`, runs the process and
-appends its wall time, user and system CPU time, and peak RSS (resident set size, the most
-physical memory it held at once) to `workload.jsonl`, skipping the go command's version
-queries.[^a-probe] The tests reuse the build's cache. The wrapper adds a
-process per tool, so we do not compare these runs' times with the others.
+GOCACHE, with the go command running a wrapper, `bench toolexec`, in place of each tool (`-toolexec`)
+and each test binary (`-exec`).[^go-toolexec][^go-exec] The wrapper appends each process's wall
+time, user and system CPU time, and peak RSS (resident set size, the most physical memory it held
+at once) to `workload.jsonl`.[^a-probe] It adds a process per tool, so we do not compare these
+runs' times with the others.
 
 ## Results
 
@@ -188,9 +187,10 @@ Table A.6: The go command's processes in one cold build and test, as the probe r
 <!-- END -->
 
 Where repeated runs did different work, the tables give the range. The first `noop-discard` also
-compiles the packages that no binary imports, and some other go command runs relinked every
-binary, some after recompiling every main package, for reasons we did not trace. Bazel's no-op and
-analysis-only runs show no count, because the harness's pattern does not match their summary
+compiles the packages that no binary imports. Some other go command runs relinked every binary,
+some after recompiling every main package: the go command stamped the book's git commit into
+each binary (Chapter 4), and we committed during the run. The harness has since set
+`-buildvcs=false`.[^a-goenv] Bazel's no-op and analysis-only runs show no count, because the harness's pattern does not match their summary
 line.[^a-time]
 
 <!-- Recheck this paragraph against n3000 and n10000 when they land. -->
@@ -203,17 +203,17 @@ they reach; Bazel's body edit reached none, and ran one compile and the links at
 
 ## Limits
 
-- **One machine:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6.[^a-meta]
+- **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
+  26.6,[^a-meta] shared during parts of the run with other work, such as a `go test -race`.
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
-  nothing and one code generator. We expect the shape of the results to carry over to real
-  repositories more than the numbers.
-- **Local Bazel only:** no remote cache or remote execution was measured. A local disk cache
-  stands in for a shared one, so no network time is included.
+  nothing and one code generator. We expect the results' shape, more than their numbers, to
+  carry over to real repositories.
+- **Local Bazel only:** no remote cache or execution. A local disk cache stands in for a shared
+  one, without network time.
 - **macOS:** macOS checks an app when it is first launched,[^apple-xprotect] and Chapter 5 infers
   that this slows the run of every newly linked test binary.
-- **CPU time:** the probe truncates each process's user and system CPU time to whole
-  milliseconds, so the shortest processes read low.[^a-probe]
+- **Whole milliseconds:** this run's probe truncated each process's times to whole
+  milliseconds, so the shortest processes read low; it now keeps microseconds.[^a-probe]
 - **Few runs:** `cold`, `test-first`, `test-core-body` and the clone scenarios ran once, and code
   generation twice. The tables give medians without spread; `results.jsonl` has every run.
 
@@ -268,13 +268,14 @@ redraws its figures.
 [^a-run]: This book's harness, `examples/bench/run.go`, `cmdRun`, `harness.runConfig`,
     `harness.edit`, `harness.runGo` and `harness.runBazel`.
     [run.go](../examples/bench/run.go#L68-L298),
-    [run.go](../examples/bench/run.go#L353-L612)
+    [run.go](../examples/bench/run.go#L357-L620)
 [^a-targets]: This book's harness, `examples/bench/gen.go`, `Repo.write`, which writes
     `build_targets.txt`; Go, `cmd/go/internal/work/build.go`, `runBuild`.
     [gen.go](../examples/bench/gen.go#L233-L237)
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
-[^a-goenv]: This book's harness, `examples/bench/run.go`, `harness.goEnv`.
-    [run.go](../examples/bench/run.go#L305-L320)
+[^a-goenv]: This book's harness, `examples/bench/run.go`, `harness.goEnv`, which sets
+    `GOFLAGS=-buildvcs=false` since this run.
+    [run.go](../examples/bench/run.go#L305-L324)
 [^go-toolchain-local]: Go, `cmd/go/internal/toolchain/select.go`, `Select`: with
     `GOTOOLCHAIN=local`, the running go command handles the command itself.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/toolchain/select.go#L271-L277>
@@ -285,7 +286,7 @@ redraws its figures.
     [gen.go](../examples/bench/gen.go#L194-L197)
 [^a-bazel]: This book's harness, `examples/bench/run.go`, `bazelCmd.args` and
     `harness.runBazel`, and `examples/bench/templates.go`, `bazelrc`.
-    [run.go](../examples/bench/run.go#L470-L518),
+    [run.go](../examples/bench/run.go#L474-L522),
     [templates.go](../examples/bench/templates.go#L253-L256)
 [^bazel-rc]: Bazel, `src/main/cpp/option_processor.cc`, `OptionProcessor::GetRcFiles`, which
     reads the system and home `.bazelrc` files unless `--nosystem_rc` and `--nohome_rc` are set.
@@ -294,16 +295,17 @@ redraws its figures.
     [run.go](../examples/bench/run.go#L121-L136)
 [^a-time]: This book's harness, `examples/bench/run.go`, `harness.timeCmd`, `goCounts`,
     `bazelCounts` and `bzProcRE`.
-    [run.go](../examples/bench/run.go#L300-L351),
-    [run.go](../examples/bench/run.go#L440-L461)
+    [run.go](../examples/bench/run.go#L300-L355),
+    [run.go](../examples/bench/run.go#L444-L465)
 [^go-toolexec]: Go, `cmd/go/internal/work/build.go`, the documentation of `-toolexec`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L202-L205>
 [^go-exec]: Go, `cmd/go/internal/test/test.go`, the documentation of `-exec`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L155-L157>
-[^a-probe]: This book's harness, `examples/bench/probe.go`, `cmdToolexec`, which records
-    `Duration.Milliseconds` of each CPU time, and `examples/bench/run.go`, `harness.runWorkload`.
-    [probe.go](../examples/bench/probe.go#L21-L63),
-    [run.go](../examples/bench/run.go#L625-L654)
+[^a-probe]: This book's harness, `examples/bench/probe.go`, `cmdToolexec` and `ms`, which since
+    this run records each time to the microsecond, and `examples/bench/run.go`,
+    `harness.runWorkload`.
+    [probe.go](../examples/bench/probe.go#L21-L67),
+    [run.go](../examples/bench/run.go#L633-L662)
 [^a-analyze]: This book's analysis script, `examples/bench/analyze.py`, `appendix`, which takes
     the planned scenarios from `run.go`'s `configs`.
     [analyze.py](../examples/bench/analyze.py)
