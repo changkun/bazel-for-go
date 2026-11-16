@@ -148,21 +148,14 @@ standard library.[^m-profile]
     [`examples/bench/results/2026-11-16/meta.json`](../examples/bench/results/2026-11-16/meta.json);
     the repository's shape:
     [`configs.jsonl`](../examples/bench/results/2026-11-16/configs.jsonl).
-[^m-workload]: Measurements, one record per process of the wrapped build and test of `n1000` and
-    `n3000`:
-    [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl),
-    summarized by [`examples/bench/analyze.py`](../examples/bench/analyze.py).
-[^m-results]: Measurements, one record per command:
-    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
 [^m-graph]: Measurements, the go command's action graph of the cold build:
     [`examples/bench/results/2026-11-16/n1000-go-cold-actiongraph.json.gz`](../examples/bench/results/2026-11-16/n1000-go-cold-actiongraph.json.gz).
 [^m-profile]: Measurements, Bazel's JSON trace profiles of the cold build and of the core-body
     edit:
     [`examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz),
     [`n1000-bazel-core-body.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-core-body.profile.gz).
-[^m-test-profile]: Measurements, Bazel's JSON trace profile of the first `bazel test //...`, its
-    `GoLink` and `TestRunner` actions:
-    [`examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz).
+[^m-results]: Measurements, one record per command:
+    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
 [^go-compile-doc]: Go, `cmd/compile/doc.go`, package documentation.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 [^go-parse]: Go, `cmd/compile/internal/noder/noder.go`, `LoadPackage`, which parses each file in
@@ -195,19 +188,26 @@ standard library.[^m-profile]
     `SpawnAction.java`, which uses it unless a rule sets its own.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>,
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
+[^m-workload]: Measurements, one record per process of the wrapped build and test of `n1000` and
+    `n3000`:
+    [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl),
+    summarized by [`examples/bench/analyze.py`](../examples/bench/analyze.py).
 [^go-link-deps]: Go, `cmd/go/internal/work/action.go`, `addTransitiveLinkDeps`, and
     `exec.go`, `writeLinkImportcfg`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>,
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1670-L1678>
 [^rules-go-link-inputs]: rules_go, `go/private/actions/link.bzl`, `emit_link`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L217-L227>
-[^go-linkactionid]: Go, `cmd/go/internal/work/exec.go`, `linkActionID`, the `packagefile`
-    line. <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
 [^go-link-phases]: Go, `cmd/link/internal/ld/main.go`, `Main`; `dwarf.go` and `data.go`, the
     parallel parts.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/main.go#L367-L374>,
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/dwarf.go#L2264-L2265>,
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/data.go#L1170-L1175>
+[^go-test-strip]: Go, `cmd/go/internal/test/test.go`, `OmitDebug`, and `work/gc.go`, `ld`.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1220>,
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
+[^go-linkactionid]: Go, `cmd/go/internal/work/exec.go`, `linkActionID`, the `packagefile`
+    line. <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
 [^go-internal-pie]: Go, `internal/platform/supported.go`, `InternalLinkPIESupported` and
     `DefaultPIE`.
     <https://github.com/golang/go/blob/go1.27.3/src/internal/platform/supported.go#L217-L243>
@@ -222,13 +222,13 @@ standard library.[^m-profile]
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L762-L797>
 [^rules-go-cgo]: rules_go, `go/tools/builders/compilepkg.go`, `compileArchive`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L338-L341>
-[^go-test-strip]: Go, `cmd/go/internal/test/test.go`, `OmitDebug`, and `work/gc.go`, `ld`.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1220>,
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
 [^apple-xprotect]: Apple, *Apple Platform Security*, "Protecting against malware in macOS",
     section "XProtect": XProtect checks for known malicious content when an app is first
     launched or has been changed in the file system.
     <https://support.apple.com/guide/security/protecting-against-malware-sec469d47bd8/web#secffa0f9b55>
+[^m-test-profile]: Measurements, Bazel's JSON trace profile of the first `bazel test //...`, its
+    `GoLink` and `TestRunner` actions:
+    [`examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz`](../examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz).
 [^go-vet]: Go, `cmd/go/internal/work/action.go`, `vetAction`, and `exec.go`, `Builder.vet`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L881-L898>,
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1409-L1413>

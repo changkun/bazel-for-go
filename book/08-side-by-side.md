@@ -286,6 +286,11 @@ checks every action against the action cache again.
 [^go-noexe]: Go, `cmd/go/internal/work/buildid.go`, `updateBuildID`: "Executables are not
     cached by default".
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L730-L742>
+[^bazel-remote-caching]: Bazel, "Remote Caching", sections "Overview" (action outputs are what
+    is cached) and "Disk cache" (shared across checkouts).
+    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
+[^go-defaultdir]: Go, `cmd/go/internal/cache/default.go`, `DefaultDir`.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/default.go#L74-L87>
 [^go124]: Go 1.24 release notes, section "Go command": executables created by `go run` and
     `go tool` "are now cached in the Go build cache" (commit 3ff868f2f5); section
     "GOCACHEPROG": a program named by the `GOCACHEPROG` environment variable can now implement
@@ -293,11 +298,6 @@ checks every action against the action cache again.
     disk cache is used.
     <https://go.dev/doc/go1.24#go-command> <https://go.dev/doc/go1.24#gocacheprog>
     <https://go.googlesource.com/go/+/3ff868f2f5>
-[^bazel-remote-caching]: Bazel, "Remote Caching", sections "Overview" (action outputs are what
-    is cached) and "Disk cache" (shared across checkouts).
-    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
-[^go-defaultdir]: Go, `cmd/go/internal/cache/default.go`, `DefaultDir`.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/default.go#L74-L87>
 [^go-cacheprog]: Go, `cmd/go/internal/cache/prog.go`, `ProgCache`; `cache/default.go`, where
     `GOCACHEPROG` replaces the disk cache.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/prog.go#L27-L31>

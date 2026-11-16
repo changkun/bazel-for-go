@@ -178,11 +178,6 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L270-L284>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/stdlib.bzl#L33-L35>
 
-[^builder]: rules_go, `go/tools/builders/builder.go`, the package comment and the subcommands
-    in `main`.
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L15-L18>
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L49-L76>
-
 [^builder-filter]: rules_go, `go/tools/builders/filter.go`, `filterAndSplitFiles`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/filter.go#L69-L71>
 
@@ -197,6 +192,11 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L391-L453>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L457-L482>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L488-L494>
+
+[^builder]: rules_go, `go/tools/builders/builder.go`, the package comment and the subcommands
+    in `main`.
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L15-L18>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L49-L76>
 
 [^builder-exec]: rules_go, `go/private/go_toolchain.bzl`, the `builder` attribute with
     `cfg = "exec"`; `go/private/sdk_build_defs.bzl`, which declares the builder as a
@@ -319,13 +319,6 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
 [^nogo-validate]: rules_go, `go/private/actions/compilepkg.bzl`, the `ValidateNogo` action.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L285-L303>
 
-[^bazel-cpu]: Bazel, `AbstractAction.java`, `DEFAULT_RESOURCE_SET`: 250 MB and 1 CPU;
-    `SpawnAction.java`, `Builder`, which starts from it; `StarlarkActionFactory.java`,
-    `registerStarlarkAction`, which replaces it only when a rule passes `resource_set`.
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkActionFactory.java#L845-L854>
-
 [^exec-groups]: Bazel, "Execution Groups", section "Using execution groups to set execution
     properties". <https://bazel.build/extending/exec-groups#using-exec-groups-for-exec-properties>
 
@@ -337,3 +330,10 @@ Bazel counts a compile as one CPU (one core) while the compiler may use every co
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L499-L503>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L197>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L237>
+
+[^bazel-cpu]: Bazel, `AbstractAction.java`, `DEFAULT_RESOURCE_SET`: 250 MB and 1 CPU;
+    `SpawnAction.java`, `Builder`, which starts from it; `StarlarkActionFactory.java`,
+    `registerStarlarkAction`, which replaces it only when a rule passes `resource_set`.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkActionFactory.java#L845-L854>

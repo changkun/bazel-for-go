@@ -168,12 +168,12 @@ module, or depends on the time is cached anyway.
 [^go-about]: Go, "About the go command", sections "Motivation" and "Configuration versus
     convention". <https://go.dev/doc/articles/go_command>
 
-[^pike]: Rob Pike, "Go at Google: Language Design in the Service of Software Engineering",
-    section "Dependencies in Go". <https://go.dev/talks/2012/splash.article>
-
 [^go-exportdata]: Go, `cmd/compile/internal/noder/unified.go`: writing export data
     "handles re-exporting any transitive dependencies" and prunes "non-inlineable functions".
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/unified.go#L160-L169>
+
+[^pike]: Rob Pike, "Go at Google: Language Design in the Service of Software Engineering",
+    section "Dependencies in Go". <https://go.dev/talks/2012/splash.article>
 
 [^go-do]: Go, `cmd/go/internal/work/exec.go`, `Builder.Do`, which starts `-p` goroutines;
     `cmd/go/internal/cfg/cfg.go`, `BuildP`, which defaults to `GOMAXPROCS`;
@@ -185,14 +185,6 @@ module, or depends on the time is cached anyway.
 [^go-filehash]: Go, `cmd/go/internal/cache/hash.go`, `FileHash`: hashes the whole file and
     remembers the result in a map that lives as long as the process.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
-
-[^go-modinfo]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`, the `modinfo` line.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
-
-[^go-buildvcs]: Go, `cmd/go/internal/work/build.go`, the `-buildvcs` flag's help; `load/pkg.go`,
-    `setBuildInfo`, the `vcs.revision`, `vcs.time` and `vcs.modified` settings.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>,
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
 
 [^go-load]: Go, `cmd/go/internal/load/pkg.go`, `PackagesAndErrors`.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2937>
@@ -216,6 +208,11 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L451-L456>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L656-L658>
 
+[^go-lookup]: Go, `cmd/go/internal/cache/hash.go`, `NewHash`, a SHA-256 hash;
+    `cmd/go/internal/work/buildid.go`, `useCache`, the GOCACHE lookup.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L82-L83>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L565>
+
 [^go-buildactionid]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`: platform, compiler
     tool ID and flags, `GOEXPERIMENT`, input files, and each dependency's content ID; the tool
     ID comes from `compile -V=full` in `Builder.toolID`.
@@ -225,13 +222,26 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L428-L435>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L146-L184>
 
-[^go-lookup]: Go, `cmd/go/internal/cache/hash.go`, `NewHash`, a SHA-256 hash;
-    `cmd/go/internal/work/buildid.go`, `useCache`, the GOCACHE lookup.
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L82-L83>
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L565>
-
 [^go-actionid-dir]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`, the `dir` line.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L275-L303>
+
+[^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
+    configuration `n1000` (1,000 packages, 11 binaries): scenarios `noop`, `noop-discard`
+    (repetitions 1 and 2), `core-body`, `core-api`, `test-core-body`, `clone-warmcache` and
+    `clone-warmcache-trimpath`. With `-o` naming a directory, `go build` builds only the main
+    packages and their dependencies, 891 packages here; 298 of `core`'s 332 direct importers
+    are among them, counted from the generated repository's imports. `configs.jsonl` lists 926
+    packages that depend on `core`, directly or not.
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
+
+[^go-modinfo]: Go, `cmd/go/internal/work/exec.go`, `buildActionID`, the `modinfo` line.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
+
+[^go-buildvcs]: Go, `cmd/go/internal/work/build.go`, the `-buildvcs` flag's help; `load/pkg.go`,
+    `setBuildInfo`, the `vcs.revision`, `vcs.time` and `vcs.modified` settings.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>,
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
 
 [^go-buildid]: Go, `cmd/go/internal/work/buildid.go`, the "Build IDs" comment: the action ID
     half as a one-element cache, the content ID half as the key for the next step.
@@ -272,16 +282,6 @@ module, or depends on the time is cached anyway.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L52-L54>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L553-L556>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L955>
-
-[^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
-    configuration `n1000` (1,000 packages, 11 binaries): scenarios `noop`, `noop-discard`
-    (repetitions 1 and 2), `core-body`, `core-api`, `test-core-body`, `clone-warmcache` and
-    `clone-warmcache-trimpath`. With `-o` naming a directory, `go build` builds only the main
-    packages and their dependencies, 891 packages here; 298 of `core`'s 332 direct importers
-    are among them, counted from the generated repository's imports. `configs.jsonl` lists 926
-    packages that depend on `core`, directly or not.
-    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
 
 [^go-archive]: Go, `cmd/compile/internal/gc/obj.go`, `dumpobj1`: the archive holds the export
     data (`__.PKGDEF`) and the object code (`_go_.o`).

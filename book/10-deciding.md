@@ -177,9 +177,17 @@ and the cache server.
 [^go-do]: Go, `cmd/go/internal/work/exec.go`, `Builder.Do`, which starts `-p` goroutines that run
     the actions as local processes.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L223-L229>
-[^go-about]: Go, "About the go command", section "Configuration versus convention": the go
-    command "does not attempt to build anything but Go packages".
-    <https://go.dev/doc/articles/go_command>
+[^bazel-cache-rw]: Bazel, "Remote Caching", section "Read from and write to the remote cache":
+    "You may want only your CI system to be able to write to the remote cache."
+    <https://bazel.build/remote/caching#read-write-remote-cache>
+[^bazel-test-spawn]: Bazel, `lib/exec/StandaloneTestStrategy.java`, `createTestRunnerSpawn`,
+    which runs a test as a spawn over the test action's inputs, and `extractExecutionInfo`, which
+    marks a cache hit as remotely cached.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L131-L139>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L374-L376>
+[^bazel-rbe]: Bazel, "Remote Execution Overview". <https://bazel.build/remote/rbe>
+[^bazel-hermetic]: Bazel, "Hermeticity", section "Overview".
+    <https://bazel.build/basics/hermeticity#overview>
 [^go-buildvcs]: Go, `cmd/go/internal/work/build.go`, the `-buildvcs` flag: `false` omits
     version control information, and `true` errors out if it "cannot be included due to a
     missing tool"; `load/pkg.go`, `setBuildInfo`: under the default `auto`, a missing tool
@@ -197,17 +205,12 @@ and the cache server.
     `cgo && !netgo && unix && !darwin` compiles C into `net` on Linux when cgo is on.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L165-L176>
     <https://github.com/golang/go/blob/go1.27.3/src/net/cgo_unix_cgo.go#L5>
-[^bazel-test-spawn]: Bazel, `lib/exec/StandaloneTestStrategy.java`, `createTestRunnerSpawn`,
-    which runs a test as a spawn over the test action's inputs, and `extractExecutionInfo`, which
-    marks a cache hit as remotely cached.
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L131-L139>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L374-L376>
-[^bazel-rbe]: Bazel, "Remote Execution Overview". <https://bazel.build/remote/rbe>
-[^bazel-hermetic]: Bazel, "Hermeticity", section "Overview".
-    <https://bazel.build/basics/hermeticity#overview>
 [^bazel-cache-issues]: Bazel, "Remote Caching", section "Known issues": "Bazel does not track
     tools outside a workspace", such as a compiler in `/usr/bin`.
     <https://bazel.build/remote/caching#known-issues>
+[^go-about]: Go, "About the go command", section "Configuration versus convention": the go
+    command "does not attempt to build anything but Go packages".
+    <https://go.dev/doc/articles/go_command>
 [^bazel-migrate]: Bazel, "Migrating from Maven to Bazel", introduction: "When migrating from any
     build tool to Bazel, it's best to have both build tools running in parallel".
     <https://bazel.build/migrate/maven>
@@ -219,8 +222,5 @@ and the cache server.
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/gazelle-reference.md?plain=1#L53-L59>
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/cmd/gazelle/update/diff.go#L30>
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/cmd/gazelle/main.go#L92-L95>
-[^bazel-cache-rw]: Bazel, "Remote Caching", section "Read from and write to the remote cache":
-    "You may want only your CI system to be able to write to the remote cache."
-    <https://bazel.build/remote/caching#read-write-remote-cache>
 [^bazel-remote-executor]: Bazel, `lib/remote/options/RemoteOptions.java`, `--remote_executor`.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L90-L99>
