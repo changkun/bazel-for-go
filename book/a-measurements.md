@@ -160,7 +160,7 @@ Table A.4: Bazel's server heap after garbage collection, in MB.[^a-results]
 | `n1000-deep` | 84 | — |
 | `n1000-local` | 82 | — |
 
-Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (processes run; hits).[^a-results]
+Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (processes run; hits); `n1000` from the first run, the others rerun.[^a-results]
 
 | Config, tool | `cold` | `noop` | `leaf-body` | `core-body` | `core-api` |
 |---|---|---|---|---|---|
@@ -192,8 +192,8 @@ The first `noop-discard` also
 compiles the packages that no binary imports. Some other go command runs relinked every binary,
 some after recompiling every main package: the go command stamped the book's git commit into
 each binary (Chapter 4), and we committed during the run; the harness now sets
-`-buildvcs=false`.[^a-goenv] The first run's pattern missed Bazel's summary line for no-op and
-analysis-only runs, which show no count.[^a-time]
+`-buildvcs=false`.[^a-goenv] Bazel's analysis-only runs, and the first run's no-ops, show no
+count: the pattern missed their summary line.[^a-time]
 
 In our measurements, from 100 to 10,000 packages, the go command's no-op ran no tool, yet took 0.20
 s to 13.6 s, since every run loads and hashes the whole tree (Chapter 4). Bazel's warm no-op took
@@ -205,8 +205,8 @@ took 185 s, against 134 s for the go command's 2,724 compiles and 100 links.
 ## Limits
 
 - **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6,[^a-meta] shared during parts of the run with other work, such as `go test -race`. The three
-  variants were rerun alone, after first runs up to nine times slower.[^a-results]
+  26.6,[^a-meta] shared during parts of the run with other work, such as `go test -race`. Table A.5's
+  variants were rerun alone.[^a-results]
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
   nothing and one code generator. We expect the results' shape, more than their numbers, to
   carry over to real repositories.
@@ -299,7 +299,8 @@ redraws its figures.
 [^a-order]: This book's harness, `examples/bench/run.go`, `cmdRun`.
     [run.go](../examples/bench/run.go#L121-L136)
 [^a-time]: This book's harness, `examples/bench/run.go`, `harness.timeCmd`, `goCounts`,
-    `bazelCounts` and `bzProcRE`, which since this run also matches Bazel's "1 process" line.
+    `bazelCounts` and `bzProcRE`, which since the first run also matches Bazel's "1 process" line,
+    though not the "0 processes." line.
     [run.go](../examples/bench/run.go#L300-L355),
     [run.go](../examples/bench/run.go#L444-L465)
 [^go-toolexec]: Go, `cmd/go/internal/work/build.go`, the documentation of `-toolexec`.
@@ -319,7 +320,8 @@ redraws its figures.
 [^a-results]: This book's measurements, one record per command:
     [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl);
     `n1000-wide`, `n1000-deep` and `n1000-local` from the rerun, whose pattern also counts Bazel's
-    no-op:
+    no-op (the first run's medians were 1.5 to 2.4 times the rerun's for cold builds, 9.5 times
+    for `n1000-local`'s no-op):
     [`examples/bench/results/2026-11-16-variants/results.jsonl`](../examples/bench/results/2026-11-16-variants/results.jsonl).
 [^a-workload]: This book's measurements, one record per process:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl).

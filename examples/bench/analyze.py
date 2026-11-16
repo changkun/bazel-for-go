@@ -466,7 +466,7 @@ def cell(res, plan, reps, config, tool, scenario):
     return f"{secs(r.seconds.median())} ({span(started)}{hit})"
 
 
-def appendix(d, meta, res):
+def appendix(d, meta, res, rerun=frozenset()):
     """Prints Appendix A's tables, after a key to the cells that hold no measurement."""
     plan, reps = run_plan(), int(meta["reps"])
     out = []
@@ -508,8 +508,10 @@ def appendix(d, meta, res):
     cols = ["cold", "noop", "leaf-body", "core-body", "core-api"]
     rows = [[f"`{c}`, {NAME[t]}"] + [cell(res, plan, reps, c, t, s) for s in cols]
             for c in SHAPES for t in ["go", "bazel"] if t in plan.get(c, {"tools": []})["tools"]]
+    first = [f"`{c}`" for c in SHAPES if c not in rerun]
+    origin = f"; {', '.join(first)} from the first run, the others rerun" if rerun & set(SHAPES) else ""
     table("Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (processes run; "
-          "hits).[^a-results]", ["Config, tool", *(f"`{s}`" for s in cols)], rows)
+          f"hits){origin}.[^a-results]", ["Config, tool", *(f"`{s}`" for s in cols)], rows)
 
     w = load(d / "workload.jsonl", lambda f: pd.read_json(f, lines=True))
     done = set(res[res.scenario == "workload-test"].config)
@@ -545,15 +547,19 @@ def main():
     print(f"<!-- {d.name}: {meta['cpu']}, {meta['ncpu']} cores, {meta['go']} -->\n")
     jsonl = lambda f: pd.read_json(f, lines=True)
     res = load(d / "results.jsonl", jsonl)
+    rerun = set()
     for e in map(Path, args[1:]):  # a later run whose configurations replace the first run's
-        later = load(e / "results.jsonl", jsonl)
+        if "--appendix" not in sys.argv[1:] or json.loads((e / "meta.json").read_text())["reps"] != meta["reps"]:
+            sys.exit(f"{e}: a later run needs --appendix and the first run's -reps")
+        later = jsonl(e / "results.jsonl")
+        rerun |= set(later.config)
         res = pd.concat([res[~res.config.isin(later.config)], later], ignore_index=True)
     res = res.reindex(columns=[*res.columns, *({"unit", "value", "err", "counts"} - set(res.columns))])
     res["counts"] = res.counts.map(lambda c: c if isinstance(c, dict) else {})
     for r in res[res.err.notna()].itertuples():
         print(f"<!-- error: {r.config} {r.tool} {r.scenario} rep {r.rep}: {r.err[:200]!r} -->\n")
     if "--appendix" in sys.argv[1:]:
-        appendix(d, meta, res)
+        appendix(d, meta, res, rerun)
         return
     end_to_end(res)
 
