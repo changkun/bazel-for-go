@@ -1,5 +1,5 @@
 # 6. Bazel 的设计
-<!-- 译自 d9d1c21 -->
+<!-- 译自 23e87eb -->
 
 Bazel 构建一个包含多种语言的仓库，在多台机器上构建并测试它，并力求给出与干净构建相同的结果。
 
@@ -21,7 +21,7 @@ Bazel 对第 1 章六项决策的回答如下，第 8 章将针对 Go 对它们�
 | 变化 | 将每个已知文件的时间与上一次构建时比较，或询问操作系统 |
 | 键 | 命令、命令的环境与机器类型，以及每个输入的内容，路径都相对于同一个目录 |
 | 共享 | 每个检出一份本地缓存；另有位于磁盘或服务器上、跨检出与机器共享的缓存 |
-| 执行 | 在本地运行，且看不到未声明的文件；或在远程机器池上运行 |
+| 执行 | 在本地一个只含已声明输入的目录中运行；或在远程机器池上运行 |
 
 ## 模型
 
@@ -33,12 +33,12 @@ Bazel 对第 1 章六项决策的回答如下，第 8 章将针对 Go 对它们�
 说明如何构建这一种类的目标。[^glossary]
 
 分析一个目标时，Bazel 运行其规则的函数，这个函数做两件事。其一，它注册**动作**（action），即声明了
-输入和输出的命令，例如「把 `greet.go` 编译为 `greet.a`」，[^rules-actions]外加 `greet.x`，即导入者编译时
+输入和输出的命令，例如把 `greet.go` 编译为 `greet.a`，[^rules-actions]外加 `greet.x`，即导入者编译时
 所依据的导出数据（第 7 章）。其二，它返回**提供者**（provider），即供依赖它的目标使用的数据。规则只
 读取其直接依赖的提供者，因此每个目标都要把依赖它的目标所需的内容传递给它们。[^rules-providers]
 `go_library` 返回 `GoArchive` 与 `GoInfo`：前者是「the compiled form ... with everything needed to link it into a binary」，
-后者是嵌入该库的二进制自行编译时所用的输入。[^rules-go-providers]动作读写的文件称为**产物**
-（artifact）；每个输出都恰好由一个动作写出。[^glossary]
+后者是「构建 GoArchive 所需的、经过筛选的输入与依赖」。[^rules-go-providers]动作读写的文件称为**产物**
+（artifact）；每个输出都恰好由一个动作写出。[^glossary][^rules-actions]
 
 **配置**（configuration）是规则之外、影响一个目标所产生动作的一组设置，例如目标平台（target
 platform，即要为之构建的操作系统与 CPU）[^platforms]和命令行标志。在两种配置下构建的目标会被分析
@@ -92,8 +92,8 @@ PACKAGE             168
 ACTION_EXECUTION    120
 ```
 
-每条命令执行之前，Bazel 都要查找发生变化的文件。默认情况下，它对图中的每个文件执行 `stat`，把文件的
-修改时间、状态变更时间和 inode 号与保存的值比较，而不读取文件内容。[^filestate]启用 `--watchfs`
+每条命令执行之前，Bazel 都要查找发生变化的文件。默认情况下，它用 `stat` 读取图中每个文件的元数据，把
+文件的修改时间、状态变更时间和 inode 号（文件在磁盘上的标识）与保存的值比较，而不读取文件内容。[^filestate]启用 `--watchfs`
 （默认关闭）时，它改为询问操作系统哪些源文件发生了变化，[^watchfs]但默认情况下仍会检查上一次构建的
 每个输出。[^output-check]直接或间接依赖于变化文件的每个节点都被标记为脏（dirty）。[^skyframe]
 
@@ -105,7 +105,7 @@ ACTION_EXECUTION    120
 实现了第 1 章的提前截断。
 
 正是这张图使重复构建变得廉价。在笔者对 1000 个包的合成仓库（附录 A）的测量中，服务进程处于热状态时，
-一次无事可做的构建耗时 0.15 至 0.3 s。新的服务进程必须重新加载并分析一切，才能确定什么都没有变：同样
+一次无事可做的构建耗时 0.16 s。新的服务进程必须重新加载并分析一切，才能确定什么都没有变：同样
 的构建耗时 3.3 s，在分析之后即停止的构建（`--nobuild`）耗时 2.8 s。[^bench]
 
 ## 动作键与两种缓存
@@ -130,13 +130,13 @@ Bazel 的**动作键**（action key）只是第 1 章所说的键的一部分：
 内容哈希一并计算出的。[^action-cache]如果根据当前文件算出的哈希与之相符，`bazel-out` 中已有的输出
 就是最新的，该动作被跳过。这一缓存不存储任何文件内容。
 
-远程缓存使用 Remote Execution API（一个开放的 gRPC 协议）[^rbe]或一个更简单的 HTTP 协议通信，磁盘
-缓存（`--disk_cache`）则是 Bazel 当作远程缓存使用的一个本地目录。[^remote-caching]在所有这些缓存中，
+远程缓存使用 Remote Execution API，即一个基于 gRPC（一种远程过程调用框架）的开放协议，[^rbe]或一个更简单的
+HTTP 协议通信，磁盘缓存（`--disk_cache`）则是 Bazel 当作远程缓存使用的一个本地目录。[^remote-caching]在所有这些缓存中，
 一个动作都变成一条 **Action** 消息，其中包括一个 **Command**（参数、环境、输出路径）的哈希、输入根目录的
 哈希、平台和超时。[^reapi]输入根目录的哈希是一个 Merkle 树哈希，即对整个输入目录树计算出的单个哈希，因此
 任何一个输入变化，它都会变化。Action 的哈希就是键。缓存分为两部分：远程动作缓存把 Action 的哈希映射
-到其输出的哈希，内容寻址存储（CAS）把每个哈希映射到相应的字节。[^remote-caching]GOCACHE 同样把
-条目分为动作条目和内容条目（第 4 章）。
+到其输出的哈希，内容寻址存储（CAS）把每个哈希映射到相应的字节。[^remote-caching]go 命令的
+构建缓存（GOCACHE）同样把条目分为动作条目和内容条目（第 4 章）。
 
 Command 与目录树中的每个路径都相对于 execroot，因此除非某个规则把绝对路径写进命令，检出的位置不会
 进入键。[^path-resolver]输出根目录以检出路径的哈希命名，因此每个检出都有自己的本地动作缓存，[^output-dirs]
@@ -155,7 +155,7 @@ Command 与目录树中的每个路径都相对于 execroot，因此除非某个
 「很少会慢几个百分点以上」。[^sandboxing]
 
 **持久工作进程**（persistent worker）是一个为许多动作服务的长期运行的进程，省去了每个动作都要启动一次
-工具的开销。工具必须支持 Bazel 的工作进程协议。[^workers]rules_go 的动作不请求工作进程，因此每次 Go
+工具的开销。工具本身或其包装程序必须支持 Bazel 的工作进程协议。[^workers]rules_go 的动作不请求工作进程，因此每次 Go
 编译和链接都是一个新进程。[^rules-go-workers]
 
 ## 远程缓存与远程执行
@@ -164,12 +164,13 @@ Command 与目录树中的每个路径都相对于 execroot，因此除非某个
 
 使用远程缓存时，Bazel 在运行每个动作之前先查找它的哈希，并上传它所运行动作的结果。[^remote-caching]
 使用远程执行时，Bazel 改为把 Action 发送给执行服务：它上传 CAS 中缺少的输入，由服务的执行器池中的
-一个执行器运行命令，并把输出存入 CAS。[^reapi-exec]执行器无法获得检出中位于输入根目录之外的任何文件，
-这正是每个输入都必须声明的原因。[^reapi]此时，并行度的上限取决于执行器池，而不是一台机器的核心数。
+一个执行器运行命令，并把输出存入 CAS。[^rbe][^reapi-exec]执行器无法获得检出中位于输入根目录之外的任何文件，
+这正是每个输入都必须声明的原因。[^reapi]调高 `--jobs`（默认为本机的核心数）之后，并行度的上限便取决于
+执行器池。[^jobs]
 
 自 7.0 起，Bazel 默认只下载顶层目标的输出以及本地动作需要的输出，对其余输出只掌握其哈希（即「Build
 without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某个后续动作需要的输出。自 9.3 起，回溯
-（rewinding）成为默认行为：Bazel 只重新运行产生了那些丢失输出的动作。[^rewind]
+（rewinding）成为默认行为：Bazel 重新运行产生了那些丢失输出的动作。[^rewind]
 
 ## 设计的代价
 
@@ -178,7 +179,7 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
 | 代价 | 原因 | 随什么增长 |
 |---|---|---|
 | 对图的第二份描述 | 图是声明的，而不是推导出来的 | 每次对导入的修改都必须同步到 BUILD 文件（第 3 章） |
-| 服务进程内存 | Skyframe 把每个节点都保存在服务进程的堆中[^client-server] | 目标与配置 |
+| 服务进程内存 | Skyframe 把每个节点都保存在服务进程的堆中[^client-server][^memory] | 目标与配置 |
 | 每个动作的固定开销 | 每个动作都有一个进程、一个沙箱、若干哈希计算和一个缓存条目[^sandboxing][^rules-go-workers] | 动作的数量 |
 | 每次启动后的加载与分析 | 图只存在于内存中[^cache-issues] | 目标的数量；每个新的持续集成（CI）运行器都要付出[^bench] |
 
@@ -250,14 +251,14 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
 [^filestate]: Bazel，`lib/actions/FileStateValue.java`，`createRegularFileStateValueFromPath`，以及
     `lib/actions/FileContentsProxy.java`：除非文件系统提供快速摘要，否则以文件元数据代替内容。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L137-L172>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L20-L37>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileContentsProxy.java#L21-L38>
 
 [^watchfs]: Bazel，`lib/skyframe/LocalDiffAwareness.java`，`--watchfs` 选项（默认值为
     `false`）以及该选项关闭时使用的 `EVERYTHING_MODIFIED`；`lib/skyframe/SkyframeExecutor.java`，
     `handleDiffsWithMissingDiffInformation`，此时它检查每个已知的文件。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L51-L63>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/LocalDiffAwareness.java#L118-L127>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3943-L3958>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/SkyframeExecutor.java#L3941-L3958>
 
 [^output-check]: Bazel，`lib/pkgcache/PackageOptions.java`，`--experimental_check_output_files`
     （默认值为 `true`）；以及 `lib/buildtool/ExecutionTool.java`，它仅在该选项为 `false` 时跳过对
@@ -274,6 +275,8 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
     （文件时间与 inode）和大小；`lib/skyframe/ActionOutputMetadataStore.java`，
     `fileArtifactValueFromStat`，它根据 `stat` 构建输出的元数据，并保留内容代理；
     `lib/actions/FileStateValue.java`，除非文件系统提供哈希，否则它保留内容代理；
+    `ActionOutputMetadataStore.constructFileArtifactValue` 与
+    `FileArtifactValue.createFromInjectedDigest`，它们加入计算出的哈希并保留内容代理；
     `lib/skyframe/ActionExecutionFunction.java`，它在动作缓存命中时根据输出当前的元数据构建值；
     以及 `FileArtifactValue.addTo`，它只把哈希放入动作缓存：「Modifying a timestamp while keeping
     the contents of a file the same should not cause rebuilds」。
@@ -281,6 +284,8 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L593-L603>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L566-L589>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileStateValue.java#L158-L171>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionOutputMetadataStore.java#L441-L453>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L335-L338>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/ActionExecutionFunction.java#L717-L724>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/FileArtifactValue.java#L254-L264>
 
@@ -337,14 +342,24 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
 
 [^rules-go-workers]: rules_go，`go/private/actions/compilepkg.bzl`，编译动作；以及
     `go/private/actions/utils.bzl`，`path_mapping_action_settings`：唯一的执行要求是
-    `supports-path-mapping`。
+    `supports-path-mapping`；`go/private/actions/link.bzl`，链接动作，它不设任何执行要求。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L201-L210>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/utils.bzl#L10-L14>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L229-L238>
 
 [^reapi-exec]: Remote Execution API，Bazel 中收录的 `remote_execution.proto`，服务
-    `Execution`（`Execute`）与 `ContentAddressableStorage`（`FindMissingBlobs`）。
+    `Execution`（`Execute`）与 `ContentAddressableStorage`（`FindMissingBlobs`），以及关于 CAS 的
+    注释：CAS「用于存储执行服务的输入与输出」。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L44-L53>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L350-L362>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/third_party/remoteapis/build/bazel/remote/execution/v2/remote_execution.proto#L198-L200>
+
+[^jobs]: Bazel，`lib/buildtool/BuildRequestOptions.java`，`--jobs`（默认值为 `auto`）与
+    `JobsConverter`，后者把 `auto` 换算为主机的 CPU 数；以及 `--experimental_async_execution`
+    （默认值为 `false`），启用它时「同时执行的动作数仍受 `--jobs` 限制」。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L51-L67>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L533-L536>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L69-L80>
 
 [^bwob]: Bazel 7.0.0 发布说明，其中也提到 `--remote_download_regex`；
     `lib/remote/options/RemoteOptions.java`，`--remote_download_outputs`，默认值为 `toplevel`。
@@ -357,8 +372,8 @@ without the Bytes」）。[^bwob]这样一来，远程缓存可能会逐出某�
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L372-L378>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/skyframe/rewinding/ActionRewindStrategy.java#L86-L90>
 
-[^cache-issues]: Bazel，「Remote Caching」，「Known issues」一节。
-    <https://bazel.build/remote/caching#known-issues>
-
 [^memory]: Bazel，「Optimize Memory」，「Trade incremental build speeds for memory」一节。
     <https://bazel.build/advanced/performance/memory#trade-incremental>
+
+[^cache-issues]: Bazel，「Remote Caching」，「Known issues」一节。
+    <https://bazel.build/remote/caching#known-issues>
