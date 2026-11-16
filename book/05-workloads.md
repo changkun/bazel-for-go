@@ -9,7 +9,7 @@ wrapper (`-toolexec` and `-exec`) that recorded each process's wall time, CPU ti
 system) and peak RSS (resident set size: the most physical memory it held at once). The
 synthetic repository has 1,000 packages of about 690 lines each in 12 layers (Appendix A), built
 on an 18-core Apple M5 Pro running macOS 26.6.[^m-meta] Figure 5.3 and the timings of whole
-actions come instead from the benchmark's own runs, without the wrapper.[^m-graph][^m-profile]
+actions come instead from the timed runs of Appendix A, without the wrapper.[^m-graph][^m-profile]
 
 ## compile: one process per package
 
@@ -78,8 +78,8 @@ compile action.[^rules-go-cgo] Our repository has no cgo.
 ## Test binaries: a link plus a run
 
 Each package's tests are compiled, linked into a binary of their own and run. Our tests do
-little: a run used a median of 5 ms of CPU, yet took 5.1 s.[^m-workload] The first 18 runs to
-finish, as many as run at once, each took about 0.22 s longer than the one before,
+little: a run used a median of 5 ms of CPU, yet took a median of 5.1 s.[^m-workload] The first
+18 runs to finish, as many as run at once, each took about 0.22 s longer than the one before,
 and `go test ./...` took 279 s for 1,000 binaries, 0.28 s each,[^m-workload][^m-results] as if
 the runs waited in one queue outside the processes. macOS checks an app for known malware on its
 first launch;[^apple-xprotect] we infer that this check, made on each new test binary in turn,

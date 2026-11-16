@@ -1,6 +1,6 @@
 # A. Measurements
 
-Every measurement in this book comes from `examples/bench`, a harness that generates a synthetic
+The book's benchmark measurements come from `examples/bench`, a harness that generates a synthetic
 Go repository, builds and tests it with both tools in fixed scenarios, and
 records each command.[^a-main]
 
@@ -30,19 +30,19 @@ with 8, 12, 14 and 16 layers.[^a-configs-run] Two vary the shape at 1,000 packag
 has 4 layers and a fan-in of 8, `n1000-deep` 40 layers and a fan-in of 3. `n1000-local` builds
 `n1000` with Bazel alone and `--spawn_strategy=local`, which runs each action as a plain local
 process,[^bazel-spawn] outside the sandbox (a directory that holds only the action's declared
-inputs). Table A.1 gives each repository's size.
+inputs).
 
 ## The harness
 
 `bench run` measures each configuration in turn, and each tool from a freshly generated
-tree.[^a-run] Both tools build the same packages. With `-o` naming a directory, `go build` builds
-only the main packages and what they import, and Bazel builds the targets that
-`build_targets.txt` lists: the binaries and the generator.[^a-targets]
+tree.[^a-run] With `-o` naming a directory, `go build` builds only the main packages and what
+they import, and Bazel builds the targets that `build_targets.txt` lists: the binaries and the
+generator.[^a-targets]
 
 Both use Go 1.27.3: the go command from the SDK (software development kit) that `-goroot` names,
-with `GOTOOLCHAIN=local` and every other `GO` variable cleared or set by the
-harness;[^a-goenv][^go-toolchain-local] rules_go downloads the version the generated `go.mod` names
-(Chapter 2).[^rg-from-file]
+with `GOTOOLCHAIN=local` (no switching to another Go version) and every other `GO` variable
+cleared or set by the harness;[^a-goenv][^go-toolchain-local] rules_go downloads the version the
+generated `go.mod` names (Chapter 2).[^rg-from-file]
 
 Each configuration has its own GOCACHE (the go command's build cache), and Bazel its own output base
 (its outputs and state for one checkout) in the harness's work directory; `--nohome_rc` and
@@ -70,7 +70,7 @@ run after the edits, with the build caches warm.
 | `codegen-generate` | append a line to one `table.txt`, then `go generate ./...` | — |
 | `codegen-build` | then build | the same edit, then build |
 | `clone-warmcache` | copy the tree to a new path; build the copy with the same GOCACHE | — |
-| `clone-warmcache-trimpath` | build the original with `-trimpath` (which removes file system paths from the outputs), untimed; then the copy | — |
+| `clone-warmcache-trimpath` | build the original with `-trimpath` (which removes file system paths from the outputs), untimed; then the copy, also with `-trimpath` | — |
 | `clone-diskcache` | — | after `bazel clean`, build the original with a new disk cache (`--disk_cache`, a local directory of action results), untimed; then build the copy with a new output base and that cache |
 | `server-heap-after-build`, `-test` | — | `bazel info used-heap-size-after-gc` after the build scenarios and after the tests |
 
@@ -78,17 +78,17 @@ The tools' order alternates between configurations, so neither always runs on a 
 machine.[^a-order] A measurement is one command's wall time, from start to exit. The harness counts
 the compile, link, asm and test processes in the go command's `-x` output, and reads Bazel's summary
 line of processes run and actions answered from a cache.[^a-time] Warm scenarios repeat `-reps`
-times, three here; Bazel's fourth `noop`, which only rewarms the server, is left out. Edits
+times, three here; Bazel's fourth `noop`, which rewarms the server, is left out. Edits
 accumulate across runs. The go command's cold build also writes its action graph
 (`-debug-actiongraph`: its actions and their times), and Bazel's cold build, first `core-body` build
 and first test write a trace profile (`--profile`); Chapters 5 and 9 analyze them.
 
 For `n1000` and `n3000`, after both tools, the harness builds and tests once more from an empty
-GOCACHE, with the go command running a wrapper, `bench toolexec`, in place of each tool
-(`-toolexec`) and each test binary (`-exec`).[^go-toolexec][^go-exec] The wrapper appends each
-process's wall time, user and system CPU time, and peak RSS (the most physical memory it held at
-once) to `workload.jsonl`.[^a-probe] It adds a process per tool, so we do not compare these runs'
-times with the others.
+GOCACHE, with the go command running a wrapper, `bench toolexec` (the probe), in place of each
+tool (`-toolexec`) and each test binary (`-exec`).[^go-toolexec][^go-exec] The wrapper appends
+each process's wall time, user and system CPU time, and peak RSS (resident set size: the most
+physical memory it held at once) to `workload.jsonl`.[^a-probe] It adds a process per tool, so we
+do not compare these runs' times with others.
 
 ## Results
 
@@ -156,9 +156,9 @@ Table A.4: Bazel's server heap after garbage collection, in MB.[^a-results]
 | `n1000` | 84 | 130 |
 | `n3000` | 119 | 229 |
 | `n10000` | 214 | — |
-| `n1000-wide` | 77 | — |
-| `n1000-deep` | 82 | — |
-| `n1000-local` | 80 | — |
+| `n1000-wide` | 79 | — |
+| `n1000-deep` | 84 | — |
+| `n1000-local` | 82 | — |
 
 Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (processes run; hits).[^a-results]
 
@@ -166,11 +166,11 @@ Table A.5: Graph shape and the sandbox at 1,000 packages, median seconds (proces
 |---|---|---|---|---|---|
 | `n1000`, go | 6.86 (1,023) | 0.86 (0) | 1.28 (3) | 2.97 (309) | 5.31 (722) |
 | `n1000`, Bazel | 37.4 (999) | 0.16 | 0.88 (2; 1 hit) | 1.71 (11; 298 hits) | 5.05 (309; 423 hits) |
-| `n1000-wide`, go | 12.0 (813) | 1.87 (0) | — | 3.15 (212) | 4.55 (498) |
-| `n1000-wide`, Bazel | 70.0 (766) | 0.60 | — | 3.87 (11; 201 hits) | 7.15 (212; 296 hits) |
-| `n1000-deep`, go | 14.1 (1,055) | 2.87 (0) | — | 10.3 (295) | 13.5 (716) |
-| `n1000-deep`, Bazel | 85.9 (1,030) | 0.45 | — | 2.91 (11; 284 hits) | 9.04 (295; 431 hits) |
-| `n1000-local`, Bazel | 49.9 (999) | 1.69 | 2.03 (2; 1 hit) | 3.45 (11; 298 hits) | — |
+| `n1000-wide`, go | 5.03 (813) | 0.80 (0) | — | 1.78 (212) | 2.80 (498) |
+| `n1000-wide`, Bazel | 30.6 (766) | 0.14 (0) | — | 1.39 (11; 201 hits) | 2.65 (212; 296 hits) |
+| `n1000-deep`, go | 6.48 (1,055) | 0.80 (0) | — | 2.56 (295) | 4.42 (716) |
+| `n1000-deep`, Bazel | 36.9 (1,030) | 0.16 (0) | — | 1.83 (11; 284 hits) | 4.71 (295; 431 hits) |
+| `n1000-local`, Bazel | 32.3 (999) | 0.18 (0) | 0.97 (2; 1 hit) | 1.62 (11; 298 hits) | — |
 
 Table A.6: The go command's processes in one cold build and test, as the probe recorded them.[^a-workload]
 
@@ -188,12 +188,12 @@ Table A.6: The go command's processes in one cold build and test, as the probe r
 | `n3000` | test run | 3,000 | 7,731 | 7 | 10 | 17 | 22.3 |
 <!-- END -->
 
-Where repeated runs did different work, the tables give the range. The first `noop-discard` also
+The first `noop-discard` also
 compiles the packages that no binary imports. Some other go command runs relinked every binary,
 some after recompiling every main package: the go command stamped the book's git commit into
 each binary (Chapter 4), and we committed during the run; the harness now sets
-`-buildvcs=false`.[^a-goenv] Bazel's no-op and analysis-only runs show no count; the harness's
-pattern misses their summary line.[^a-time]
+`-buildvcs=false`.[^a-goenv] The first run's pattern missed Bazel's summary line for no-op and
+analysis-only runs, which show no count.[^a-time]
 
 In our measurements, from 100 to 10,000 packages, the go command's no-op ran no tool, yet took 0.20
 s to 13.6 s, since every run loads and hashes the whole tree (Chapter 4). Bazel's warm no-op took
@@ -205,7 +205,8 @@ took 185 s, against 134 s for the go command's 2,724 compiles and 100 links.
 ## Limits
 
 - **One machine, not idle:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
-  26.6,[^a-meta] shared during parts of the run with other work, such as a `go test -race`.
+  26.6,[^a-meta] shared during parts of the run with other work, such as `go test -race`. The three
+  variants were rerun alone, after first runs up to nine times slower.[^a-results]
 - **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
   nothing and one code generator. We expect the results' shape, more than their numbers, to
   carry over to real repositories.
@@ -231,7 +232,10 @@ go build -o ../../.tools/bin/bench .
 ../../.tools/bin/bench run -configs n1000,n100,n3000,n1000-wide,n1000-deep,n1000-local,n10000 \
     -reps 3 -work work -out results/2026-11-16 \
     -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
-uv run analyze.py --appendix results/2026-11-16
+../../.tools/bin/bench run -configs n1000-wide,n1000-deep,n1000-local \
+    -reps 3 -work work -out results/2026-11-16-variants \
+    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants
 ```
 
 `bench run` writes `meta.json` (the machine and versions), `configs.jsonl`, `results.jsonl`,
@@ -295,7 +299,7 @@ redraws its figures.
 [^a-order]: This book's harness, `examples/bench/run.go`, `cmdRun`.
     [run.go](../examples/bench/run.go#L121-L136)
 [^a-time]: This book's harness, `examples/bench/run.go`, `harness.timeCmd`, `goCounts`,
-    `bazelCounts` and `bzProcRE`.
+    `bazelCounts` and `bzProcRE`, which since this run also matches Bazel's "1 process" line.
     [run.go](../examples/bench/run.go#L300-L355),
     [run.go](../examples/bench/run.go#L444-L465)
 [^go-toolexec]: Go, `cmd/go/internal/work/build.go`, the documentation of `-toolexec`.
@@ -313,7 +317,10 @@ redraws its figures.
 [^a-configs]: This book's measurements, the generated repositories:
     [`examples/bench/results/2026-11-16/configs.jsonl`](../examples/bench/results/2026-11-16/configs.jsonl).
 [^a-results]: This book's measurements, one record per command:
-    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
+    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl);
+    `n1000-wide`, `n1000-deep` and `n1000-local` from the rerun, whose pattern also counts Bazel's
+    no-op:
+    [`examples/bench/results/2026-11-16-variants/results.jsonl`](../examples/bench/results/2026-11-16-variants/results.jsonl).
 [^a-workload]: This book's measurements, one record per process:
     [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl).
 [^a-meta]: This book's measurements, the machine and Go version:
