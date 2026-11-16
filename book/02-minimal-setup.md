@@ -67,8 +67,8 @@ require github.com/google/go-cmp v0.7.0
 
 `go.mod` is the only list of Go module versions you edit: the go command and Bazel both read it,
 so `go get` changes dependencies for both.[^rg-bzlmod-go-mod] `go_deps` also reads the Go
-dependencies that other Bazel modules declare (here Gazelle's), takes the highest version of each
-module, and warns when that is higher than this file says.[^gz-mvs]
+dependencies that other Bazel modules declare (here rules_go's and Gazelle's), takes the highest
+version of each module, and warns when that is higher than this file says.[^gz-mvs]
 
 ### The root `BUILD.bazel`
 
@@ -139,7 +139,8 @@ INFO: Analyzed target //:gazelle (161 packages loaded, 8706 targets configured).
 INFO: Running command line: bazel-bin/gazelle
 ```
 
-A clean build of the command runs the five processes of Figure 2.2:
+A clean build runs the five processes of Figure 2.2; Bazel's summary also counts actions that start
+none, such as symlinks, as "internal":[^bazel-spawn-stats]
 
 ```console
 $ bazel clean
@@ -179,8 +180,8 @@ INFO: Elapsed time: 0.133s, Critical Path: 0.00s
 By default Bazel reruns a test only if it or its dependencies changed, it failed last time,
 it is marked `external`, or `--runs_per_test` asks for several runs.[^bazel-cache-tests] On this
 Mac the first run of the new test binary took 0.3 s and a forced rerun under 0.1 s; we attribute
-the difference to macOS scanning a new executable on its first launch. Chapter 5 returns to that
-first-launch cost.
+the difference to macOS scanning a new executable on its first launch.[^apple-xprotect] Chapter 5
+returns to that first-launch cost.
 
 ```console
 $ bazel build //...
@@ -246,9 +247,9 @@ takes time.[^rg-editors-setup]
   we recommend one from the start (Chapter 9).
 - A server restart repeats loading and analysis even when every action is cached. We recommend
   keeping servers warm on continuous integration (CI) runners as well as laptops.
-- BUILD files are generated. Run `bazel run //:gazelle` with every change that adds a package or
-  an import; Chapter 3 adds a CI check.
-- gopls keeps working, but each package load is a Bazel command and a server runs one command at
+- BUILD files are generated. We recommend running `bazel run //:gazelle` whenever Go files or
+  their imports change; Chapter 3 adds a CI check.
+- gopls keeps working, but each package load runs Bazel commands and a server runs one command at
   a time,[^bazel-client-server] so a long build delays the editor (Chapter 9).
 
 ## References
@@ -257,8 +258,11 @@ takes time.[^rg-editors-setup]
     <https://bazel.build/reference/glossary>
 [^bazel-labels]: Bazel, "Labels".
     <https://bazel.build/concepts/labels>
-[^bazelisk]: Bazel, "Installing Bazel using Bazelisk".
-    <https://bazel.build/install/bazelisk>
+[^bazelisk]: Bazel, "Installing Bazel using Bazelisk"; Bazelisk v1.30.0, `README.md`, which
+    speaks of installing Bazelisk "as `bazel`" and of reading `.bazelversion`.
+    <https://bazel.build/install/bazelisk>,
+    <https://github.com/bazelbuild/bazelisk/blob/v1.30.0/README.md?plain=1#L37>,
+    <https://github.com/bazelbuild/bazelisk/blob/v1.30.0/README.md?plain=1#L49>
 [^bazel-extension]: Bazel, "Module extensions".
     <https://bazel.build/external/extension>
 [^rg-from-file]: rules_go, `go/private/go_mod.bzl`, `_version_from_go_file`, which
@@ -315,16 +319,27 @@ takes time.[^rg-editors-setup]
     <https://bazel.build/run/build#build-phases>
 [^bazel-sandbox]: Bazel, "Sandboxing".
     <https://bazel.build/docs/sandboxing>
-[^bazel-target-patterns]: Bazel, "Build programs with Bazel", "Specifying targets to build".
+[^bazel-spawn-stats]: Bazel, `SpawnStats.java`, which counts "internal actions, such as SymlinkTree
+    actions" by their having no process, and notes that its "processes" count "is actually the
+    number of actions".
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/runtime/SpawnStats.java#L44-L45>,
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/runtime/SpawnStats.java#L131>
+[^bazel-target-patterns]: Bazel, "Build programs with Bazel", "Building multiple targets".
     <https://bazel.build/run/build#specifying-build-targets>
 [^gz-macro]: Gazelle, `def.bzl`, `gazelle`: the runner rule is untagged, the `sh_binary` that
     wraps it is tagged `manual`.
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/def.bzl#L225-L244>
 [^bazel-cache-tests]: Bazel, `TestConfiguration.java`, the `cache_test_results` option.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/test/TestConfiguration.java#L169-L183>
+[^apple-xprotect]: Apple, *Apple Platform Security*, "Protecting against malware in macOS",
+    section "XProtect": XProtect checks for known malicious content when an app is first
+    launched or has been changed in the file system.
+    <https://support.apple.com/guide/security/protecting-against-malware-sec469d47bd8/web#secffa0f9b55>
 [^xtools-driver]: golang.org/x/tools at the commit gopls v0.24.0 is built from,
-    `go/packages/doc.go`, "The driver protocol".
-    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/doc.go#L82-L87>
+    `go/packages/doc.go`, "The driver protocol"; `go/packages/external.go`, whose driver supplies
+    package metadata "in place of 'go list'".
+    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/doc.go#L82-L87>,
+    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/external.go#L7-L8>
 [^rg-editors]: rules_go, `docs/editors.md`, "General setup".
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/editors.md?plain=1#L3-L4>
 [^rg-driver]: rules_go, `go/tools/gopackagesdriver/bazel_json_builder.go`, `fileQuery` and

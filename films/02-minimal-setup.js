@@ -540,7 +540,7 @@ export default {
         { say: "If `GOPACKAGESDRIVER` names a program, gopls asks that program instead.", hold: 1.2 },
         { say: "The driver queries Bazel for the targets that contain a file.", hold: 1 },
         { say: "It then builds them with an aspect (extra actions attached to existing targets) that writes each package's files and imports as JSON.", hold: 1.4 },
-        { say: "Each package load is a Bazel command, and a server runs one command at a time, so a long build delays the editor.", hold: 2 },
+        { say: "Each package load runs Bazel commands, and a server runs one command at a time, so a long build delays the editor.", hold: 2 },
       ],
       draw(s) {
         // gopls asks the driver, which runs two Bazel commands and answers in JSON.
