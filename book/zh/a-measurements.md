@@ -1,12 +1,12 @@
 # A. 测量
-<!-- 译自 73c7901 -->
+<!-- 译自 0e92008 -->
 
 本书的基准测量来自 `examples/bench`。这是一个测量框架（harness），它生成一个合成 Go 仓库，在一组
 固定的场景中用两种工具构建并测试它，并记录每一条命令。[^a-main]
 
 ## 合成仓库
 
-![图 A.1：包数为 1000 时生成的导入图。包只导入更低层的包，二进制只导入最顶层的包。](../figures/a-repository.svg)
+![图 A.1：包数为 1000 时生成的导入图。包只导入更低层的包或 `core`，二进制只导入最顶层的包。](../figures/a-repository.svg)
 
 `bench gen` 写出一个 Go 模块，连同 Gazelle 会为它写出的 BUILD 文件，因此两种工具构建的是同一棵源码树；
 给定的形状总是产生相同的字节。[^a-gen]包均匀地分布在各层中（图 A.1）。第 0 层以上的每个包从
@@ -213,8 +213,8 @@ Bazel 的空构建耗时 0.14 s 至 0.36 s。Bazel 的函数体修改（body edi
 
 ## 局限
 
-- **一台机器，且并不空闲**：一台 18 核、64 GB 内存的 Apple M5 Pro，运行 macOS 26.6，[^a-meta]与其他
-  工作共用，例如 `go test -race`。表 A.5 中的变体之后在机器负载较低时重新运行过。[^a-results]
+- **一台机器，且并不空闲**：一台 18 核、64 GB 内存的 Apple M5 Pro，运行 macOS 26.6，[^a-meta]与笔者的
+  其他工作共用，例如 `go test -race`。[^a-second]表 A.5 中的变体之后在机器负载较低时重新运行过。[^a-results]
 - **合成仓库**：包的结构都相同，没有 cgo，没有外部模块，测试几乎什么都不做，代码生成器只有一个。笔者
   预计，与具体的数字相比，结果的形态更能推广到真实仓库。
 - **只有本地 Bazel**：没有远程缓存或远程执行。本地磁盘缓存代替了共享缓存，不含网络时间。
@@ -222,8 +222,8 @@ Bazel 的空构建耗时 0.14 s 至 0.36 s。Bazel 的函数体修改（body edi
 - **整毫秒**：第一次运行的探针把每个进程的时间向下取整到整毫秒，因此最短的进程读数偏低；探针现在保留到
   微秒。[^a-probe]
 - **运行次数少**：每个场景至多三次。`n1000` 与 `n10000` 的第二次运行（表 A.7）与第一次相比，三次运行的
-  中位数之比至多为 1.25，其余单元格之比至多为 1.7；例外是 10000 个包时 go 命令的空构建与叶子包修改，
-  比值分别为 2.4 和 3.7。[^a-second]
+  中位数之比至多为 1.25（例外是 10000 个包时 go 命令的空构建与叶子包修改，比值分别为 2.4 和 3.7），
+  其余单元格之比至多为 1.7。[^a-second]
 
 ## 复现
 
@@ -235,18 +235,23 @@ GOBIN="$PWD/.tools/bin" go install github.com/bazelbuild/bazelisk@v1.30.0
 cd examples/bench
 go build -o ../../.tools/bin/bench .
 ../../.tools/bin/bench gen -pkgs 1000 -o /tmp/synth    # one repository, to inspect
+out=results/new    # bench run appends to -out's records; the book's are in results/2026-11-16*
+flags=(-reps 3 -work work -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)"
+       -bazel "$PWD/../../.tools/bin/bazelisk")
 ../../.tools/bin/bench run -configs n1000,n100,n3000,n1000-wide,n1000-deep,n1000-local,n10000 \
-    -reps 3 -work work -out results/2026-11-16 \
-    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+    "${flags[@]}" -out $out
 ../../.tools/bin/bench run -configs n1000-wide,n1000-deep,n1000-local \
-    -reps 3 -work work -out results/2026-11-16-variants \
-    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
-for c in n1000 n10000; do   # the second run
-  ../../.tools/bin/bench run -configs $c -reps 3 -work work -out results/2026-11-16-$c-check \
-      -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+    "${flags[@]}" -out $out-variants
+for c in n1000 n10000; do   # the second run, sampling the machine's load every 30 s
+  mkdir -p $out-$c-check
+  while :; do
+    echo "$(date +%T) $(sysctl -n vm.loadavg) cpu%=$(ps -Ao pcpu= | awk '{s+=$1} END {printf "%.0f", s}')"
+    sleep 30
+  done > $out-$c-check/load.log &
+  ../../.tools/bin/bench run -configs $c "${flags[@]}" -out $out-$c-check
+  kill $!
 done
-uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants \
-    --second results/2026-11-16-n1000-check results/2026-11-16-n10000-check
+uv run analyze.py --appendix $out $out-variants --second $out-n1000-check $out-n10000-check
 ```
 
 `bench run` 把各条记录、动作图和剖面写到 `-out` 目录，并把每条命令的输出写到
@@ -295,9 +300,10 @@ uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants \
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/toolchain/select.go#L271-L277>
 [^rg-from-file]: rules_go，`go/private/go_mod.bzl`，`_version_from_go_file`，由
     `version_from_go_mod` 调用；`examples/bench/gen.go`，`Repo.write`，它写出 `go.mod` 与
-    `MODULE.bazel`。
+    `MODULE.bazel`；以及 `examples/bench/templates.go`，`moduleBazel`，它调用 `go_sdk.from_file`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_mod.bzl#L76-L79>
-    [gen.go](../../examples/bench/gen.go#L194-L197)
+    [gen.go](../../examples/bench/gen.go#L194-L197)，
+    [templates.go](../../examples/bench/templates.go#L244-L250)
 [^a-bazel]: 本书的测量框架，`examples/bench/run.go`，`bazelCmd.args` 与 `harness.runBazel`；以及
     `examples/bench/templates.go`，`bazelrc`。
     [run.go](../../examples/bench/run.go#L474-L522)，
@@ -340,7 +346,7 @@ uv run analyze.py --appendix results/2026-11-16 results/2026-11-16-variants \
     [`2026-11-16-n10000-check/results.jsonl`](../../examples/bench/results/2026-11-16-n10000-check/results.jsonl)，
     [`load.log`](../../examples/bench/results/2026-11-16-n10000-check/load.log)。
     Bazel 冷构建剖面中 `System load average` 计数器的均值，1000 个包时第一次与第二次运行分别为 21.4 和
-    36.5，10000 个包时分别为 38.6 和 29.6。
+    36.5，10000 个包时分别为 38.6 和 29.6。两次运行中，两种规模下都是 go 命令先于 Bazel 运行。
 [^a-meta]: 本书的测量，机器与 Go 版本：
     [`examples/bench/results/2026-11-16/meta.json`](../../examples/bench/results/2026-11-16/meta.json)。
 [^apple-xprotect]: Apple，*Apple Platform Security*，「Protecting against malware in macOS」，
