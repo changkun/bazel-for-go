@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" role="img" aria-labelledby="fa1-title" class="fa1">
+  <title id="fa1-title">The generated repository at 1,000 packages: binaries import three packages of the top layer; each package imports three packages from the layer below and one from any lower layer; some packages also import core, a package in layer 0.</title>
+  <style>
+    .fa1 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
+    .fa1 .fa1-sm { font-size: 13px; opacity: 0.8; }
+    .fa1 .fa1-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .fa1 .fa1-node { fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .fa1 .fa1-focus { fill: none; stroke: currentColor; stroke-width: 2.5; }
+    .fa1 .fa1-edge { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.3; }
+    .fa1 .fa1-path { fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .fa1 .fa1-dot { fill: currentColor; }
+  </style>
+
+  <!-- Row labels -->
+  <text x="20" y="40" class="fa1-sm">binaries</text>
+  <text x="20" y="116" class="fa1-sm">layer 11</text>
+  <text x="20" y="192" class="fa1-sm">layer 10</text>
+  <text x="44" y="234" class="fa1-sm" text-anchor="middle">⋮</text>
+  <text x="20" y="276" class="fa1-sm">layer 0</text>
+
+  <!-- Binaries import three packages of the top layer -->
+  <g class="fa1-edge">
+    <line x1="183" y1="50" x2="183" y2="96"/>
+    <line x1="183" y1="50" x2="293" y2="96"/>
+    <line x1="183" y1="50" x2="513" y2="96"/>
+    <line x1="293" y1="50" x2="293" y2="96"/>
+    <line x1="293" y1="50" x2="403" y2="96"/>
+    <line x1="293" y1="50" x2="623" y2="96"/>
+  </g>
+  <!-- Each package imports three from the layer below -->
+  <g class="fa1-edge">
+    <line x1="183" y1="126" x2="183" y2="172"/>
+    <line x1="183" y1="126" x2="293" y2="172"/>
+    <line x1="183" y1="126" x2="403" y2="172"/>
+    <line x1="293" y1="126" x2="183" y2="172"/>
+    <line x1="293" y1="126" x2="293" y2="172"/>
+    <line x1="293" y1="126" x2="403" y2="172"/>
+    <line x1="403" y1="126" x2="293" y2="172"/>
+    <line x1="403" y1="126" x2="403" y2="172"/>
+    <line x1="403" y1="126" x2="513" y2="172"/>
+    <line x1="623" y1="126" x2="403" y2="172"/>
+    <line x1="623" y1="126" x2="513" y2="172"/>
+    <line x1="623" y1="126" x2="623" y2="172"/>
+    <!-- on through the layers not drawn -->
+    <line x1="183" y1="202" x2="183" y2="218"/>
+    <line x1="293" y1="202" x2="293" y2="218"/>
+    <line x1="403" y1="202" x2="403" y2="218"/>
+    <line x1="513" y1="202" x2="513" y2="218"/>
+    <line x1="623" y1="202" x2="623" y2="218"/>
+    <line x1="183" y1="240" x2="183" y2="256"/>
+    <line x1="293" y1="240" x2="293" y2="256"/>
+    <line x1="403" y1="240" x2="403" y2="256"/>
+    <line x1="513" y1="240" x2="513" y2="256"/>
+    <line x1="623" y1="240" x2="623" y2="256"/>
+  </g>
+  <!-- One package's imports: three from the layer below, one from a lower layer -->
+  <g class="fa1-path">
+    <line x1="513" y1="126" x2="403" y2="172"/>
+    <line x1="513" y1="126" x2="513" y2="172"/>
+    <line x1="513" y1="126" x2="623" y2="172"/>
+    <path d="M556,111 C715,111 715,271 666,271"/>
+  </g>
+
+  <!-- Binaries -->
+  <rect class="fa1-node" x="140" y="20" width="86" height="30" rx="6"/>
+  <text x="183" y="40" text-anchor="middle" class="fa1-mono">app00</text>
+  <rect class="fa1-node" x="250" y="20" width="86" height="30" rx="6"/>
+  <text x="293" y="40" text-anchor="middle" class="fa1-mono">app01</text>
+  <text x="403" y="40" text-anchor="middle">…</text>
+
+  <!-- Layer 11 -->
+  <rect class="fa1-node" x="140" y="96" width="86" height="30" rx="6"/>
+  <text x="183" y="116" text-anchor="middle" class="fa1-mono">leaf</text>
+  <rect class="fa1-node" x="250" y="96" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="360" y="96" width="86" height="30" rx="6"/>
+  <rect class="fa1-focus" x="470" y="96" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="580" y="96" width="86" height="30" rx="6"/>
+
+  <!-- Layer 10 -->
+  <rect class="fa1-node" x="140" y="172" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="250" y="172" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="360" y="172" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="470" y="172" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="580" y="172" width="86" height="30" rx="6"/>
+
+  <!-- Layer 0 -->
+  <rect class="fa1-focus" x="140" y="256" width="86" height="30" rx="6"/>
+  <text x="183" y="276" text-anchor="middle" class="fa1-mono">core</text>
+  <rect class="fa1-node" x="250" y="256" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="360" y="256" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="470" y="256" width="86" height="30" rx="6"/>
+  <rect class="fa1-node" x="580" y="256" width="86" height="30" rx="6"/>
+
+  <!-- Packages that also import core directly -->
+  <circle class="fa1-dot" cx="326" cy="106" r="4.5"/>
+  <circle class="fa1-dot" cx="546" cy="106" r="4.5"/>
+  <circle class="fa1-dot" cx="436" cy="182" r="4.5"/>
+  <circle class="fa1-dot" cx="436" cy="266" r="4.5"/>
+
+  <!-- Key -->
+  <circle class="fa1-dot" cx="146" cy="318" r="4.5"/>
+  <text x="158" y="323" class="fa1-sm">also imports <tspan class="fa1-mono">core</tspan></text>
+  <path class="fa1-path" d="M400,326 C420,326 420,310 440,310"/>
+  <text x="452" y="323" class="fa1-sm">one import from any lower layer</text>
+</svg>

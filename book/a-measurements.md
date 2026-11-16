@@ -1,0 +1,321 @@
+# A. Measurements
+
+Every measurement in this book comes from `examples/bench`, a harness that generates a synthetic
+Go repository, builds and tests it with the go command and with Bazel in fixed scenarios, and
+records each command.[^a-main]
+
+## The synthetic repository
+
+![Figure A.1: The generated import graph at 1,000 packages. Packages import only from lower layers, binaries from the top one.](figures/a-repository.svg)
+
+`bench gen` writes one Go module together with the BUILD files Gazelle would write for it, so
+both tools build the same source tree; a given shape always produces the same bytes.[^a-gen]
+Packages are spread evenly over a number of layers (Figure A.1). Each package above layer 0
+imports up to three packages chosen at random from the layer directly below and one from any
+lower layer: a fan-in of four.[^a-plan] Package 0, `core`, sits in layer 0, and every other
+package also imports it directly with probability 0.3, so an edit to `core` reaches most of the
+repository. The binaries, one per 100 packages and at least two, each import three packages of
+the top layer. The leaf is the first package that `app00` imports; no library imports it.
+
+Every package has the same files.[^a-files] `edit.go` holds `bodyEdit`, a function too large to
+inline, whose body the harness edits. Three files hold ten functions each; `api.go` declares
+`Compute`, which calls them and every import's `Compute`; `pkg_test.go` holds two small tests.
+Every tenth package also has a `table.txt` that the generator `tools/gentable` turns into
+`table_gen.go`, standing in for generators such as protoc. For the go command that file is
+checked in and refreshed by `go generate`; for Bazel, a `genrule` (a rule that runs a command)
+generates it during the build.[^a-gentable]
+
+The configurations are named for their package count: `n100`, `n1000`, `n3000` and `n10000`,
+with 8, 12, 14 and 16 layers.[^a-configs-run] Two vary the shape at 1,000 packages: `n1000-wide`
+has 4 layers and a fan-in of 8, `n1000-deep` 40 layers and a fan-in of 3. `n1000-local` builds
+`n1000` with Bazel alone and `--spawn_strategy=local`, which runs each action as a plain local
+process,[^bazel-spawn] outside the sandbox (a directory that holds only the action's declared
+inputs). Table A.1 gives each repository's size.
+
+## The harness
+
+`bench run` measures each configuration in turn, and each tool from a freshly generated
+tree.[^a-run] Both tools build the same packages. With `-o` naming a directory, `go build` builds
+only the main packages and what they import, and Bazel builds the targets that
+`build_targets.txt` lists: the binaries and the generator.[^a-targets]
+
+Both use Go 1.27.3. The go command is the Go SDK (software development kit) that `-goroot` names,
+run with `GOTOOLCHAIN=local`, so it never switches to another toolchain, and with every other
+`GO` variable cleared or set by the harness;[^a-goenv][^go-toolchain-local] rules_go downloads
+the version that the generated `go.mod` names (Chapter 2).[^rg-from-file]
+
+The caches are separate. Each configuration has its own GOCACHE (the go command's build cache).
+Bazel keeps its output base (its outputs and state for one checkout) under an
+`--output_user_root` in the harness's work directory, and `--nohome_rc` and `--nosystem_rc` keep
+the user's and the system's `.bazelrc` files out.[^a-bazel][^bazel-rc] Bazel's cold build follows
+a fetch of rules_go and the Go SDK, so it downloads nothing.
+
+In the table, a go build is `go build -x -o <dir> ./...`, where `-x` prints each command it runs,
+and a Bazel build is `bazel build --target_pattern_file=build_targets.txt`. The test scenarios
+run after the edits, with the build caches warm.
+
+| Scenario | go command | Bazel |
+|---|---|---|
+| `cold` | build with an empty GOCACHE | build after `bazel clean` and `bazel shutdown`, which stops the server, Bazel's long-lived process that holds the build graph |
+| `noop` | build again, nothing changed | the same, with the server running |
+| `noop-discard` | `go build -x ./...`: every package, with each binary linked into a temporary directory and discarded | — |
+| `noop-cold-server` | — | build after `bazel shutdown` |
+| `analysis-cold-server` | — | `bazel build --nobuild` after `bazel shutdown`: only loading and analysis, the phases that read BUILD files and plan the actions |
+| `leaf-body` | change a number in the body of the leaf's `bodyEdit`, then build | the same |
+| `core-body` | the same in `core` | the same |
+| `core-api` | add an exported function to `core`, then build | the same |
+| `core-comment` | add a comment above the package clause of `core`'s `types.go`, moving every declaration in it, then build | the same |
+| `test-first` | `go test -x -vet=off ./...` | `bazel test //...` |
+| `test-noop` | the same again | the same |
+| `test-core-body` | a `core-body` edit, then the same | the same |
+| `codegen-generate` | append a line to one `table.txt`, then `go generate ./...` | — |
+| `codegen-build` | then build | the same edit, then build |
+| `clone-warmcache` | copy the tree to a new path; build the copy with the same GOCACHE | — |
+| `clone-warmcache-trimpath` | build the original with `-trimpath` (which removes file system paths from the outputs), untimed; then the copy | — |
+| `clone-diskcache` | — | after `bazel clean`, build the original with a new disk cache (`--disk_cache`, a local directory of action results), untimed; then build the copy with a new output base and that cache |
+| `server-heap-after-build`, `-test` | — | `bazel info used-heap-size-after-gc` after the build scenarios and after the tests |
+
+The order of the tools alternates with each configuration's position in `-configs`, so that
+neither always runs on a hotter machine.[^a-order] A measurement is the wall time of one
+command, from start to exit. The harness counts the compile, link, asm and test processes in the
+go command's `-x` output, and reads Bazel's summary line, which counts the processes it ran and
+the actions it answered from a cache instead.[^a-time] Warm scenarios repeat `-reps` times, three
+here; Bazel's fourth `noop`, which only warms the server again after the restarts, is left out.
+Edits accumulate: each run edits the tree again. The go command's cold build also writes its
+action graph (`-debug-actiongraph`, its plan of actions with their times), and Bazel's cold and
+first `core-body` builds write a trace profile (`--profile`); Chapters 5 and 9 analyze them.
+
+For `n1000` and `n3000`, after both tools, the harness builds and tests once more from an empty
+GOCACHE, with the go command running a wrapper in place of each tool (`-toolexec`) and each test
+binary (`-exec`).[^go-toolexec][^go-exec] The wrapper, `bench toolexec`, runs the process and
+appends its wall time, user and system CPU time, and peak RSS (resident set size, the most
+physical memory it held at once) to `workload.jsonl`, skipping the go command's version
+queries.[^a-probe] The tests reuse the build's cache. The wrapper adds a
+process per tool, so we do not compare these runs' times with the others.
+
+## Results
+
+`analyze.py --appendix` prints the tables below from the results directory.[^a-analyze]
+
+<!-- BEGIN generated by analyze.py --appendix -->
+<!-- 2026-11-16: Apple M5 Pro, 18 cores, go version go1.27.3 darwin/arm64 -->
+
+"—": not measured in this configuration; "pending": not yet measured.
+
+Table A.1: The configurations, as generated.[^a-configs]
+
+| Config | Packages | Layers | Fan-in | Binaries | Lines of Go | Import `core` | Depend on `core` | Depth |
+|---|---|---|---|---|---|---|---|---|
+| `n100` | 100 | 8 | 4 | 2 | 68,528 | 32 | 95 | 8 |
+| `n1000` | 1,000 | 12 | 4 | 10 | 685,590 | 332 | 926 | 12 |
+| `n3000` | 3,000 | 14 | 4 | 30 | 2,057,038 | 898 | 2,819 | 14 |
+| `n10000` | pending | pending | pending | pending | pending | pending | pending | pending |
+| `n1000-wide` | pending | pending | pending | pending | pending | pending | pending | pending |
+| `n1000-deep` | pending | pending | pending | pending | pending | pending | pending | pending |
+| `n1000-local` | pending | pending | pending | pending | pending | pending | pending | pending |
+
+Table A.2: The go command. Median wall time in seconds; in parentheses, the compile, link, asm and test processes it ran, as a range where runs differed.[^a-results]
+
+| Scenario | `n100` | `n1000` | `n3000` | `n10000` | Runs |
+|---|---|---|---|---|---|
+| `cold` | 2.77 (213) | 6.86 (1,023) | 27.6 (2,885) | pending | 1 |
+| `noop` | 0.20 (0) | 0.86 (0) | 2.45 (0) | pending | 3 |
+| `noop-discard` | 0.30 (3–20) | 1.53 (11–131) | 8.88 (31–329) | pending | 3 |
+| `leaf-body` | 0.31 (3–5) | 1.28 (3) | 4.66 (3–33) | pending | 3 |
+| `core-body` | 0.61 (32) | 2.97 (309) | 14.0 (823–855) | pending | 3 |
+| `core-api` | 0.84 (78) | 5.31 (722) | 24.4 (2,193) | pending | 3 |
+| `core-comment` | 0.87 (78) | 5.41 (722) | 24.0 (2,193) | pending | 3 |
+| `test-first` | 26.0 (486) | 279 (4,132) | 1,313 (12,190) | — | 1 |
+| `test-noop` | 0.18 (0) | 1.31 (0) | 9.82 (0) | — | 3 |
+| `test-core-body` | 23.8 (256) | 259 (2,501) | pending | — | 1 |
+| `codegen-generate` | 0.98 | 6.13 | pending | pending | 2 |
+| `codegen-build` | 0.31 (7–11) | 1.48 (17) | pending | pending | 2 |
+| `clone-warmcache` | 0.73 (92) | 4.98 (902) | pending | pending | 1 |
+| `clone-warmcache-trimpath` | 0.28 (3) | 1.83 (11) | pending | pending | 1 |
+
+Table A.3: Bazel. Median wall time in seconds; in parentheses, the processes it ran, and the actions it found in its action cache or, for `clone-diskcache`, its disk cache (hits).[^a-results]
+
+| Scenario | `n100` | `n1000` | `n3000` | `n10000` | Runs |
+|---|---|---|---|---|---|
+| `cold` | 27.8 (106) | 37.4 (999) | pending | pending | 1 |
+| `noop` | 0.14 | 0.16 | pending | pending | 3 |
+| `noop-cold-server` | 2.86 | 3.32 | pending | pending | 3 |
+| `analysis-cold-server` | 2.65 | 2.76 | pending | pending | 3 |
+| `leaf-body` | 0.51 (2; 1 hit) | 0.88 (2; 1 hit) | pending | pending | 3 |
+| `core-body` | 0.53 (3; 29 hits) | 1.71 (11; 298 hits) | pending | pending | 3 |
+| `core-api` | 1.02 (32; 48 hits) | 5.05 (309; 423 hits) | pending | pending | 3 |
+| `core-comment` | 0.96 (32; 46 hits) | 5.04 (309; 413 hits) | pending | pending | 3 |
+| `test-first` | 39.8 (621) | 531 (6,142) | pending | — | 1 |
+| `test-noop` | 0.21 | 0.26 | pending | — | 3 |
+| `test-core-body` | 44.9 (198; 133 hits) | 458 (1,868; 1,402 hits) | pending | — | 1 |
+| `codegen-build` | 0.69 (4; 4 hits) | 3.31 (12; 6 hits) | pending | pending | 2 |
+| `clone-diskcache` | 5.76 (0; 106 hits) | 9.45 (0; 999 hits) | pending | pending | 1 |
+
+Table A.4: Bazel's server heap after garbage collection, in MB.[^a-results]
+
+| Config | After the builds | After the tests |
+|---|---|---|
+| `n100` | 68 | 74 |
+| `n1000` | 84 | 130 |
+| `n3000` | pending | pending |
+| `n10000` | pending | — |
+| `n1000-wide` | pending | — |
+| `n1000-deep` | pending | — |
+| `n1000-local` | pending | — |
+
+Table A.5: Graph shape and the sandbox at 1,000 packages. Median wall time in seconds (processes run; hits).[^a-results]
+
+| Config, tool | `cold` | `noop` | `leaf-body` | `core-body` | `core-api` |
+|---|---|---|---|---|---|
+| `n1000`, go | 6.86 (1,023) | 0.86 (0) | 1.28 (3) | 2.97 (309) | 5.31 (722) |
+| `n1000`, Bazel | 37.4 (999) | 0.16 | 0.88 (2; 1 hit) | 1.71 (11; 298 hits) | 5.05 (309; 423 hits) |
+| `n1000-wide`, go | pending | pending | — | pending | pending |
+| `n1000-wide`, Bazel | pending | pending | — | pending | pending |
+| `n1000-deep`, go | pending | pending | — | pending | pending |
+| `n1000-deep`, Bazel | pending | pending | — | pending | pending |
+| `n1000-local`, Bazel | pending | pending | pending | pending | — |
+
+Table A.6: The go command's processes in one cold build and test, as the probe recorded them.[^a-workload]
+
+| Config | Process | Count | Wall, median (ms) | CPU, median (ms) | Peak RSS, median (MB) | Peak RSS, max (MB) | CPU, total (s) |
+|---|---|---|---|---|---|---|---|
+| `n1000` | compile | 3,079 | 25 | 56 | 42 | 302 | 149.1 |
+| `n1000` | asm | 69 | 7 | 5 | 7 | 10 | 0.3 |
+| `n1000` | link, binary | 11 | 707 | 792 | 450 | 462 | 8.0 |
+| `n1000` | link, test | 1,000 | 112 | 128 | 186 | 378 | 147.2 |
+| `n1000` | test run | 1,000 | 5,132 | 5 | 8 | 11 | 4.8 |
+| `n3000` |  | pending |  |  |  |  |  |
+<!-- END -->
+
+Where repeated runs did different work, the tables give the range. The first `noop-discard` also
+compiles the packages that no binary imports, and some other go command runs relinked every
+binary, some after recompiling every main package, for reasons we did not trace. Bazel's no-op and
+analysis-only runs show no count, because the harness's pattern does not match their summary
+line.[^a-time]
+
+<!-- Recheck this paragraph against n3000 and n10000 when they land. -->
+In our measurements, from 100 to 1,000 packages, the go command's no-op and leaf edit did the same
+small work at both sizes, yet their time grew with the repository, since every run loads and
+hashes the whole tree (Chapter 4). Bazel's warm no-op stayed flat, and a new server's loading and
+analysis changed little; its leaf edit, one compile and one link, grew with the binary it
+relinks, and its heap with the graph. Edits to `core` grew under both tools with the importers
+they reach; Bazel's body edit reached none, and ran one compile and the links at both sizes.
+
+## Limits
+
+- **One machine:** an Apple M5 Pro with 18 cores and 64 GB of memory, running macOS
+  26.6.[^a-meta]
+- **A synthetic repository:** uniform packages, no cgo, no external modules, tests that do almost
+  nothing and one code generator. We expect the shape of the results to carry over to real
+  repositories more than the numbers.
+- **Local Bazel only:** no remote cache or remote execution was measured. A local disk cache
+  stands in for a shared one, so no network time is included.
+- **macOS:** macOS checks an app when it is first launched,[^apple-xprotect] and Chapter 5 infers
+  that this slows the run of every newly linked test binary.
+- **CPU time:** the probe truncates each process's user and system CPU time to whole
+  milliseconds, so the shortest processes read low.[^a-probe]
+- **Few runs:** `cold`, `test-first`, `test-core-body` and the clone scenarios ran once, and code
+  generation twice. The tables give medians without spread; `results.jsonl` has every run.
+
+## Reproduce
+
+The harness needs Go 1.27.3, bazelisk, which reads `.bazelversion` and downloads Bazel 9.3.2, and
+`uv` for the analysis script. From the repository's root:
+
+```bash
+GOBIN="$PWD/.tools/bin" go install github.com/bazelbuild/bazelisk@v1.30.0
+cd examples/bench
+go build -o ../../.tools/bin/bench .
+../../.tools/bin/bench gen -pkgs 1000 -o /tmp/synth    # one repository, to inspect
+../../.tools/bin/bench run -configs n1000,n100,n3000,n1000-wide,n1000-deep,n1000-local,n10000 \
+    -reps 3 -work work -out results/2026-11-16 \
+    -goroot "$(GOTOOLCHAIN=go1.27.3 go env GOROOT)" -bazel "$PWD/../../.tools/bin/bazelisk"
+uv run analyze.py --appendix results/2026-11-16
+```
+
+`bench run` writes `meta.json` (the machine and versions), `configs.jsonl`, `results.jsonl`,
+`workload.jsonl`, the action graphs and the profiles to the `-out` directory, and each command's
+output to `work/logs`.[^a-run] Without `--appendix`, `analyze.py` prints Chapter 5's tables and
+redraws its figures.
+
+## References
+
+[^a-main]: This book's harness, `examples/bench/main.go`, the command's documentation.
+    [main.go](../examples/bench/main.go#L1-L8)
+[^a-gen]: This book's harness, `examples/bench/gen.go`, `Shape` and `Repo.write`.
+    [gen.go](../examples/bench/gen.go#L15-L27),
+    [gen.go](../examples/bench/gen.go#L180-L253)
+[^a-plan]: This book's harness, `examples/bench/gen.go`, `Shape.withDefaults` and `plan`.
+    [gen.go](../examples/bench/gen.go#L29-L55),
+    [gen.go](../examples/bench/gen.go#L79-L138)
+[^a-files]: This book's harness, `examples/bench/gen.go`, `Repo.writePkg`, and
+    `examples/bench/templates.go`, `typesTmpl`, `editTmpl` and `testTmpl`.
+    [gen.go](../examples/bench/gen.go#L255-L362),
+    [templates.go](../examples/bench/templates.go#L5-L83),
+    [templates.go](../examples/bench/templates.go#L177-L195)
+[^a-gentable]: This book's harness, `examples/bench/gen.go`, `Repo.writePkg`, and
+    `examples/bench/templates.go`, `genruleTmpl` and `gentableMain`; Bazel, "General Rules",
+    section "genrule".
+    [gen.go](../examples/bench/gen.go#L335-L351),
+    [templates.go](../examples/bench/templates.go#L215-L225),
+    [templates.go](../examples/bench/templates.go#L277-L278)
+    <https://bazel.build/reference/be/general#genrule>
+[^a-configs-run]: This book's harness, `examples/bench/run.go`, `configs`.
+    [run.go](../examples/bench/run.go#L28-L38)
+[^bazel-spawn]: Bazel, "Commands and Options", section `--spawn_strategy`: "`local` causes
+    commands to be executed as local subprocesses".
+    <https://bazel.build/docs/user-manual#spawn-strategy>
+[^a-run]: This book's harness, `examples/bench/run.go`, `cmdRun`, `harness.runConfig`,
+    `harness.edit`, `harness.runGo` and `harness.runBazel`.
+    [run.go](../examples/bench/run.go#L68-L298),
+    [run.go](../examples/bench/run.go#L353-L612)
+[^a-targets]: This book's harness, `examples/bench/gen.go`, `Repo.write`, which writes
+    `build_targets.txt`; Go, `cmd/go/internal/work/build.go`, `runBuild`.
+    [gen.go](../examples/bench/gen.go#L233-L237)
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
+[^a-goenv]: This book's harness, `examples/bench/run.go`, `harness.goEnv`.
+    [run.go](../examples/bench/run.go#L305-L320)
+[^go-toolchain-local]: Go, `cmd/go/internal/toolchain/select.go`, `Select`: with
+    `GOTOOLCHAIN=local`, the running go command handles the command itself.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/toolchain/select.go#L271-L277>
+[^rg-from-file]: rules_go, `go/private/go_mod.bzl`, `_version_from_go_file`, which
+    `version_from_go_mod` calls; `examples/bench/gen.go`, `Repo.write`, writes `go.mod` and
+    `MODULE.bazel`.
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_mod.bzl#L76-L79>
+    [gen.go](../examples/bench/gen.go#L194-L197)
+[^a-bazel]: This book's harness, `examples/bench/run.go`, `bazelCmd.args` and
+    `harness.runBazel`, and `examples/bench/templates.go`, `bazelrc`.
+    [run.go](../examples/bench/run.go#L470-L518),
+    [templates.go](../examples/bench/templates.go#L253-L256)
+[^bazel-rc]: Bazel, `src/main/cpp/option_processor.cc`, `OptionProcessor::GetRcFiles`, which
+    reads the system and home `.bazelrc` files unless `--nosystem_rc` and `--nohome_rc` are set.
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/cpp/option_processor.cc#L384-L410>
+[^a-order]: This book's harness, `examples/bench/run.go`, `cmdRun`.
+    [run.go](../examples/bench/run.go#L121-L136)
+[^a-time]: This book's harness, `examples/bench/run.go`, `harness.timeCmd`, `goCounts`,
+    `bazelCounts` and `bzProcRE`.
+    [run.go](../examples/bench/run.go#L300-L351),
+    [run.go](../examples/bench/run.go#L440-L461)
+[^go-toolexec]: Go, `cmd/go/internal/work/build.go`, the documentation of `-toolexec`.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L202-L205>
+[^go-exec]: Go, `cmd/go/internal/test/test.go`, the documentation of `-exec`.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L155-L157>
+[^a-probe]: This book's harness, `examples/bench/probe.go`, `cmdToolexec`, which records
+    `Duration.Milliseconds` of each CPU time, and `examples/bench/run.go`, `harness.runWorkload`.
+    [probe.go](../examples/bench/probe.go#L21-L63),
+    [run.go](../examples/bench/run.go#L625-L654)
+[^a-analyze]: This book's analysis script, `examples/bench/analyze.py`, `appendix`, which takes
+    the planned scenarios from `run.go`'s `configs`.
+    [analyze.py](../examples/bench/analyze.py)
+[^a-configs]: This book's measurements, the generated repositories:
+    [`examples/bench/results/2026-11-16/configs.jsonl`](../examples/bench/results/2026-11-16/configs.jsonl).
+[^a-results]: This book's measurements, one record per command:
+    [`examples/bench/results/2026-11-16/results.jsonl`](../examples/bench/results/2026-11-16/results.jsonl).
+[^a-workload]: This book's measurements, one record per process:
+    [`examples/bench/results/2026-11-16/workload.jsonl`](../examples/bench/results/2026-11-16/workload.jsonl).
+[^a-meta]: This book's measurements, the machine and Go version:
+    [`examples/bench/results/2026-11-16/meta.json`](../examples/bench/results/2026-11-16/meta.json).
+[^apple-xprotect]: Apple, *Apple Platform Security*, "Protecting against malware in macOS",
+    section "XProtect": XProtect checks for known malicious content when an app is first
+    launched or has been changed in the file system.
+    <https://support.apple.com/guide/security/protecting-against-malware-sec469d47bd8/web#secffa0f9b55>
