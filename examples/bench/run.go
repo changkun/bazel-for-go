@@ -552,14 +552,17 @@ func (h *harness) runBazel(c config, repo *Repo, dir, src string) error {
 			measure(bz, e, i, "build", extra...)
 		}
 	}
-	// Keep the cold and incremental profiles (Chrome trace format, with Bazel's critical path
-	// in it) for analyze.py. Bazel 9 removed the analyze-profile command.
-	for _, s := range []string{"cold", "core-body"} {
-		p := filepath.Join(h.logs, c.Name+"-bazel-"+s+".profile.gz")
+	// Keep the cold, incremental and first test profiles (Chrome trace format, with Bazel's
+	// critical path in it) for analyze.py and the book. Bazel 9 removed the analyze-profile
+	// command.
+	keep := func(scenario string) {
+		p := filepath.Join(h.logs, c.Name+"-bazel-"+scenario+".profile.gz")
 		if b, err := os.ReadFile(p); err == nil {
 			os.WriteFile(filepath.Join(h.out, filepath.Base(p)), b, 0o644)
 		}
 	}
+	keep("cold")
+	keep("core-body")
 	if c.want("noop") {
 		_, out, err := bz.run(c.Name+"-bazel-heap", "info", "used-heap-size-after-gc")
 		if err == nil {
@@ -570,6 +573,7 @@ func (h *harness) runBazel(c config, repo *Repo, dir, src string) error {
 	}
 	if c.want("test") {
 		measure(bz, "test-first", 0, "test", "//...", profile("test-first"))
+		keep("test-first")
 		for i := range h.reps {
 			measure(bz, "test-noop", i, "test", "//...")
 		}
