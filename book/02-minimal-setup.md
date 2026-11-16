@@ -133,84 +133,67 @@ inputs.[^bazel-sandbox] Chapter 6 explains the machinery, including how the phas
 
 Gazelle changes nothing when the BUILD files are current:
 
-<!-- rerun: bazel run //:gazelle (confirm it still changes nothing without the gazelle:prefix
-directive; refresh the package and target counts) -->
-
 ```console
 $ bazel run //:gazelle
-INFO: Analyzed target //:gazelle (52 packages loaded, 257 targets configured).
+INFO: Analyzed target //:gazelle (161 packages loaded, 8706 targets configured).
 INFO: Running command line: bazel-bin/gazelle
 ```
 
 A clean build of the command runs the five processes of Figure 2.2:
 
-<!-- rerun: bazel clean; bazel build //cmd/hello --execution_log_json_file=/tmp/exec.json;
-jq -r '[.mnemonic, .targetLabel, .metrics.totalTime] | @tsv' /tmp/exec.json
-(Elapsed 55.112s, Critical Path 52.52s, every per-process time) -->
-
 ```console
 $ bazel clean
 $ bazel build //cmd/hello --execution_log_json_file=/tmp/exec.json
 INFO: Analyzed target //cmd/hello:hello (105 packages loaded, 8446 targets configured).
-INFO: Elapsed time: 55.112s, Critical Path: 52.52s
+INFO: Elapsed time: 17.814s, Critical Path: 16.85s
 INFO: 13 processes: 8 internal, 5 darwin-sandbox.
 $ jq -r '[.mnemonic, .targetLabel, .metrics.totalTime] | @tsv' /tmp/exec.json
-GoStdlib                @@rules_go+//:stdlib                                         36.688s
-GoCompilePkg            //internal/greet:greet                                        0.113s
-GoCompilePkg            //cmd/hello:hello                                             0.033s
-GoLink                  //cmd/hello:hello                                             0.304s
-GoToolchainBinaryBuild  @@rules_go++go_sdk+main___download_0_darwin_arm64//:builder  14.213s
+GoStdlib                @@rules_go+//:stdlib                                          5.487s
+GoCompilePkg            //internal/greet:greet                                        0.026s
+GoCompilePkg            //cmd/hello:hello                                             0.023s
+GoLink                  //cmd/hello:hello                                             0.228s
+GoToolchainBinaryBuild  @@rules_go++go_sdk+main___download_0_darwin_arm64//:builder  10.235s
 ```
 
-Compiling and linking the example's code took under half a second.<!-- rerun: sum of the
-GoCompilePkg and GoLink times in the jq output above --> Compiling the standard library and
-rules_go's builder, a program that wraps the Go tools, took 51 of the 55 seconds;<!-- rerun:
-GoStdlib + GoToolchainBinaryBuild in the jq output vs Elapsed time --> Chapter 7 explains both.
-`hello_lib` was not compiled separately, because the binary compiles the sources it embeds.
+Compiling and linking the example's code took 0.28 seconds. Compiling the standard library and
+rules_go's builder, a program that wraps the Go tools, took 16 of the 18 seconds; Chapter 7
+explains both. `hello_lib` was not compiled separately, because the binary compiles the sources
+it embeds.
 
 A new server loads and analyzes again even when every action is cached; a running one does
 neither:
-
-<!-- rerun: bazel shutdown && bazel build //cmd/hello (9.320s, 0.07s); bazel build //cmd/hello
-(0.170s, 0.00s) -->
 
 ```console
 $ bazel shutdown && bazel build //cmd/hello
 Starting local Bazel server (9.3.2) and connecting to it...
 INFO: Analyzed target //cmd/hello:hello (105 packages loaded, 8446 targets configured).
-INFO: Elapsed time: 9.320s, Critical Path: 0.07s
+INFO: Elapsed time: 2.919s, Critical Path: 0.06s
 INFO: 1 process: 12 action cache hit, 1 internal.
 $ bazel build //cmd/hello
 INFO: Analyzed target //cmd/hello:hello (0 packages loaded, 0 targets configured).
-INFO: Elapsed time: 0.170s, Critical Path: 0.00s
+INFO: Elapsed time: 0.133s, Critical Path: 0.00s
 ```
 
 `//...` means every target not tagged `manual`; that includes the untagged runner behind
 `//:gazelle`, so the first full build also compiles Gazelle.[^bazel-target-patterns][^gz-macro]
 By default Bazel reruns a test only if it or its dependencies changed, it failed last time,
 it is marked `external`, or `--runs_per_test` asks for several runs.[^bazel-cache-tests] On this
-Mac the first run of the new test binary took 8.4 s and a forced rerun 0.1 s;<!-- rerun: first
-bazel test //... and bazel test //... --nocache_test_results; isolate the first-launch cost by
-copying bazel-bin/internal/greet/greet_test_/greet_test to a new path and timing two launches -->
-we attribute the difference to macOS scanning a new executable on its first launch. Chapter 5
-returns to that first-launch cost.
-
-<!-- rerun: bazel build //... (47.101s, 46.63s, process counts); bazel test //... (8.4s);
-bazel test //... (cached); bazel test //... --nocache_test_results (0.1s);
-bazel run //cmd/hello -- Ada -->
+Mac the first run of the new test binary took 0.3 s and a forced rerun under 0.1 s; we attribute
+the difference to macOS scanning a new executable on its first launch. Chapter 5 returns to that
+first-launch cost.
 
 ```console
 $ bazel build //...
-INFO: Analyzed 5 targets (64 packages loaded, 311 targets configured).
-INFO: Elapsed time: 47.101s, Critical Path: 46.63s
-INFO: 109 processes: 6 action cache hit, 32 internal, 77 darwin-sandbox.
+INFO: Analyzed 5 targets (63 packages loaded, 306 targets configured).
+INFO: Elapsed time: 10.196s, Critical Path: 9.79s
+INFO: 108 processes: 32 internal, 76 darwin-sandbox.
 $ bazel test //...
-//internal/greet:greet_test                                              PASSED in 8.4s
+//internal/greet:greet_test                                              PASSED in 0.3s
 $ bazel test //...
-//internal/greet:greet_test                                     (cached) PASSED in 8.4s
+//internal/greet:greet_test                                     (cached) PASSED in 0.3s
 Executed 0 out of 1 test: 1 test passes.
 $ bazel test //... --nocache_test_results
-//internal/greet:greet_test                                              PASSED in 0.1s
+//internal/greet:greet_test                                              PASSED in 0.0s
 $ bazel run //cmd/hello -- Ada
 INFO: Running command line: bazel-bin/cmd/hello/hello_/hello <args omitted>
 Hello, Ada!
@@ -258,9 +241,9 @@ takes time.[^rg-editors-setup]
   recommend `go_deps.config(check_direct_dependencies = "error")`, so a build fails, rather than
   warns, when another Bazel module raises a version.[^gz-mvs] With `.bazelversion` and a
   checked-in `MODULE.bazel.lock`, every machine resolves the same build.
-- A clean build here spent 51 of 55 seconds on the toolchain, not the code.<!-- rerun: bazel
-  clean; bazel build //cmd/hello, as above --> Every fresh machine pays that again unless a
-  shared cache serves it, so we recommend one from the start (Chapter 9).
+- A clean build here spent 16 of 18 seconds compiling the standard library and rules_go's
+  builder, not the code. Every fresh machine pays that again unless a shared cache serves it, so
+  we recommend one from the start (Chapter 9).
 - A server restart repeats loading and analysis even when every action is cached. We recommend
   keeping servers warm on continuous integration (CI) runners as well as laptops.
 - BUILD files are generated. Run `bazel run //:gazelle` with every change that adds a package or

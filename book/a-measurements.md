@@ -8,7 +8,7 @@ records each command.[^a-main]
 
 ![Figure A.1: The generated import graph at 1,000 packages. Packages import only from lower layers, binaries from the top one.](figures/a-repository.svg)
 
-`bench gen` writes one Go module with the BUILD files Gazelle would write for it, so both
+`bench gen` writes one Go module with the BUILD files Gazelle would write, so both
 tools build the same tree; a given shape always produces the same bytes.[^a-gen]
 Packages are spread evenly over layers (Figure A.1). Each package above layer 0
 imports up to three packages chosen at random from the layer directly below and one from any
@@ -215,7 +215,7 @@ took 185 s, against 134 s for the go command's 2,724 compiles and 100 links.
   every new test binary's first run.
 - **Whole milliseconds:** this run's probe truncated each process's times to whole
   milliseconds, so the shortest processes read low; it now keeps microseconds.[^a-probe]
-- **Few runs:** at most three per scenario (each table's last column), and medians without
+- **Few runs:** at most three per scenario (Tables A.2 and A.3 count them), and medians without
   spread; `results.jsonl` has every run.
 
 ## Reproduce

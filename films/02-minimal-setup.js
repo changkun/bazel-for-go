@@ -11,7 +11,7 @@ import { during, measure, mix, place, ramp, runs, show } from "./stage.js";
 // bench: clean `bazel build //cmd/hello` in examples/minimal on macOS/arm64,
 // seconds per process from the execution log (the chapter's jq listing).
 // Only the proportions of one bar use them; no number is shown.
-const CLEAN = { builder: 14.213, stdlib: 36.688, greet: 0.113, hello: 0.033, link: 0.304 };
+const CLEAN = { builder: 10.235, stdlib: 5.487, greet: 0.026, hello: 0.023, link: 0.228 };
 
 // Fade something in from second a, over d seconds.
 const appear = (thing, t, a, d = 0.6) => show(thing, during(t, a, a + d));
@@ -419,7 +419,7 @@ export default {
       section: "Building, testing and running",
       lines: [
         { say: "Compiling the standard library and rules_go's builder, a program that wraps the Go tools, took most of a clean build.", hold: 1.6 },
-        { say: "Compiling and linking the example's code took very little: the time went to the toolchain, not the code.", hold: 1.8 },
+        { say: "Compiling and linking the example's code took very little: the time went to the standard library and the builder.", hold: 1.8 },
       ],
       draw(s) {
         // The five processes over one bar of the clean build's time, in proportion.
@@ -447,7 +447,7 @@ export default {
         toolchain.line(0, Y + BH + 22, 0, Y + BH + 32, { width: 2, opacity: 0.6 });
         toolchain.line(0, Y + BH + 32, wB + wS - 6, Y + BH + 32, { width: 2, opacity: 0.6 });
         toolchain.line(wB + wS - 6, Y + BH + 22, wB + wS - 6, Y + BH + 32, { width: 2, opacity: 0.6 });
-        toolchain.text((wB + wS) / 2, Y + BH + 72, "toolchain", { size: 30, weight: 600, anchor: "middle" });
+        toolchain.text((wB + wS) / 2, Y + BH + 72, "standard library and builder", { size: 30, weight: 600, anchor: "middle" });
         const codeName = s.text(W + 16, Y + BH / 2 + 10, "code", codeLabel);
 
         return (t, cue) => {
