@@ -26,18 +26,18 @@ Bazel adds:
 - **a declared graph held in memory** by a long-lived server, so a run neither rederives the
   graph nor rereads unchanged files, only checks their timestamps (Chapters 6 and 8);
 - **a shared cache that holds links and test results,** not only compiles, for checkouts at any
-  path on any machine (Chapters 6 and 10);
+  path on matching machines (Chapters 6 and 10);
 - **execution that can leave the machine,** so a pool of machines, not one machine's cores,
   bounds parallelism (Chapter 6);
 - **a graph that crosses languages,** so generated code and other languages' build steps are
   cached too (Chapters 3 and 8);
-- **a finer cutoff,** the point where an edit stops spreading: importers compile against each
+- **a finer cutoff,** the point where an edit stops spreading: importers' keys cover only each
   package's export data, a summary of what it exports, so a body edit that leaves that summary
   unchanged recompiles one package, not every direct importer (Chapter 7).
 
 Its price is BUILD files, a second description of the graph that Gazelle must keep current;
-server memory that grows with the graph; a process, sandbox and hashing per action; and
-reloading and replanning the build after each server start (Chapters 3 and 6).
+server memory that grows with the graph; a fixed cost per action; and reloading and replanning
+the build after each server start (Chapters 3 and 6).
 
 In our analysis, the go command's work per run grows with the repository rather than the
 change; Bazel's overheads grow with the graph (Chapter 8). If continuous integration time goes to
@@ -45,4 +45,4 @@ compiling, we recommend `-trimpath` (dropping paths from outputs), one Go versio
 shared through `GOCACHEPROG` (the go command's hook for an external cache), to share compiles,
 not links, across machines (Chapter 10). In our view, Bazel pays off once many machines building
 the same code spend their time on links, tests or generators; long-lived runners spend it
-loading the tree; other languages join; or one build outgrows one machine (Chapter 10).
+loading the tree; other languages join; or one build outgrows one machine (Table 10.1).
