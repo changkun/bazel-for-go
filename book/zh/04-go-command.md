@@ -1,5 +1,5 @@
 # 4. go 命令的设计
-<!-- 译自 d9d1c21 -->
+<!-- 译自 34bd9c5 -->
 
 go 命令从导入语句推导构建图，以每个步骤输入的哈希作为该步骤的键，
 并把结果保存在每个用户各自的缓存中。第 8 章把其中的每个机制与 Bazel 的对应机制逐一比较。
@@ -310,10 +310,11 @@ go 命令每天至多查找一次旧条目，并删除五天内未被使用的�
     才存储二进制。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L756>
 
-[^go-testlog]: Go，`testing/internal/testdeps/deps.go`，`testLog`；`os.Getenv`、`os.OpenFile`
-    与 `os.Stat` 中的 `testlog` 调用。
+[^go-testlog]: Go，`testing/internal/testdeps/deps.go`，`testLog`；`os.Getenv`、`os.Chdir`、
+    `os.OpenFile` 与 `os.Stat` 中的 `testlog` 调用。
     <https://github.com/golang/go/blob/go1.27.3/src/testing/internal/testdeps/deps.go#L82-L96>
     <https://github.com/golang/go/blob/go1.27.3/src/os/env.go#L102>
+    <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L376-L381>
     <https://github.com/golang/go/blob/go1.27.3/src/os/file.go#L411>
     <https://github.com/golang/go/blob/go1.27.3/src/os/stat.go#L12>
 
