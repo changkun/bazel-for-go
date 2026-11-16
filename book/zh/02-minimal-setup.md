@@ -1,5 +1,5 @@
 # 2. 一个最小的 Bazel Go 仓库
-<!-- 译自 9726daa -->
+<!-- 译自 39305c9 -->
 
 `examples/minimal` 是一个 Go 模块，包含一个命令行程序、一个库和一个测试，用 Bazel
 9.3.2、rules_go 0.65.0（Bazel 的 Go 规则）与 Gazelle 0.54.0（根据 Go 源码写出 Bazel 构建文件的工具）构建。
@@ -63,7 +63,7 @@ require github.com/google/go-cmp v0.7.0
 
 `go.mod` 是唯一需要手动编辑的 Go 模块版本列表：go 命令与 Bazel 都读取它，
 因此 `go get` 会同时改变二者的依赖。[^rg-bzlmod-go-mod]
-`go_deps` 还会读取其他 Bazel 模块声明的 Go 依赖（这里是 Gazelle 的），对每个模块取最高版本，
+`go_deps` 还会读取其他 Bazel 模块声明的 Go 依赖（这里是 rules_go 与 Gazelle 的），对每个模块取最高版本，
 并在该版本高于本文件所写版本时发出警告。[^gz-mvs]
 
 ### 根目录的 `BUILD.bazel`
@@ -133,7 +133,7 @@ INFO: Analyzed target //:gazelle (161 packages loaded, 8706 targets configured).
 INFO: Running command line: bazel-bin/gazelle
 ```
 
-对这个命令行程序做一次干净构建，会运行图 2.2 中的五个进程：
+一次干净构建会运行图 2.2 中的五个进程；Bazel 的汇总行还把不启动进程的动作（例如符号链接）记为「internal」：[^bazel-spawn-stats]
 
 ```console
 $ bazel clean
@@ -171,7 +171,7 @@ INFO: Elapsed time: 0.133s, Critical Path: 0.00s
 默认情况下，Bazel 只在以下情况重新运行测试：测试本身或其依赖发生了变化，上次运行失败，
 测试被标记为 `external`，或者 `--runs_per_test` 要求运行多次。[^bazel-cache-tests]
 在这台 Mac 上，新测试二进制的首次运行用了 0.3 s，强制重新运行不到 0.1 s；
-笔者将这一差异归因于 macOS 在新可执行文件首次启动时对其进行的扫描。第 5 章会再讨论这项首次启动的开销。
+笔者将这一差异归因于 macOS 在新可执行文件首次启动时对其进行的扫描。[^apple-xprotect]第 5 章会再讨论这项首次启动的开销。
 
 ```console
 $ bazel build //...
@@ -233,9 +233,9 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
   因此笔者建议从一开始就使用共享缓存（第 9 章）。
 - 即使每个动作都已缓存，服务进程重启后仍要重新加载和分析。笔者建议不仅在笔记本电脑上，
   也在持续集成（CI）运行器上让服务进程保持热状态。
-- BUILD 文件是生成的。每次改动若新增了包或导入，都应运行 `bazel run //:gazelle`；
+- BUILD 文件是生成的。笔者建议每当 Go 文件或其导入发生变化时，都运行 `bazel run //:gazelle`；
   第 3 章会加上一项 CI 检查。
-- gopls 仍能正常工作，但每次加载包都是一条 Bazel 命令，而服务进程一次只运行一条命令，[^bazel-client-server]
+- gopls 仍能正常工作，但每次加载包都要运行若干条 Bazel 命令，而服务进程一次只运行一条命令，[^bazel-client-server]
   因此耗时较长的构建会拖慢编辑器（第 9 章）。
 
 ## 参考文献
@@ -244,8 +244,11 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
     <https://bazel.build/reference/glossary>
 [^bazel-labels]: Bazel，「Labels」。
     <https://bazel.build/concepts/labels>
-[^bazelisk]: Bazel，「Installing Bazel using Bazelisk」。
-    <https://bazel.build/install/bazelisk>
+[^bazelisk]: Bazel，「Installing Bazel using Bazelisk」；Bazelisk v1.30.0，`README.md`：其中谈到把
+    Bazelisk 安装为 `bazel`，以及读取 `.bazelversion`。
+    <https://bazel.build/install/bazelisk>，
+    <https://github.com/bazelbuild/bazelisk/blob/v1.30.0/README.md?plain=1#L37>，
+    <https://github.com/bazelbuild/bazelisk/blob/v1.30.0/README.md?plain=1#L49>
 [^bazel-extension]: Bazel，「Module extensions」。
     <https://bazel.build/external/extension>
 [^rg-from-file]: rules_go，`go/private/go_mod.bzl`，`_version_from_go_file`，由
@@ -301,16 +304,27 @@ $ GOPACKAGESDRIVER=$PWD/tools/gopackagesdriver.sh gopls check internal/greet/gre
     <https://bazel.build/run/build#build-phases>
 [^bazel-sandbox]: Bazel，「Sandboxing」。
     <https://bazel.build/docs/sandboxing>
-[^bazel-target-patterns]: Bazel，「Build programs with Bazel」，「Specifying targets to build」。
+[^bazel-spawn-stats]: Bazel，`SpawnStats.java`：以不启动进程为标志，把「internal actions, such as
+    SymlinkTree actions」计为内部动作，并指出其「processes」计数「is actually the number of
+    actions」。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/runtime/SpawnStats.java#L44-L45>，
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/runtime/SpawnStats.java#L131>
+[^bazel-target-patterns]: Bazel，「Build programs with Bazel」，「Building multiple targets」。
     <https://bazel.build/run/build#specifying-build-targets>
 [^gz-macro]: Gazelle，`def.bzl`，`gazelle`：运行器规则不带标记，包装它的 `sh_binary` 带有
     `manual` 标记。
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/def.bzl#L225-L244>
 [^bazel-cache-tests]: Bazel，`TestConfiguration.java`，`cache_test_results` 选项。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/test/TestConfiguration.java#L169-L183>
+[^apple-xprotect]: Apple，*Apple Platform Security*，「Protecting against malware in macOS」，
+    「XProtect」一节：XProtect 会在应用首次启动时，或在应用于文件系统中被更改后，检查其中是否含有
+    已知的恶意内容。
+    <https://support.apple.com/guide/security/protecting-against-malware-sec469d47bd8/web#secffa0f9b55>
 [^xtools-driver]: golang.org/x/tools（gopls v0.24.0 构建所基于的提交），
-    `go/packages/doc.go`，「The driver protocol」。
-    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/doc.go#L82-L87>
+    `go/packages/doc.go`，「The driver protocol」；`go/packages/external.go`：驱动程序
+    「in place of 'go list'」提供包的元数据。
+    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/doc.go#L82-L87>，
+    <https://github.com/golang/tools/blob/24a65270771e7a9b6b3385b45eefaf454a2439d2/go/packages/external.go#L7-L8>
 [^rg-editors]: rules_go，`docs/editors.md`，「General setup」。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/docs/editors.md?plain=1#L3-L4>
 [^rg-driver]: rules_go，`go/tools/gopackagesdriver/bazel_json_builder.go`，`fileQuery` 与
