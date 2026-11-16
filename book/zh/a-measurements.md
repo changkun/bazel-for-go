@@ -1,5 +1,5 @@
 # A. 测量
-<!-- 译自 5be0d60 -->
+<!-- 译自 a07a617 -->
 
 本书的基准测量来自 `examples/bench`。这是一个测量框架（harness），它生成一个合成 Go 仓库，在一组
 固定的场景中用两种工具构建并测试它，并记录每一条命令。[^a-main]
@@ -338,6 +338,9 @@ uv run analyze.py --appendix $out $out-variants --second $out-n1000-check $out-n
     冷构建剖面中 `System load average` 计数器的均值，第一次运行为 47.1 至 68.3，重新运行为 8.7 至
     11.0）：
     [`examples/bench/results/2026-11-16-variants/results.jsonl`](../../examples/bench/results/2026-11-16-variants/results.jsonl)。
+    表 A.5 中 `n1000` 的两行取自第一次运行，当时 Bazel 冷构建的负载均值为 21.4；第二次运行（表 A.7）
+    的负载均值为 36.5，这两行三次运行的中位数之比至多为 1.25，Bazel 的 `cold` 为 1.29，大于它与各变体
+    Bazel `cold` 之间 1.01 至 1.22 的比值。
 [^a-workload]: 本书的测量，每个进程一条记录：
     [`examples/bench/results/2026-11-16/workload.jsonl`](../../examples/bench/results/2026-11-16/workload.jsonl)。
 [^a-second]: 本书的测量，`n1000` 与 `n10000` 的第二次运行，设置了 `-buildvcs=false`；每条命令一条
