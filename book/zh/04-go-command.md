@@ -1,5 +1,5 @@
 # 4. go 命令的设计
-<!-- 译自 375360f -->
+<!-- 译自 c8cebc2 -->
 
 go 命令从导入语句推导构建图，以每个步骤输入的哈希作为该步骤的键，
 并把结果保存在每个用户各自的缓存中。第 8 章把其中的每个机制与 Bazel 的对应机制逐一比较。
@@ -149,12 +149,12 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
 [^go-about]: Go，「About the go command」，「Motivation」与「Configuration versus
     convention」两节。<https://go.dev/doc/articles/go_command>
 
-[^pike]: Rob Pike，「Go at Google: Language Design in the Service of Software
-    Engineering」，「Dependencies in Go」一节。<https://go.dev/talks/2012/splash.article>
-
 [^go-exportdata]: Go，`cmd/compile/internal/noder/unified.go`：
     写出导出数据时「handles re-exporting any transitive dependencies」，并剪除「non-inlineable functions」。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/noder/unified.go#L160-L169>
+
+[^pike]: Rob Pike，「Go at Google: Language Design in the Service of Software
+    Engineering」，「Dependencies in Go」一节。<https://go.dev/talks/2012/splash.article>
 
 [^go-do]: Go，`cmd/go/internal/work/exec.go`，`Builder.Do`，它启动 `-p` 个 goroutine；
     `cmd/go/internal/cfg/cfg.go`，`BuildP`，其默认值为 `GOMAXPROCS`；
@@ -166,14 +166,6 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
 [^go-filehash]: Go，`cmd/go/internal/cache/hash.go`，`FileHash`：对整个文件求哈希，
     并把结果记在一个与进程同生命周期的 map 中。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L140-L183>
-
-[^go-modinfo]: Go，`cmd/go/internal/work/exec.go`，`buildActionID` 中的 `modinfo` 一行。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
-
-[^go-buildvcs]: Go，`cmd/go/internal/work/build.go`，`-buildvcs` 标志的帮助文本；`load/pkg.go`，
-    `setBuildInfo` 中的 `vcs.revision`、`vcs.time` 与 `vcs.modified` 设置。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>，
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
 
 [^go-load]: Go，`cmd/go/internal/load/pkg.go`，`PackagesAndErrors`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2937>
@@ -197,6 +189,11 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L451-L456>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L656-L658>
 
+[^go-lookup]: Go，`cmd/go/internal/cache/hash.go`，`NewHash`，一个 SHA-256 哈希；
+    `cmd/go/internal/work/buildid.go`，`useCache`，即 GOCACHE 查找。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L82-L83>
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L565>
+
 [^go-buildactionid]: Go，`cmd/go/internal/work/exec.go`，`buildActionID`：平台、
     编译器的工具 ID 与标志、`GOEXPERIMENT`、输入文件，以及每个依赖的内容 ID；
     工具 ID 来自 `Builder.toolID` 中的 `compile -V=full`。
@@ -206,13 +203,25 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L428-L435>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L146-L184>
 
-[^go-lookup]: Go，`cmd/go/internal/cache/hash.go`，`NewHash`，一个 SHA-256 哈希；
-    `cmd/go/internal/work/buildid.go`，`useCache`，即 GOCACHE 查找。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/hash.go#L82-L83>
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L565>
-
 [^go-actionid-dir]: Go，`cmd/go/internal/work/exec.go`，`buildActionID` 中的 `dir` 一行。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L275-L303>
+
+[^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`，
+    配置 `n1000`（1000 个包、11 个二进制）：场景 `noop`、`noop-discard`（第 1 次与第 2 次重复）、
+    `core-body`、`core-api`、`test-core-body`、`clone-warmcache` 与 `clone-warmcache-trimpath`。
+    当 `-o` 指定一个目录时，`go build` 只构建 main 包及其依赖，这里是 891 个包；
+    `core` 的 332 个直接导入者中有 298 个在其中，这一数字根据生成的仓库中的导入关系统计得出。
+    `configs.jsonl` 列出了 926 个依赖 `core` 的包，包括直接依赖与间接依赖。
+    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
+
+[^go-modinfo]: Go，`cmd/go/internal/work/exec.go`，`buildActionID` 中的 `modinfo` 一行。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L358-L360>
+
+[^go-buildvcs]: Go，`cmd/go/internal/work/build.go`，`-buildvcs` 标志的帮助文本；`load/pkg.go`，
+    `setBuildInfo` 中的 `vcs.revision`、`vcs.time` 与 `vcs.modified` 设置。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L124-L131>，
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/load/pkg.go#L2624-L2632>
 
 [^go-buildid]: Go，`cmd/go/internal/work/buildid.go`，「Build IDs」注释：
     动作 ID 这一半作为只有一个条目的缓存，内容 ID 这一半作为下一个步骤的键。
@@ -252,15 +261,6 @@ go 命令每天至多查找一次旧条目，并删除已有五天未被使用�
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L52-L54>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L553-L556>
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L955>
-
-[^bench]: 本书的测量，`examples/bench/results/2026-11-16/results.jsonl`，
-    配置 `n1000`（1000 个包、11 个二进制）：场景 `noop`、`noop-discard`（第 1 次与第 2 次重复）、
-    `core-body`、`core-api`、`test-core-body`、`clone-warmcache` 与 `clone-warmcache-trimpath`。
-    当 `-o` 指定一个目录时，`go build` 只构建 main 包及其依赖，这里是 891 个包；
-    `core` 的 332 个直接导入者中有 298 个在其中，这一数字根据生成的仓库中的导入关系统计得出。
-    `configs.jsonl` 列出了 926 个依赖 `core` 的包，包括直接依赖与间接依赖。
-    [results.jsonl](../../examples/bench/results/2026-11-16/results.jsonl)
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/build.go#L510-L531>
 
 [^go-archive]: Go，`cmd/compile/internal/gc/obj.go`，`dumpobj1`：
     归档包含导出数据（`__.PKGDEF`）与目标代码（`_go_.o`）。

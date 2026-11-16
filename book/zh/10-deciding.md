@@ -1,5 +1,5 @@
 # 10. 做出决定
-<!-- 译自 8f916dd -->
+<!-- 译自 c8cebc2 -->
 
 ## 每种工具的适用范围
 
@@ -159,9 +159,17 @@ Bazel 的 Maven 迁移指南建议同时运行两个构建工具，直到团队�
 [^go-do]: Go，`cmd/go/internal/work/exec.go`，`Builder.Do`，它启动 `-p` 个 goroutine，
     以本地进程的形式运行动作。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L223-L229>
-[^go-about]: Go，「About the go command」，「Configuration versus convention」一节：go
-    命令「除 Go 包之外，不尝试构建任何东西」。
-    <https://go.dev/doc/articles/go_command>
+[^bazel-cache-rw]: Bazel，「Remote Caching」，「Read from and write to the remote cache」一节：
+    「可能希望只让 CI 系统能够写入远程缓存。」
+    <https://bazel.build/remote/caching#read-write-remote-cache>
+[^bazel-test-spawn]: Bazel，`lib/exec/StandaloneTestStrategy.java`，`createTestRunnerSpawn`，
+    它以测试动作的输入把测试作为一个 spawn 运行；以及 `extractExecutionInfo`，它把缓存命中
+    标记为来自远程缓存。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L131-L139>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L374-L376>
+[^bazel-rbe]: Bazel，「Remote Execution Overview」。<https://bazel.build/remote/rbe>
+[^bazel-hermetic]: Bazel，「Hermeticity」，「Overview」一节。
+    <https://bazel.build/basics/hermeticity#overview>
 [^go-buildvcs]: Go，`cmd/go/internal/work/build.go`，`-buildvcs` 标志：`false` 总是省略版本控制信息，
     `true` 则在版本控制信息「因缺少工具而无法写入」时报错；`load/pkg.go`，`setBuildInfo`：在默认的
     `auto` 下，缺少工具意味着「we should silently drop the VCS metadata」，而这些元数据记录了提交
@@ -179,17 +187,12 @@ Bazel 的 Maven 迁移指南建议同时运行两个构建工具，直到团队�
     `cgo && !netgo && unix && !darwin` 使 cgo 开启时 Linux 上的 `net` 会编译进 C 代码。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cfg/cfg.go#L165-L176>
     <https://github.com/golang/go/blob/go1.27.3/src/net/cgo_unix_cgo.go#L5>
-[^bazel-test-spawn]: Bazel，`lib/exec/StandaloneTestStrategy.java`，`createTestRunnerSpawn`，
-    它以测试动作的输入把测试作为一个 spawn 运行；以及 `extractExecutionInfo`，它把缓存命中
-    标记为来自远程缓存。
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L131-L139>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L374-L376>
-[^bazel-rbe]: Bazel，「Remote Execution Overview」。<https://bazel.build/remote/rbe>
-[^bazel-hermetic]: Bazel，「Hermeticity」，「Overview」一节。
-    <https://bazel.build/basics/hermeticity#overview>
 [^bazel-cache-issues]: Bazel，「Remote Caching」，「Known issues」一节：「Bazel 不追踪工作区之外的
     工具」，例如 `/usr/bin` 中的编译器。
     <https://bazel.build/remote/caching#known-issues>
+[^go-about]: Go，「About the go command」，「Configuration versus convention」一节：go
+    命令「除 Go 包之外，不尝试构建任何东西」。
+    <https://go.dev/doc/articles/go_command>
 [^bazel-migrate]: Bazel，「Migrating from Maven to Bazel」，引言：「从任何构建工具迁移到 Bazel 时，
     最好让两个构建工具并行运行」。
     <https://bazel.build/migrate/maven>
@@ -200,8 +203,5 @@ Bazel 的 Maven 迁移指南建议同时运行两个构建工具，直到团队�
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/gazelle-reference.md?plain=1#L53-L59>
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/v2/cmd/gazelle/update/diff.go#L30>
     <https://github.com/bazel-contrib/bazel-gazelle/blob/v0.54.0/cmd/gazelle/main.go#L92-L95>
-[^bazel-cache-rw]: Bazel，「Remote Caching」，「Read from and write to the remote cache」一节：
-    「可能希望只让 CI 系统能够写入远程缓存。」
-    <https://bazel.build/remote/caching#read-write-remote-cache>
 [^bazel-remote-executor]: Bazel，`lib/remote/options/RemoteOptions.java`，`--remote_executor`。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L90-L99>

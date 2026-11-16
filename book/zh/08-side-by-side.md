@@ -1,5 +1,5 @@
 # 8. 两种设计并排比较
-<!-- 译自 8038a91 -->
+<!-- 译自 c8cebc2 -->
 
 本章比较 go 命令与 Bazel 对第 1 章六项决策的回答，并说明随着仓库增长，各自要付出什么
 代价。
@@ -257,17 +257,17 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 [^go-noexe]: Go，`cmd/go/internal/work/buildid.go`，`updateBuildID`：「Executables are not
     cached by default」。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/buildid.go#L730-L742>
+[^bazel-remote-caching]: Bazel，「Remote Caching」，「Overview」一节（被缓存的是动作的输出）与
+    「Disk cache」一节（在多个检出之间共享）。
+    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
+[^go-defaultdir]: Go，`cmd/go/internal/cache/default.go`，`DefaultDir`。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/default.go#L74-L87>
 [^go124]: Go 1.24 发布说明，「Go command」一节：`go run` 与 `go tool`
     创建的可执行文件「现在会缓存在 Go 构建缓存中」（提交 3ff868f2f5）；「GOCACHEPROG」一节：
     由 `GOCACHEPROG` 环境变量指定的程序现在可以实现缓存，
     这一功能「此前需要通过 GOEXPERIMENT 启用」。除非设置了该变量，否则使用磁盘缓存。
     <https://go.dev/doc/go1.24#go-command> <https://go.dev/doc/go1.24#gocacheprog>
     <https://go.googlesource.com/go/+/3ff868f2f5>
-[^bazel-remote-caching]: Bazel，「Remote Caching」，「Overview」一节（被缓存的是动作的输出）与
-    「Disk cache」一节（在多个检出之间共享）。
-    <https://bazel.build/remote/caching#overview> <https://bazel.build/remote/caching#disk-cache>
-[^go-defaultdir]: Go，`cmd/go/internal/cache/default.go`，`DefaultDir`。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/default.go#L74-L87>
 [^go-cacheprog]: Go，`cmd/go/internal/cache/prog.go`，`ProgCache`；`cache/default.go`，其中
     `GOCACHEPROG` 取代磁盘缓存。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/cache/prog.go#L27-L31>

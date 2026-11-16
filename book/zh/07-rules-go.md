@@ -1,5 +1,5 @@
 # 7. rules_go：两种设计的交汇处
-<!-- 译自 310b524 -->
+<!-- 译自 c8cebc2 -->
 
 rules_go 是 Bazel 中用于 Go 的一组规则。它取代了 go 命令中决定构建什么的那一半，保留了执行构建的
 那一半。
@@ -155,10 +155,6 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/transition.bzl#L270-L284>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/stdlib.bzl#L33-L35>
 
-[^builder]: rules_go，`go/tools/builders/builder.go`，包注释与 `main` 中的子命令。
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L15-L18>
-    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L49-L76>
-
 [^builder-filter]: rules_go，`go/tools/builders/filter.go`，`filterAndSplitFiles`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/filter.go#L69-L71>
 
@@ -173,6 +169,10 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L391-L453>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L457-L482>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L488-L494>
+
+[^builder]: rules_go，`go/tools/builders/builder.go`，包注释与 `main` 中的子命令。
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L15-L18>
+    <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/builder.go#L49-L76>
 
 [^builder-exec]: rules_go，`go/private/go_toolchain.bzl`，带 `cfg = "exec"` 的 `builder` 属性；
     `go/private/sdk_build_defs.bzl`，它把构建器声明为一个 `go_tool_binary`；
@@ -287,13 +287,6 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
 [^nogo-validate]: rules_go，`go/private/actions/compilepkg.bzl`，`ValidateNogo` 动作。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/compilepkg.bzl#L285-L303>
 
-[^bazel-cpu]: Bazel，`AbstractAction.java`，`DEFAULT_RESOURCE_SET`：250 MB 与 1 个 CPU；
-    `SpawnAction.java`，`Builder`，它以此为初始值；`StarlarkActionFactory.java`，
-    `registerStarlarkAction`，只有当规则传入 `resource_set` 时才替换它。
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
-    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkActionFactory.java#L845-L854>
-
 [^exec-groups]: Bazel，「Execution Groups」，「Using execution groups to set execution
     properties」一节。<https://bazel.build/extending/exec-groups#using-exec-groups-for-exec-properties>
 
@@ -304,3 +297,10 @@ Bazel 可以把它们发往另一类机器。[^exec-groups]这个组名为 `go_l
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L499-L503>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/test.bzl#L197>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L237>
+
+[^bazel-cpu]: Bazel，`AbstractAction.java`，`DEFAULT_RESOURCE_SET`：250 MB 与 1 个 CPU；
+    `SpawnAction.java`，`Builder`，它以此为初始值；`StarlarkActionFactory.java`，
+    `registerStarlarkAction`，只有当规则传入 `resource_set` 时才替换它。
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
+    <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/starlark/StarlarkActionFactory.java#L845-L854>

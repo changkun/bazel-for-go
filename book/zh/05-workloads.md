@@ -1,5 +1,5 @@
 # 5. 工具链的负载
-<!-- 译自 8e2c0d1 -->
+<!-- 译自 c8cebc2 -->
 
 go 命令与 rules_go 运行的是同一批程序：编译器、链接器、汇编器、cgo（让 Go 代码调用 C 的工具）和测试二进制。本章测量每种程序
 消耗多少资源、这一消耗如何增长，以便第 9 章把每种程序放到合适的机器上。
@@ -129,19 +129,13 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     [`examples/bench/results/2026-11-16/meta.json`](../../examples/bench/results/2026-11-16/meta.json)；
     仓库的形态：
     [`configs.jsonl`](../../examples/bench/results/2026-11-16/configs.jsonl)。
-[^m-workload]: 测量数据，`n1000` 与 `n3000` 经包装的构建与测试中每个进程一条记录：
-    [`examples/bench/results/2026-11-16/workload.jsonl`](../../examples/bench/results/2026-11-16/workload.jsonl)，
-    由 [`examples/bench/analyze.py`](../../examples/bench/analyze.py) 汇总。
-[^m-results]: 测量数据，每条命令一条记录：
-    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)。
 [^m-graph]: 测量数据，冷构建中 go 命令的动作图：
     [`examples/bench/results/2026-11-16/n1000-go-cold-actiongraph.json.gz`](../../examples/bench/results/2026-11-16/n1000-go-cold-actiongraph.json.gz)。
 [^m-profile]: 测量数据，Bazel 对冷构建和 core 函数体修改的 JSON 追踪剖面：
     [`examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz)，
     [`n1000-bazel-core-body.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-core-body.profile.gz)。
-[^m-test-profile]: 测量数据，Bazel 对首次 `bazel test //...` 的 JSON 追踪剖面，其中的 `GoLink` 与
-    `TestRunner` 动作：
-    [`examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz)。
+[^m-results]: 测量数据，每条命令一条记录：
+    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)。
 [^go-compile-doc]: Go，`cmd/compile/doc.go`，包文档。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 [^go-parse]: Go，`cmd/compile/internal/noder/noder.go`，`LoadPackage`，它在各自的 goroutine 中解析
@@ -172,19 +166,25 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     `SpawnAction.java`，除非规则自行设定，否则它使用该值。
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/actions/AbstractAction.java#L70-L78>，
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/actions/SpawnAction.java#L623>
+[^m-workload]: 测量数据，`n1000` 与 `n3000` 经包装的构建与测试中每个进程一条记录：
+    [`examples/bench/results/2026-11-16/workload.jsonl`](../../examples/bench/results/2026-11-16/workload.jsonl)，
+    由 [`examples/bench/analyze.py`](../../examples/bench/analyze.py) 汇总。
 [^go-link-deps]: Go，`cmd/go/internal/work/action.go`，`addTransitiveLinkDeps`；以及
     `exec.go`，`writeLinkImportcfg`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>，
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1670-L1678>
 [^rules-go-link-inputs]: rules_go，`go/private/actions/link.bzl`，`emit_link`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/actions/link.bzl#L217-L227>
-[^go-linkactionid]: Go，`cmd/go/internal/work/exec.go`，`linkActionID` 中的 `packagefile`
-    一行。<https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
 [^go-link-phases]: Go，`cmd/link/internal/ld/main.go`，`Main`；`dwarf.go` 与 `data.go`，其中的并行
     部分。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/main.go#L367-L374>，
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/dwarf.go#L2264-L2265>，
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/ld/data.go#L1170-L1175>
+[^go-test-strip]: Go，`cmd/go/internal/test/test.go`，`OmitDebug`；以及 `work/gc.go`，`ld`。
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1220>，
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
+[^go-linkactionid]: Go，`cmd/go/internal/work/exec.go`，`linkActionID` 中的 `packagefile`
+    一行。<https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
 [^go-internal-pie]: Go，`internal/platform/supported.go`，`InternalLinkPIESupported` 与
     `DefaultPIE`。
     <https://github.com/golang/go/blob/go1.27.3/src/internal/platform/supported.go#L217-L243>
@@ -199,13 +199,13 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L762-L797>
 [^rules-go-cgo]: rules_go，`go/tools/builders/compilepkg.go`，`compileArchive`。
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/tools/builders/compilepkg.go#L338-L341>
-[^go-test-strip]: Go，`cmd/go/internal/test/test.go`，`OmitDebug`；以及 `work/gc.go`，`ld`。
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1220>，
-    <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
 [^apple-xprotect]: Apple，*Apple Platform Security*，「Protecting against malware in macOS」，
     「XProtect」一节：XProtect 会在应用首次启动时，或在应用于文件系统中被更改后，检查其中是否含有
     已知的恶意内容。
     <https://support.apple.com/guide/security/protecting-against-malware-sec469d47bd8/web#secffa0f9b55>
+[^m-test-profile]: 测量数据，Bazel 对首次 `bazel test //...` 的 JSON 追踪剖面，其中的 `GoLink` 与
+    `TestRunner` 动作：
+    [`examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-test-first.profile.gz)。
 [^go-vet]: Go，`cmd/go/internal/work/action.go`，`vetAction`；以及 `exec.go`，`Builder.vet`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L881-L898>，
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1409-L1413>
