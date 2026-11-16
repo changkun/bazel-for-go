@@ -13,26 +13,26 @@ a checkout's outputs and state), or to the file that `--profile` names. Opened i
 path, the longest chain of actions that each wait for the one before.[^profile] Bazel 9 removed
 `analyze-profile`, the command that summarized a profile;[^analyze-profile] the file is gzipped
 JSON, and the critical path is its events of category `critical path component`.[^profile-task]
-Bazel merges short events unless `--noslim_profile` is set,[^profile-format] so we count actions
-in the execution log (next section), not in the profile.
+Bazel merges short events unless `--noslim_profile` is set,[^profile-format] so Appendix A counts
+actions from Bazel's closing summary line, not from the profile.
 
 In two profiles of the 1,000-package synthetic repository (Appendix A), drawn in Figure
 9.1,[^bench] 24.2 s of the cold build's 29.9 s critical path went to rules_go's own setup. One
 action built the builder, the Go program that runs most of rules_go's actions (Chapter 7), with
-`GOMAXPROCS=1`, so its `go build` commands compiled one package at a time.[^builder-env] Another
-built the standard library for tools, programs that run during the build, here the repository's
-code generator. Neither depends on the repository's code, so, in our reading, a shared cache can
-serve both to every machine of the same platform after the first. After the first edit to a
-function body in `core`, 2.26 s of the 2.32 s was one link.
+`GOMAXPROCS=1` (at most one thread runs Go code at once), so its `go build` commands compiled one
+package at a time.[^builder-env] Another built the standard library for tools, programs that run
+during the build, here the repository's code generator. Neither depends on the repository's code,
+so, in our reading, a shared cache can serve both to every machine of the same platform after the
+first. After the first edit to a function body in `core`, 2.26 s of the 2.32 s was one link.
 
 Bazel's documentation suggests splitting a slow action that sits on the critical
-path.[^profile-issues] For Go the smallest unit is a package: the compiler compiles one per run,
-and Gazelle writes one `go_library` per directory (Chapter 7).[^gazelle-one] So the only finer
-grain is a smaller package. A large package costs three ways: any edit recompiles all of it, its
-compile is one long step on every chain through it, and every importer recompiles when any part
-of its export data (the summary of its exported declarations that importers' compiles read)
-changes, even a part that importer does not use (Chapter 7). We recommend splitting packages
-that the critical path names often and that many packages import.
+path.[^profile-issues] For Go the smallest unit is a package: the compiler compiles one per
+run,[^go-compile] and Gazelle writes one `go_library` per directory (Chapter 7).[^gazelle-one]
+So the only finer grain is a smaller package. A large package costs three ways: any edit
+recompiles all of it, its compile is one long step on every chain through it, and every importer
+recompiles when any part of its export data (the summary of its exported declarations that
+importers' compiles read) changes, even a part that importer does not use (Chapter 7). We
+recommend splitting packages that the critical path names often and that many packages import.
 
 ## Keep keys stable
 
@@ -45,32 +45,35 @@ or remote cache, its key.[^exec-log] Actions found
 in the local action cache, Bazel's per-checkout record of actions already run, are left
 out.[^spawn-proto] So Bazel's guide runs `bazel clean` before each of two builds, converts both
 logs to text with its `execlog` parser, and diffs them.[^compare-logs] The input or setting that
-differs is the cause (Figure 9.2). In a Go build it is usually one of these:
+differs is the cause (Figure 9.2). In a Go build, we would look first at these:
 
 - **Stamping.** rules_go's `x_defs` sets string variables at link time, and a value can name a
   workspace status key, a line printed by the `--workspace_status_command` script such as
   `{STABLE_GIT_COMMIT}`, which `--stamp`, off by default, fills in.[^stamp] `GoLink` then reads
   `stable-status.txt` if a value names a stable key (`STABLE_*`, `BUILD_HOST`, `BUILD_USER` or
-  `BUILD_EMBED_LABEL`) and `volatile-status.txt` otherwise.[^rg-stamp] The stable file always
-  holds `BUILD_HOST` and `BUILD_USER`, so links that read it share no results across machines or
-  users. Bazel's manual recommends `--nostamp` for caching.[^status] We recommend stamping only
-  release builds.
+  `BUILD_EMBED_LABEL`) and `volatile-status.txt` if it names any other key.[^rg-stamp] The
+  stable file always holds `BUILD_HOST` and `BUILD_USER`, so links that read it share no results
+  across machines or users whose names differ. Bazel's manual recommends `--nostamp` for
+  caching.[^status] We recommend stamping only release builds.
 - **Environment.** rules_go gives its actions their own environment, so neither the caller's
-  `PATH` nor `--action_env` reaches its compiles and links.[^rg-env] A `genrule` takes the
-  build's action environment, a few OS-dependent variables plus those `--action_env`
-  sets.[^genrule-env] Since 9.0 that has a fixed `PATH`, but `--action_env=NAME` copies the
-  caller's value into its key; `--action_env=NAME=value` fixes the value.[^strict-env]
+  `PATH` nor `--action_env` reaches its compiles and links.[^rg-env] A `genrule` (Bazel's rule
+  that runs a shell command) takes the build's action environment, a few OS-dependent variables
+  plus those `--action_env` sets.[^genrule-env] Since 9.0 that has a fixed `PATH`, but
+  `--action_env=NAME` copies the caller's value into its key; `--action_env=NAME=value` fixes
+  the value.[^strict-env]
 - **Machine-dependent or nondeterministic outputs.** An action whose output records where or when
-  it ran, through absolute paths, timestamps or build IDs, changes the key of every action that
-  reads it.[^hermeticity] rules_go's compiles trim absolute paths, and its links replace the build
-  ID with a hash of the binary.[^rg-determinism] A `genrule` that writes the date does not.
+  it ran, through absolute paths, timestamps or build IDs (identifiers written into a binary),
+  changes the key of every action that reads it.[^hermeticity] rules_go's compiles trim
+  absolute paths, and its links replace the build ID with a hash of the
+  binary.[^rg-determinism] A `genrule` that writes the date does not.
 - **Execution properties.** The properties sent with an action (next section) are part of its
   remote key, so routing the same action to two sets of machines gives two cache
   entries.[^reapi-platform]
 - **Tools on the host.** Bazel does not track a tool found outside the workspace, such as a
-  system C compiler used for cgo or external linking. Machines with different compilers then
-  share results they should not.[^cache-issues] That is a wrong hit, not a miss (Chapter 1's
-  "Key"), and the two execution logs match, so diffing them cannot show it.
+  system C compiler used for cgo (Go code that calls C) or for external linking, where the Go
+  linker hands it the final link. Machines with different compilers then share results they
+  should not.[^cache-issues] That is a wrong hit, not a miss (Chapter 1's "Key"), and the two
+  execution logs match, so diffing them cannot show it.
 
 ## Place work on machines
 
@@ -137,7 +140,7 @@ memory.[^memory]
 
 ## Tests and the local loop
 
-![Figure 9.4: What `bazel test //...` runs after an edit to `core`.](figures/09-tests.svg)
+![Figure 9.4: What `bazel test //...` runs after an edit to `core` (schematic).](figures/09-tests.svg)
 
 `bazel test` reruns a test only if the test or its dependencies changed, it failed last time,
 it is marked `external`, or more than one run was asked for.[^cache-test] Other results come
@@ -148,15 +151,17 @@ top-level `Test` function,[^rg-shard] so one slow function cannot be split.
 `--test_sharding_strategy` defaults to `explicit`: only targets that set `shard_count`
 shard.[^shard-strategy] We recommend sharding only packages with many slow test functions.
 
-On a laptop the server is warm and few actions rerun, so finding changes takes a large share
-(Chapter 1). `--watchfs`, off by default, takes changes to source files from the operating system
-instead of checking each one;[^watchfs] the outputs of the last build are still checked
-(Chapter 6). gopls, Go's language server, asks Bazel about packages through
-`GOPACKAGESDRIVER` (Chapter 2). Each request runs Bazel commands, and a server runs one command
-at a time,[^client-server] so a long build delays the editor. rules_go's driver passes
-`GOPACKAGESDRIVER_BAZEL_FLAGS` before the command,[^gpd-flags] so `--output_base=<dir>` there
-would give the editor a server of its own, at the cost of a second server's memory; we have not
-tested this.
+On a laptop the server is warm and few actions rerun. In our measurements, a build with nothing
+to do took 0.16 s at 1,000 packages and 0.20 s at 3,000, against 0.88 s and 1.91 s after a
+function body edit in a package that no library imports.[^bench-loop] `--watchfs`, off by
+default, takes changes to source files from the operating system instead of checking each
+one;[^watchfs] the outputs of the last build are still checked (Chapter 6). gopls, Go's
+language server, asks Bazel about packages through `GOPACKAGESDRIVER` (Chapter 2). Each request
+runs Bazel commands, and a server runs one command at a time,[^client-server] so a long build
+delays the editor. rules_go's driver passes `GOPACKAGESDRIVER_BAZEL_FLAGS` before the
+command,[^gpd-flags] so `--output_base=<dir>` there, and in the launcher's `bazel run`
+(Chapter 2), would give the editor a server and output tree of its own, at the cost of a second
+server's memory and a second build; we have not tested this.
 
 ## What this means at scale
 
@@ -167,8 +172,8 @@ tested this.
   `--action_env` an explicit value.
 - Route links through `go_link` and test runs through `test`. Keep routing identical for every
   build that shares a cache, because execution properties are part of the key.
-- Set the server's heap explicitly, keep startup options fixed, and keep CI servers warm across
-  jobs.
+- Set the server's heap explicitly, keep startup options fixed, and keep continuous
+  integration (CI) servers warm across jobs.
 - Shard only tests with many slow test functions; caching handles the rest.
 
 ## References
@@ -203,6 +208,9 @@ tested this.
 
 [^profile-issues]: Bazel, "JSON Trace Profile", "Common performance issues".
     <https://bazel.build/advanced/performance/json-trace-profile#common-performance-issues>
+
+[^go-compile]: Go, `cmd/compile/doc.go`, package documentation.
+    <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 
 [^gazelle-one]: Gazelle, `language/go/generate.go`, `GenerateRules` and `selectPackage`: one
     package, and one library, per directory.
@@ -398,6 +406,11 @@ tested this.
 [^shard-strategy]: Bazel, `lib/analysis/test/TestConfiguration.java`, `--test_sharding_strategy`,
     default `explicit`.
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/analysis/test/TestConfiguration.java#L243-L258>
+
+[^bench-loop]: This book's measurements, `examples/bench/results/2026-11-16/`, tool `bazel`,
+    configurations `n1000` and `n3000`, scenarios `noop` and `leaf-body`: medians of reps 0 to 2
+    (Table A.3).
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
 
 [^watchfs]: Bazel, `lib/skyframe/LocalDiffAwareness.java`, the `--watchfs` option, default
     `false`.

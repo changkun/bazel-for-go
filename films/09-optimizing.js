@@ -10,9 +10,12 @@ import { during, measure, mix, place, ramp, show } from "./stage.js";
 // bench: examples/bench/results/2026-11-16/, configuration n1000: the critical paths of
 // n1000-bazel-cold.profile.gz and n1000-bazel-core-body.profile.gz, in seconds, and the
 // number of compiles on the cold one. Only the blocks' widths use them; no number is drawn.
+// loop: results.jsonl, tool bazel, n1000, medians of reps 0 to 2 of the scenarios noop (nothing
+// to do) and leaf-body (one function body edit), in seconds (Table A.3); drawn and labelled.
 const BENCH = {
   cold: { builder: 12.6, stdlib: 11.6, generator: 1.3, compiles: 2.0, link: 2.4, count: 13 },
   edit: { compile: 0.05, link: 2.26 },
+  loop: { noop: 0.16, edit: 0.88 },
 };
 
 // Fade something in from second a, over d seconds.
@@ -35,7 +38,7 @@ export default {
         { say: "Bazel writes a trace profile of every build; its `Critical Path` row shows one block for each action on the critical path." },
         { say: "In our cold build, rules_go's own setup takes most of it: building the builder and the standard library for tools." },
         { say: "Neither depends on the repository's code, so, in our reading, a shared cache can serve both to every machine of the same platform after the first." },
-        { say: "After an edit to a function body in `core`, one link takes most of it.", hold: 0.6 },
+        { say: "After the first edit to a function body in `core`, one link dominates it.", hold: 0.6 },
       ],
       draw(s) {
         // Figure 9.1: both critical paths on one time scale.
@@ -86,9 +89,9 @@ export default {
         };
         const setup = bracket(null);
         const shared = bracket("remote");
-        const same = s.text(s1 / 2, Y1 - 40, "the same on every machine of the same platform", { size: 26, anchor: "middle", tone: "remote" });
+        const same = s.text(s1 / 2, Y1 - 40, "independent of the repository's code", { size: 26, anchor: "middle", tone: "remote" });
         // After an edit to core: one tiny compile, then one link.
-        const editName = s.text(0, Y2 - 20, "after an edit to a function body in `core`", { size: 30, weight: 600 });
+        const editName = s.text(0, Y2 - 20, "after the first edit to a function body in `core`", { size: 30, weight: 600 });
         const ec = Math.max(6, edit.compile * S);
         const eCompile = s.rect(0, Y2, ec, ROW, { kind: "run", fill: 0.16, r: 2, width: 2 });
         const eLink = s.box(ec + 2, Y2, edit.link * S, ROW, "link", { kind: "run" });
@@ -128,7 +131,7 @@ export default {
         { say: "Bazel's guide runs `bazel clean` before each of two builds, then diffs the two logs." },
         { say: "The input or setting that differs is the cause.", hold: 1.4 },
         { say: "Stamping: rules_go's `x_defs` sets string variables at link time, and a value can name a workspace status key, such as `{STABLE_GIT_COMMIT}`, that `--stamp` fills in." },
-        { say: "A stamped link that names a stable key reads `stable-status.txt`, which always holds `BUILD_HOST` and `BUILD_USER`, so such links share no results across machines or users." },
+        { say: "A stamped link that names a stable key reads `stable-status.txt`, which always holds `BUILD_HOST` and `BUILD_USER`, so its key changes with the host and user name." },
         { say: "We recommend stamping only release builds.", hold: 1.2 },
       ],
       draw(s) {
@@ -474,8 +477,8 @@ export default {
     {
       section: "Tests and the local loop",
       lines: [
-        { say: "On a laptop the server is warm and few actions rerun, so finding changes takes a large share.", hold: 0.6 },
-        { say: "`--watchfs`, off by default, takes changes to source files from the operating system instead of checking each one; the outputs of the last build are still checked." },
+        { say: "With a warm server, a build of 1,000 packages with nothing to do took 0.16 s in our measurements.", hold: 0.5 },
+        { say: "`--watchfs`, off by default, takes changes to source files from the operating system instead of checking each one; the outputs of the last build are still checked.", hold: 0.5 },
       ],
       draw(s) {
         s.fit(0, 0, 1040, 590);
@@ -490,15 +493,15 @@ export default {
         // One check at a time: a frame that steps from file to file.
         const scan = s.rect(10, 170, 110, 56, { r: 6, width: 4 });
         const notify = s.edge(os, changed, { from: "bottom", to: "top" });
-        // One edit's time on a laptop, in Chapter 1's illustrative shares: finding changes, then running actions.
-        const barName = s.text(10, 500, "one edit, on a laptop", { size: 26, tone: "muted" });
+        // Two builds on a warm server, to one scale: one with nothing to do, one after an edit.
+        const { loop } = BENCH;
+        const barName = s.text(1030, 488, "1,000 packages, warm server", { size: 26, anchor: "end", tone: "muted" });
         const bar = s.group();
-        const W0 = 1020 * (330 / 652), W1 = 1020 - W0 - 6;
-        const detect = bar.rect(10, 518, W0, 70, { r: 4, width: 2, fill: null });
+        const W1 = 1020, W0 = (W1 * loop.noop) / loop.edit;
+        const detect = bar.rect(10, 458, W0, 46, { r: 4, width: 2, fill: null });
         detect.setAttribute("fill", s.hatch());
-        const run = bar.rect(16 + W0, 518, W1, 70, { r: 4, width: 2, kind: "run", fill: 0.18 });
-        const labels = [bar.text(10 + W0 / 2, 562, "finding changes", { size: 26, anchor: "middle" }), bar.text(16 + W0 + W1 / 2, 562, "running actions", { size: 26, anchor: "middle" })];
-        const note = s.text(1030, 500, "illustrative, not to scale", { size: 26, anchor: "end", tone: "muted", italic: true });
+        const run = bar.rect(10, 516, W1, 46, { r: 4, width: 2, kind: "run", fill: 0.18 });
+        const labels = [bar.text(24 + W0, 490, `nothing to do: ${loop.noop} s`, { size: 26 }), bar.text(10 + W1 / 2, 548, `one function body edit: ${loop.edit} s`, { size: 26, anchor: "middle" })];
         const every = [...sources, ...outputs];
         return (t, cue) => {
           const [a, b] = cue;
@@ -524,7 +527,6 @@ export default {
           show(labels[0], during(t, a + 4.4, a + 4.8));
           show(labels[1], during(t, a + 5.4, a + 5.8));
           show(barName, during(t, a + 1.4, a + 1.8) * mix(1, 0.4, during(t, b + 0.2, b + 0.6)));
-          show(note, during(t, a + 1.4, a + 1.8) * mix(1, 0.4, during(t, b + 0.2, b + 0.6)));
           // With --watchfs: the operating system says which source changed.
           appear(watch, t, b + 0.4);
           appear(os, t, b + 2.4);

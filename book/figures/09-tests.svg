@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 244" role="img" aria-labelledby="f94-title" class="f94">
-  <title id="f94-title">bazel test //... after an edit to core. The three test targets the edit reaches run; the three it does not reach report results from the cache. One of the tests that runs, web_test, has shard_count = 3, so it runs as three processes, possibly on three machines: shard 0 runs TestA and TestD, shard 1 TestB and TestE, shard 2 TestC and TestF.</title>
+  <title id="f94-title">Schematic. bazel test //... after an edit to core. The three test targets the edit reaches run; the three it does not reach report results from the cache. One of the tests that runs, web_test, has shard_count = 3, so it runs as three processes, possibly on three machines: shard 0 runs TestA and TestD, shard 1 TestB and TestE, shard 2 TestC and TestF.</title>
   <style>
     .f94 text { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; fill: currentColor; }
     .f94 .f94-sm { font-size: 13px; opacity: 0.8; }
