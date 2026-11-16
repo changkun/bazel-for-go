@@ -1,5 +1,5 @@
 # 5. 工具链的负载
-<!-- 译自 c8cebc2 -->
+<!-- 译自 988b20a -->
 
 go 命令与 rules_go 运行的是同一批程序：编译器、链接器、汇编器、cgo（让 Go 代码调用 C 的工具）和测试二进制。本章测量每种程序
 消耗多少资源、这一消耗如何增长，以便第 9 章把每种程序放到合适的机器上。
@@ -9,7 +9,7 @@ go 命令与 rules_go 运行的是同一批程序：编译器、链接器、汇�
 （resident set size，常驻内存集：进程在同一时刻占用的最多物理内存）。这个合成仓库有 1000 个包，每个
 约 690 行，分为 12 层（附录 A），在一台运行 macOS 26.6 的 18 核 Apple M5 Pro 上构建。[^m-meta]图 5.3
 和以整个动作（构建的步骤，例如一次编译）计的耗时则另取自附录 A 中计时的运行，不经过包装
-程序。[^m-graph][^m-profile]经过包装的构建耗时 13.4 s，计时的构建为 6.9 s。[^m-results]
+程序。[^m-graph][^m-profile]
 
 ## compile：每个包一个进程
 
@@ -31,7 +31,7 @@ CPU 和 250 MB。[^bazel-resources]这样，在 Bazel 下，18 次编译可能�
 go 命令下至多 108 个；笔者没有测量其影响。
 
 编译本书合成仓库中的一个包，所用 CPU 时间与内存的中位数分别为 61 ms 和 45 MB，`-c` 在 4 至 18
-之间。[^m-workload]总体而言，这些编译的 CPU 时间约等于墙钟时间。按笔者的理解，小包的编译以串行的
+之间。[^m-workload]总体而言，这些编译的 CPU 时间至多是墙钟时间的 1.3 倍。[^m-check]按笔者的理解，小包的编译以串行的
 前端为主，而在繁忙的机器上，多出的工作 goroutine 找不到空闲的核心。有空闲的核心时，后端确实有帮助：
 运行时包是代价最高的编译，它较早运行，`-c=18`：其动作在 0.67 s 内用了 2.05 s 的 CPU
 时间，[^m-graph]内存为 302 MB。[^m-workload]
@@ -46,7 +46,7 @@ rules_go 则把每个传递依赖的归档以及标准库都声明为链接动�
 goroutine。[^go-link-phases]
 
 go 命令那次构建中的 11 次链接（其中十次各链接约 730 个仓库包）[^m-graph]峰值内存的中位数为
-450 MB：是一次编译的十倍，CPU 时间是墙钟时间的 1.1 倍。[^m-workload]测试二进制在链接时不带调试
+450 MB：是一次编译的十倍，CPU 时间是墙钟时间的 1.1 至 1.2 倍。[^m-workload][^m-check]测试二进制在链接时不带调试
 信息，[^go-test-strip]它们显示了链接如何增长（图 5.2 右）：链接的仓库包不超过 10 个时，中位数为
 96 MB 和 59 ms；超过 300 个时，为 282 MB 和 172 ms。[^m-workload][^m-graph]二进制中任何一个包改变，链接都要
 重新运行：[^go-linkactionid]对 `core`（被导入最广的包，第 4 章）做一次函数体修改（body edit），两种工具都重新链接了
@@ -71,7 +71,7 @@ Go 代码。[^go-cgo]rules_go 在一个编译动作内完成全部这些工作�
 
 每个包的测试先被编译，再链接成独立的二进制，然后运行。本书的测试几乎不做什么：一次运行的 CPU 时间
 中位数为 5 ms，耗时的中位数却为 5.1 s。[^m-workload]最先结束的 18 次运行（与同时运行的数目相同）每一次都比前
-一次多花约 0.22 s，[^m-workload]而计时运行的 `go test ./...` 运行 1000 个二进制共耗时 279 s，每个
+一次多花约 0.22 s，[^m-workload][^m-check]而计时运行的 `go test ./...` 运行 1000 个二进制共耗时 279 s，每个
 0.28 s，[^m-results]就好像这些运行在进程之外的同一个队列里等待。macOS 会在应用首次启动时检查其中是否含有已知的恶意
 软件；[^apple-xprotect]笔者推断，这项检查依次施加于每个新的测试二进制，它就是那个队列；笔者还预计
 Linux 机器不会付出这一代价。Bazel 的首次测试运行耗时 531 s，尽管其最长的依赖动作链用了
@@ -86,7 +86,7 @@ Linux 机器不会付出这一代价。Bazel 的首次测试运行耗时 531 s�
 一个独立的动作，读取源文件以及直接导入的导出数据和事实。[^rules-go-nogo]
 
 `go build` 从不运行 `go generate`，后者也没有缓存；[^go-generate]重新运行仓库中的 100 条
-`go:generate` 指令耗时 6.1 s。[^m-results]在 Bazel 下，生成器作为一个动作运行，[^bazel-genrule]像其他动作一样被
+`go:generate` 指令耗时 6 至 10 s。[^m-results][^m-check]在 Bazel 下，生成器作为一个动作运行，[^bazel-genrule]像其他动作一样被
 缓存。[^bazel-actions]
 
 ## 构建的形状
@@ -134,8 +134,6 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
 [^m-profile]: 测量数据，Bazel 对冷构建和 core 函数体修改的 JSON 追踪剖面：
     [`examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-cold.profile.gz)，
     [`n1000-bazel-core-body.profile.gz`](../../examples/bench/results/2026-11-16/n1000-bazel-core-body.profile.gz)。
-[^m-results]: 测量数据，每条命令一条记录：
-    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)。
 [^go-compile-doc]: Go，`cmd/compile/doc.go`，包文档。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/doc.go#L6>
 [^go-parse]: Go，`cmd/compile/internal/noder/noder.go`，`LoadPackage`，它在各自的 goroutine 中解析
@@ -169,6 +167,15 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
 [^m-workload]: 测量数据，`n1000` 与 `n3000` 经包装的构建与测试中每个进程一条记录：
     [`examples/bench/results/2026-11-16/workload.jsonl`](../../examples/bench/results/2026-11-16/workload.jsonl)，
     由 [`examples/bench/analyze.py`](../../examples/bench/analyze.py) 汇总。
+[^m-check]: 测量数据，为核对第一次运行而再次运行的 `n1000`：
+    [`examples/bench/results/2026-11-16-n1000-check/`](../../examples/bench/results/2026-11-16-n1000-check/)。按进程计：一次仓库包编译的 CPU
+    时间与内存中位数为 55 ms 和 45 MB，所有这些编译的 CPU 时间合计是墙钟时间的 1.3 倍；运行时包的编译
+    为 293 MB；构建中的链接为 446 MB，CPU 时间是墙钟时间的 1.2 倍；一次测试运行用 5.7 ms 的 CPU、
+    耗时 4.9 s，最先结束的 18 个依次相隔 0.22 s。按完整动作计：冷 go 构建用了 59 s 的 CPU，关键路径
+    3.8 s，跨度 5.9 s；运行时包的动作在 0.68 s 内用了 2.09 s 的 CPU；链接在 go 命令下为 0.59 s，在
+    Bazel 下为 2.24 s。按命令计：`go generate` 9.9 s；`go test ./...` 305 s；Bazel 的首次测试运行
+    615 s，关键路径 22.2 s，测试链接 0.93 s，测试运行 8.25 s；Bazel 冷构建的关键路径为 38.2 s，其中
+    32.1 s 用于构建 builder 与标准库。附录 A 比较了两次运行中的各条命令。
 [^go-link-deps]: Go，`cmd/go/internal/work/action.go`，`addTransitiveLinkDeps`；以及
     `exec.go`，`writeLinkImportcfg`。
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/action.go#L1034-L1046>，
@@ -185,6 +192,8 @@ Bazel 的冷构建关键路径更长，为 29.9 s，其中 24.2 s 用于构建 r
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/gc.go#L605-L607>
 [^go-linkactionid]: Go，`cmd/go/internal/work/exec.go`，`linkActionID` 中的 `packagefile`
     一行。<https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/work/exec.go#L1540-L1566>
+[^m-results]: 测量数据，每条命令一条记录：
+    [`examples/bench/results/2026-11-16/results.jsonl`](../../examples/bench/results/2026-11-16/results.jsonl)。
 [^go-internal-pie]: Go，`internal/platform/supported.go`，`InternalLinkPIESupported` 与
     `DefaultPIE`。
     <https://github.com/golang/go/blob/go1.27.3/src/internal/platform/supported.go#L217-L243>
