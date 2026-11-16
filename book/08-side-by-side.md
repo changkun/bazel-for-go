@@ -96,11 +96,13 @@ and those local actions need.[^bazel-bwob]
 
 ## End to end
 
-Table 8.1: Wall time in seconds: medians of three runs; the cold build, test and fresh checkout
-ran once; tests did not run at 10,000.[^bench]
+Table 8.1: Wall time in seconds: medians of three runs (cold build, test and fresh checkout:
+one); at 1,000 and 10,000, ranges where two runs differed.[^bench]
 
 <!--
-Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000).
+Fill from examples/bench/results/2026-11-16/results.jsonl, configs n1000, n3000 and n10000 (no tests at n10000),
+and from results/2026-11-16-n1000-check and -n10000-check: where the two runs' medians differ at two
+significant digits, the cell is a range, low–high.
 Row                         go scenario       bazel scenario
 Cold build                  cold              cold
 No-op build                 noop (reps 0-2)   noop (reps 0-2; rep 3 only re-warms the server)
@@ -113,15 +115,15 @@ go clone-warmcache has no -trimpath; clone-warmcache-trimpath is the same build 
 
 | Scenario | go, 1,000 | Bazel, 1,000 | go, 3,000 | Bazel, 3,000 | go, 10,000 | Bazel, 10,000 |
 |---|---|---|---|---|---|---|
-| Cold build | 6.9 | 37 | 28 | 84 | 230 | 320 |
-| No-op build | 0.86 | 0.16 | 2.5 | 0.20 | 14 | 0.36 |
-| Body edit to `core` | 3.0 | 1.7 | 14 | 12 | 130 | 180 |
-| API edit to `core` | 5.3 | 5.1 | 24 | 21 | 200 | 210 |
-| Test after the body edit | 260 | 460 | 1,200 | 2,300 | — | — |
-| Fresh checkout, warm cache | 5.0 | 9.4 | 22 | 6.4 | 200 | 11 |
+| Cold build | 6.9–7.4 | 37–48 | 28 | 84 | 180–230 | 320–380 |
+| No-op build | 0.86–0.87 | 0.13–0.16 | 2.5 | 0.20 | 14–33 | 0.31–0.36 |
+| Body edit to `core` | 3.0 | 1.7 | 14 | 12 | 130–140 | 180–190 |
+| API edit to `core` | 4.8–5.3 | 5.1–5.6 | 24 | 21 | 170–200 | 210–230 |
+| Test after the body edit | 260–270 | 460–480 | 1,200 | 2,300 | — | — |
+| Fresh checkout, warm cache | 5.0–6.1 | 5.9–9.4 | 22 | 6.4 | 200–220 | 11–12 |
 
 The repository is Appendix A's synthetic repository at 1,000, 3,000 and 10,000 packages, `core`
-its most widely imported package. The builds are `go build -o <dir> ./...` and
+its most imported package. The builds are `go build -o <dir> ./...` and
 `bazel build` of the same binaries; the test row runs `go test -vet=off ./...` and
 `bazel test //...`:
 
@@ -337,9 +339,11 @@ checks every action against the action cache again.
     <https://github.com/bazelbuild/bazel/releases/tag/7.0.0>
     <https://github.com/bazelbuild/bazel/blob/9.3.2/src/main/java/com/google/devtools/build/lib/remote/options/RemoteOptions.java#L519-L533>
 [^bench]: This book's measurements, `examples/bench/results/2026-11-16/results.jsonl`,
-    configurations `n1000`, `n3000` and `n10000`; Appendix A describes the repository and the
-    harness.
-    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl)
+    configurations `n1000`, `n3000` and `n10000`, and a second run of `n1000` and `n10000`
+    (Appendix A, Table A.7); Appendix A describes the repository and the harness.
+    [results.jsonl](../examples/bench/results/2026-11-16/results.jsonl),
+    [n1000, second run](../examples/bench/results/2026-11-16-n1000-check/results.jsonl),
+    [n10000, second run](../examples/bench/results/2026-11-16-n10000-check/results.jsonl)
 [^go-no-prebuilt-std]: Go 1.20 release notes, "Go command": "The directory `$GOROOT/pkg` no
     longer stores pre-compiled package archives for the standard library".
     <https://go.dev/doc/go1.20#go-command>
@@ -351,13 +355,18 @@ checks every action against the action cache again.
     `go build -trimpath`.
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/go_toolchain.bzl#L62-L64>
     <https://github.com/bazel-contrib/rules_go/blob/v0.65.0/go/private/rules/binary_wrapper.sh#L18-L23>
-[^bench-links]: This book's measurements at 10,000 packages: in the cold builds a binary's link
-    took a median of 32 s under Bazel and 19 s under the go command; in Bazel's first body edit,
-    41 s; the go command's edits record no link times. The two tools ran at this size an hour
-    apart, on a machine shared with other work (Appendix A).
+[^bench-links]: This book's measurements at 10,000 packages, in two runs: in the cold builds a
+    binary's link took a median of 32 s and 36 s under Bazel, 19 s and 12 s under the go command;
+    in Bazel's first body edit, 41 s and 34 s; the go command's edits record no link times. In
+    each run the two tools ran at this size an hour apart, on a machine shared with other work
+    (Appendix A).
     [n10000-bazel-cold.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-cold.profile.gz),
     [n10000-bazel-core-body.profile.gz](../examples/bench/results/2026-11-16/n10000-bazel-core-body.profile.gz),
-    [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz)
+    [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16/n10000-go-cold-actiongraph.json.gz);
+    the second run's
+    [n10000-bazel-cold.profile.gz](../examples/bench/results/2026-11-16-n10000-check/n10000-bazel-cold.profile.gz),
+    [n10000-bazel-core-body.profile.gz](../examples/bench/results/2026-11-16-n10000-check/n10000-bazel-core-body.profile.gz),
+    [n10000-go-cold-actiongraph.json.gz](../examples/bench/results/2026-11-16-n10000-check/n10000-go-cold-actiongraph.json.gz)
 [^go-testcache]: Go, `cmd/go/internal/test/test.go`, `tryCacheWithID`: the test ID uses the
     link's inputs as a proxy for the test binary.
     <https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/test/test.go#L1882-L1909>
